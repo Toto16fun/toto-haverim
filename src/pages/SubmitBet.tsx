@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Calendar, AlertCircle } from 'lucide-react';
+import { ArrowRight, Calendar, AlertCircle, SendHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 
@@ -290,7 +290,7 @@ const SubmitBet = () => {
                 size="lg"
                 disabled={isDeadlinePassed || doublesCount !== 3}
               >
-                <Send className="h-4 w-4 mr-2" />
+                <SendHorizontal className="h-4 w-4 mr-2" />
                 שלח טור
               </Button>
             </div>
