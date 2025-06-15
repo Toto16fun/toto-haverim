@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,24 @@ const SubmitBet = () => {
   // Calculate next Saturday at 13:00
   const getNextSaturday = () => {
     const now = new Date();
-    const daysUntilSaturday = (6 - now.getDay()) % 7;
+    const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
+    let daysUntilSaturday;
+    
+    if (currentDay === 6) { // It's Saturday
+      const currentHour = now.getHours();
+      if (currentHour < 13) {
+        // Before 13:00 on Saturday - deadline is today at 13:00
+        daysUntilSaturday = 0;
+      } else {
+        // After 13:00 on Saturday - deadline is next Saturday
+        daysUntilSaturday = 7;
+      }
+    } else {
+      // Any other day - calculate days until next Saturday
+      daysUntilSaturday = (6 - currentDay) % 7;
+      if (daysUntilSaturday === 0) daysUntilSaturday = 7;
+    }
+    
     const nextSaturday = new Date(now);
     nextSaturday.setDate(now.getDate() + daysUntilSaturday);
     nextSaturday.setHours(13, 0, 0, 0);
@@ -169,7 +187,6 @@ const SubmitBet = () => {
               <div>
                 <Label htmlFor="username">שם המשתמש</Label>
                 <Select
-                  id="username"
                   value={selectedUser}
                   onValueChange={setSelectedUser}
                   disabled={isDeadlinePassed}
@@ -211,7 +228,6 @@ const SubmitBet = () => {
               {games.map((game) => {
                 const prediction = predictions.find(p => p.gameId === game.id)?.prediction;
                 const isDouble = predictions.find(p => p.gameId === game.id)?.isDouble;
-                const doublePredictions = predictions.find(p => p.gameId === game.id)?.doublePredictions;
                 
                 return (
                   <div key={game.id} className="p-4 border rounded-lg">
@@ -226,59 +242,34 @@ const SubmitBet = () => {
                     <div className="text-center mb-3 text-sm text-gray-600 text-right">
                       {game.homeTeam} נגד {game.awayTeam}
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-right">
-                      <div className="flex items-center justify-end space-x-2 space-x-reverse">
-                        <Label htmlFor={`home-${game.id}`} className="text-sm">
-                          1 (בית)
+                    
+                    <RadioGroup
+                      value={prediction}
+                      onValueChange={(value) => 
+                        handlePredictionChange(game.id, value, isDouble)
+                      }
+                      disabled={isDeadlinePassed}
+                      className="flex justify-center gap-8"
+                    >
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
+                          1
                         </Label>
-                        <RadioGroup
-                          id={`home-${game.id}`}
-                          value={prediction === 'home' ? 'home' : prediction === 'draw' ? 'draw' : prediction === 'away' ? 'away' : undefined}
-                          onValueChange={(value) => 
-                            handlePredictionChange(game.id, value as string, isDouble, doublePredictions)
-                          }
-                          disabled={isDeadlinePassed}
-                        >
-                          <RadioGroupItem value="home" />
-                          <RadioGroupItem value="draw" />
-                          <RadioGroupItem value="away" />
-                        </RadioGroup>
+                        <RadioGroupItem value="home" id={`home-${game.id}`} />
                       </div>
-                      <div className="flex items-center justify-end space-x-2 space-x-reverse">
-                        <Label htmlFor={`draw-${game.id}`} className="text-sm">
-                          X (תיקו)
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Label htmlFor={`draw-${game.id}`} className="text-sm font-medium">
+                          X
                         </Label>
-                        <RadioGroup
-                          id={`draw-${game.id}`}
-                          value={prediction === 'home' ? 'home' : prediction === 'draw' ? 'draw' : prediction === 'away' ? 'away' : undefined}
-                          onValueChange={(value) => 
-                            handlePredictionChange(game.id, value as string, isDouble, doublePredictions)
-                          }
-                          disabled={isDeadlinePassed}
-                        >
-                          <RadioGroupItem value="home" />
-                          <RadioGroupItem value="draw" />
-                          <RadioGroupItem value="away" />
-                        </RadioGroup>
+                        <RadioGroupItem value="draw" id={`draw-${game.id}`} />
                       </div>
-                      <div className="flex items-center justify-end space-x-2 space-x-reverse">
-                        <Label htmlFor={`away-${game.id}`} className="text-sm">
-                          2 (חוץ)
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
+                          2
                         </Label>
-                        <RadioGroup
-                          id={`away-${game.id}`}
-                          value={prediction === 'home' ? 'home' : prediction === 'draw' ? 'draw' : prediction === 'away' ? 'away' : undefined}
-                          onValueChange={(value) => 
-                            handlePredictionChange(game.id, value as string, isDouble, doublePredictions)
-                          }
-                          disabled={isDeadlinePassed}
-                        >
-                          <RadioGroupItem value="home" />
-                          <RadioGroupItem value="draw" />
-                          <RadioGroupItem value="away" />
-                        </RadioGroup>
+                        <RadioGroupItem value="away" id={`away-${game.id}`} />
                       </div>
-                    </div>
+                    </RadioGroup>
                   </div>
                 );
               })}
