@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { ArrowRight, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ interface UserBettingSheet {
 
 const CurrentRound = () => {
   const currentRound = 2;
+  const [showComparison, setShowComparison] = useState(true);
   
   // Sample current round data with full betting sheets
   const currentRoundBets: UserBettingSheet[] = [
@@ -148,6 +150,107 @@ const CurrentRound = () => {
     );
   };
 
+  const renderComparisonView = () => (
+    <Card className="overflow-x-auto">
+      <CardContent className="p-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {currentRoundBets.map((userBet) => (
+                <TableHead key={userBet.id} className="text-center min-w-[120px]">
+                  <div className="flex flex-col items-center space-y-1">
+                    <div className="font-semibold">{userBet.username}</div>
+                    <div className="flex items-center text-xs text-gray-600">
+                      {userBet.isSubmitted ? (
+                        <CheckCircle className="h-3 w-3 text-green-600 ml-1" />
+                      ) : (
+                        <XCircle className="h-3 w-3 text-red-600 ml-1" />
+                      )}
+                      {userBet.isSubmitted ? 'נשלח' : 'לא נשלח'}
+                    </div>
+                    <div className="text-xs text-gray-500">כפולים: {userBet.doublesUsed}/3</div>
+                  </div>
+                </TableHead>
+              ))}
+              <TableHead className="text-right min-w-[200px]">קבוצות</TableHead>
+              <TableHead className="text-right min-w-[80px]">משחק</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentRoundBets[0]?.predictions.map((_, gameIndex) => (
+              <TableRow key={gameIndex}>
+                {currentRoundBets.map((userBet) => (
+                  <TableCell key={userBet.id} className="text-center">
+                    {renderPredictionButtons(
+                      userBet.predictions[gameIndex].prediction,
+                      userBet.predictions[gameIndex].isDouble
+                    )}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right">
+                  <div className="text-sm font-medium">
+                    {currentRoundBets[0].predictions[gameIndex].homeTeam} - {currentRoundBets[0].predictions[gameIndex].awayTeam}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center font-medium text-gray-600">
+                  {gameIndex + 1}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
+  const renderSeparateView = () => (
+    <div className="space-y-6">
+      {currentRoundBets.map((userBet) => (
+        <Card key={userBet.id}>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                {userBet.username}
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center text-sm">
+                  {userBet.isSubmitted ? (
+                    <CheckCircle className="h-4 w-4 text-green-600 ml-2" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-red-600 ml-2" />
+                  )}
+                  {userBet.isSubmitted ? 'נשלח' : 'לא נשלח'}
+                </div>
+                <div className="text-sm text-gray-600">
+                  כפולים: {userBet.doublesUsed}/3
+                </div>
+              </div>
+            </CardTitle>
+            <CardDescription>
+              הוגש ב-{userBet.submissionDate}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {userBet.predictions.map((prediction, index) => (
+                <div key={prediction.gameId} className="border rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-600 mb-2">
+                    משחק {index + 1}
+                  </div>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {prediction.homeTeam} - {prediction.awayTeam}
+                  </div>
+                  {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
@@ -179,64 +282,23 @@ const CurrentRound = () => {
         </Card>
 
         <div className="space-y-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            טורים שהוגשו ({currentRoundBets.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-800">
+              טורים שהוגשו ({currentRoundBets.length})
+            </h2>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-600">טורים נפרדים</span>
+              <Switch
+                checked={showComparison}
+                onCheckedChange={setShowComparison}
+              />
+              <span className="text-sm text-gray-600">השווה טורים</span>
+            </div>
+          </div>
           
-          {currentRoundBets.length > 0 && (
-            <Card className="overflow-x-auto">
-              <CardContent className="p-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {currentRoundBets.map((userBet) => (
-                        <TableHead key={userBet.id} className="text-center min-w-[120px]">
-                          <div className="flex flex-col items-center space-y-1">
-                            <div className="font-semibold">{userBet.username}</div>
-                            <div className="flex items-center text-xs text-gray-600">
-                              {userBet.isSubmitted ? (
-                                <CheckCircle className="h-3 w-3 text-green-600 ml-1" />
-                              ) : (
-                                <XCircle className="h-3 w-3 text-red-600 ml-1" />
-                              )}
-                              {userBet.isSubmitted ? 'נשלח' : 'לא נשלח'}
-                            </div>
-                            <div className="text-xs text-gray-500">כפולים: {userBet.doublesUsed}/3</div>
-                          </div>
-                        </TableHead>
-                      ))}
-                      <TableHead className="text-right min-w-[200px]">קבוצות</TableHead>
-                      <TableHead className="text-right min-w-[80px]">משחק</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentRoundBets[0]?.predictions.map((_, gameIndex) => (
-                      <TableRow key={gameIndex}>
-                        {currentRoundBets.map((userBet) => (
-                          <TableCell key={userBet.id} className="text-center">
-                            {renderPredictionButtons(
-                              userBet.predictions[gameIndex].prediction,
-                              userBet.predictions[gameIndex].isDouble
-                            )}
-                          </TableCell>
-                        ))}
-                        <TableCell className="text-right">
-                          <div className="text-sm font-medium">
-                            {currentRoundBets[0].predictions[gameIndex].homeTeam} - {currentRoundBets[0].predictions[gameIndex].awayTeam}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center font-medium text-gray-600">
-                          {gameIndex + 1}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-
-          {currentRoundBets.length === 0 && (
+          {currentRoundBets.length > 0 ? (
+            showComparison ? renderComparisonView() : renderSeparateView()
+          ) : (
             <Card>
               <CardContent className="text-center py-8">
                 <p className="text-gray-500">עדיין לא הוגשו טורים במחזור הנוכחי</p>
