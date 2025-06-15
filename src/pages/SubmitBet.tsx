@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -259,16 +260,16 @@ const SubmitBet = () => {
                     
                     <div className="flex justify-center gap-8">
                       <div className="flex items-center space-x-2 space-x-reverse">
-                        <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
-                          1
+                        <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
+                          2
                         </Label>
                         <Checkbox
-                          id={`home-${game.id}`}
-                          checked={selectedPredictions.includes('home')}
+                          id={`away-${game.id}`}
+                          checked={selectedPredictions.includes('away')}
                           onCheckedChange={(checked) => 
-                            handlePredictionChange(game.id, 'home', checked as boolean)
+                            handlePredictionChange(game.id, 'away', checked as boolean)
                           }
-                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('home'))}
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('away'))}
                         />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
@@ -285,16 +286,16 @@ const SubmitBet = () => {
                         />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
-                        <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
-                          2
+                        <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
+                          1
                         </Label>
                         <Checkbox
-                          id={`away-${game.id}`}
-                          checked={selectedPredictions.includes('away')}
+                          id={`home-${game.id}`}
+                          checked={selectedPredictions.includes('home')}
                           onCheckedChange={(checked) => 
-                            handlePredictionChange(game.id, 'away', checked as boolean)
+                            handlePredictionChange(game.id, 'home', checked as boolean)
                           }
-                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('away'))}
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('home'))}
                         />
                       </div>
                     </div>
