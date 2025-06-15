@@ -156,6 +156,8 @@ const CurrentRound = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="text-right min-w-[80px]">משחק</TableHead>
+              <TableHead className="text-right min-w-[200px]">קבוצות</TableHead>
               {currentRoundBets.map((userBet) => (
                 <TableHead key={userBet.id} className="text-center min-w-[120px]">
                   <div className="flex flex-col items-center space-y-1">
@@ -172,13 +174,19 @@ const CurrentRound = () => {
                   </div>
                 </TableHead>
               ))}
-              <TableHead className="text-right min-w-[200px]">קבוצות</TableHead>
-              <TableHead className="text-right min-w-[80px]">משחק</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentRoundBets[0]?.predictions.map((_, gameIndex) => (
               <TableRow key={gameIndex}>
+                <TableCell className="text-center font-medium text-gray-600">
+                  {gameIndex + 1}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="text-sm font-medium">
+                    {currentRoundBets[0].predictions[gameIndex].homeTeam} - {currentRoundBets[0].predictions[gameIndex].awayTeam}
+                  </div>
+                </TableCell>
                 {currentRoundBets.map((userBet) => (
                   <TableCell key={userBet.id} className="text-center">
                     {renderPredictionButtons(
@@ -187,14 +195,6 @@ const CurrentRound = () => {
                     )}
                   </TableCell>
                 ))}
-                <TableCell className="text-right">
-                  <div className="text-sm font-medium">
-                    {currentRoundBets[0].predictions[gameIndex].homeTeam} - {currentRoundBets[0].predictions[gameIndex].awayTeam}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center font-medium text-gray-600">
-                  {gameIndex + 1}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -228,20 +228,24 @@ const CurrentRound = () => {
               </div>
             </CardTitle>
             <CardDescription>
-              הוגש ב-{userBet.submissionDate}
+              נשלח ב-{userBet.submissionDate}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
               {userBet.predictions.map((prediction, index) => (
-                <div key={prediction.gameId} className="border rounded-lg p-3">
-                  <div className="text-sm font-medium text-gray-600 mb-2">
-                    משחק {index + 1}
+                <div key={prediction.gameId} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                  <div className="flex items-center gap-2">
+                    {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
                   </div>
-                  <div className="text-xs text-gray-500 mb-2">
-                    {prediction.homeTeam} - {prediction.awayTeam}
+                  <div className="text-center flex-1">
+                    <div className="text-sm font-medium">
+                      {prediction.homeTeam} - {prediction.awayTeam}
+                    </div>
                   </div>
-                  {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
+                  <div className="text-sm font-medium text-gray-600 w-8 text-center">
+                    {index + 1}
+                  </div>
                 </div>
               ))}
             </div>
