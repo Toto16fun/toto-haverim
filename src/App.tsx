@@ -10,6 +10,7 @@ import SubmitBet from "./pages/SubmitBet";
 import History from "./pages/History";
 import Statistics from "./pages/Statistics";
 import Users from "./pages/Users";
+import CurrentRound from "./pages/CurrentRound";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/submit-bet" element={<SubmitBet />} />
+          <Route path="/current-round" element={<CurrentRound />} />
           <Route path="/history" element={<History />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/users" element={<Users />} />

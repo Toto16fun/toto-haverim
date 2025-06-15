@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ArrowRight, Calendar, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -34,6 +33,9 @@ const History = () => {
     ? historicalBets.filter(bet => bet.roundNumber === selectedRound)
     : historicalBets;
 
+  // Sort by correct guesses (descending)
+  const sortedBets = [...filteredBets].sort((a, b) => b.correctGuesses - a.correctGuesses);
+
   const rounds = [...new Set(historicalBets.map(bet => bet.roundNumber))].sort((a, b) => b - a);
 
   const getPositionColor = (position: number) => {
@@ -55,7 +57,7 @@ const History = () => {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-green-800 mb-2">היסטוריית שליחות</h1>
-          <p className="text-gray-600">צפה בטורים של כל המחזורים ובתוצאות</p>
+          <p className="text-gray-600">צפה בטורים של כל המחזורים ובתוצאות (מסודר לפי ניחושים נכונים)</p>
         </div>
 
         <Card className="mb-6">
@@ -87,13 +89,13 @@ const History = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredBets.map((bet) => (
+          {sortedBets.map((bet, index) => (
             <Card key={bet.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{bet.username}</CardTitle>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(bet.position)}`}>
-                    מקום {bet.position}
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(index + 1)}`}>
+                    מקום {index + 1}
                   </div>
                 </div>
                 <CardDescription>מחזור {bet.roundNumber} • {bet.submissionDate}</CardDescription>
@@ -121,7 +123,7 @@ const History = () => {
                     {bet.isPaid ? 'משלם בסיבוב הבא' : 'לא משלם'}
                   </span>
                 </div>
-                {bet.position === 1 && (
+                {index === 0 && selectedRound !== '' && (
                   <div className="flex items-center text-yellow-600 text-sm">
                     <Trophy className="h-4 w-4 mr-1" />
                     זוכה המחזור!
@@ -132,7 +134,7 @@ const History = () => {
           ))}
         </div>
 
-        {filteredBets.length === 0 && (
+        {sortedBets.length === 0 && (
           <Card>
             <CardContent className="text-center py-8">
               <p className="text-gray-500">לא נמצאו טורים עבור המחזור שנבחר</p>

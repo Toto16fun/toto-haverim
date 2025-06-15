@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Trophy, Target, Award, Zap } from 'lucide-react';
+import { ArrowRight, Trophy, Target, Award, Zap, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface PlayerStats {
@@ -25,6 +25,7 @@ const Statistics = () => {
 
   const sortedByCorrectGuesses = [...playerStats].sort((a, b) => b.totalCorrectGuesses - a.totalCorrectGuesses);
   const sortedByFirstPlace = [...playerStats].sort((a, b) => b.firstPlaceCount - a.firstPlaceCount);
+  const sortedByLastPlace = [...playerStats].sort((a, b) => b.lastPlaceCount - a.lastPlaceCount);
   const sortedByRecord = [...playerStats].sort((a, b) => b.seasonRecord - a.seasonRecord);
 
   const getPositionColor = (index: number) => {
@@ -109,6 +110,33 @@ const Statistics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
+                <TrendingDown className="h-5 w-5 mr-2 text-red-600" />
+                מובילי המקום האחרון
+              </CardTitle>
+              <CardDescription>כמות פעמים במקום אחרון במחזורים</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {sortedByLastPlace.map((player, index) => (
+                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium text-lg mr-2">#{index + 1}</span>
+                        <span className="font-medium">{player.username}</span>
+                      </div>
+                      <span className="text-xl font-bold text-red-600">
+                        {player.lastPlaceCount}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
                 <Award className="h-5 w-5 mr-2 text-purple-600" />
                 שיאים אישיים
               </CardTitle>
@@ -132,36 +160,36 @@ const Statistics = () => {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Zap className="h-5 w-5 mr-2 text-blue-600" />
-                טוטומטים (הזנה ידנית)
-              </CardTitle>
-              <CardDescription>כמות הטוטומטים שנעשו השנה</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {playerStats
-                  .sort((a, b) => b.totalTotomat - a.totalTotomat)
-                  .map((player, index) => (
-                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                        <span className="font-medium">{player.username}</span>
-                      </div>
-                      <span className="text-xl font-bold text-blue-600">
-                        {player.totalTotomat}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Zap className="h-5 w-5 mr-2 text-blue-600" />
+              טוטומטים (הזנה ידנית)
+            </CardTitle>
+            <CardDescription>כמות הטוטומטים שנעשו השנה</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {playerStats
+                .sort((a, b) => b.totalTotomat - a.totalTotomat)
+                .map((player, index) => (
+                <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="font-medium text-lg mr-2">#{index + 1}</span>
+                      <span className="font-medium">{player.username}</span>
+                    </div>
+                    <span className="text-xl font-bold text-blue-600">
+                      {player.totalTotomat}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

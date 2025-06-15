@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3 } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -13,7 +13,7 @@ const Index = () => {
           <p className="text-lg text-gray-600">אפליקציית הימורים חברית לקבוצה</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="text-center">
               <Trophy className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
@@ -24,6 +24,21 @@ const Index = () => {
               <Link to="/submit-bet">
                 <Button className="w-full bg-green-600 hover:bg-green-700">
                   מלא טור חדש
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <CardHeader className="text-center">
+              <Clock className="h-12 w-12 text-green-600 mx-auto mb-2" />
+              <CardTitle className="text-xl">מחזור נוכחי</CardTitle>
+              <CardDescription>צפה בטורים שהוגשו במחזור הנוכחי</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/current-round">
+                <Button className="w-full bg-green-600 hover:bg-green-700">
+                  מחזור נוכחי
                 </Button>
               </Link>
             </CardContent>
