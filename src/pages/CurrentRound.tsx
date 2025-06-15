@@ -122,6 +122,11 @@ const CurrentRound = () => {
     const options = ['1', 'X', '2'];
     return (
       <div className="flex items-center gap-2">
+        {isDouble && (
+          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center">
+            כפול
+          </div>
+        )}
         <div className="flex gap-1">
           {options.map((option) => {
             const isSelected = prediction.includes(option);
@@ -139,11 +144,6 @@ const CurrentRound = () => {
             );
           })}
         </div>
-        {isDouble && (
-          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center">
-            כפול
-          </div>
-        )}
       </div>
     );
   };
