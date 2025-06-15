@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, Calendar, AlertCircle, SendHorizontal } from 'lucide-react';
@@ -11,15 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 
 interface GamePrediction {
   gameId: number;
-  prediction: string;
+  predictions: string[];
   isDouble: boolean;
-  doublePredictions?: string[];
 }
 
 const SubmitBet = () => {
   const [selectedUser, setSelectedUser] = useState('');
   const [predictions, setPredictions] = useState<GamePrediction[]>([]);
-  const [doublesCount, setDoublesCount] = useState(0);
   const { toast } = useToast();
 
   // List of registered users
@@ -62,24 +60,37 @@ const SubmitBet = () => {
   const deadline = getNextSaturday();
   const isDeadlinePassed = new Date() > deadline;
 
-  const handlePredictionChange = (gameId: number, prediction: string, isDouble: boolean = false, doublePredictions?: string[]) => {
+  const handlePredictionChange = (gameId: number, option: string, checked: boolean) => {
     const existingPrediction = predictions.find(p => p.gameId === gameId);
     const newPredictions = predictions.filter(p => p.gameId !== gameId);
     
-    if (existingPrediction?.isDouble && !isDouble) {
-      setDoublesCount(prev => prev - 1);
-    } else if (!existingPrediction?.isDouble && isDouble) {
-      setDoublesCount(prev => prev + 1);
+    let newGamePredictions: string[] = [];
+    
+    if (existingPrediction) {
+      newGamePredictions = [...existingPrediction.predictions];
     }
-
-    newPredictions.push({
-      gameId,
-      prediction,
-      isDouble,
-      doublePredictions
-    });
+    
+    if (checked) {
+      if (!newGamePredictions.includes(option)) {
+        newGamePredictions.push(option);
+      }
+    } else {
+      newGamePredictions = newGamePredictions.filter(p => p !== option);
+    }
+    
+    if (newGamePredictions.length > 0) {
+      newPredictions.push({
+        gameId,
+        predictions: newGamePredictions,
+        isDouble: newGamePredictions.length === 2
+      });
+    }
     
     setPredictions(newPredictions);
+  };
+
+  const getDoublesCount = () => {
+    return predictions.filter(p => p.isDouble).length;
   };
 
   const handleSubmit = () => {
@@ -101,6 +112,7 @@ const SubmitBet = () => {
       return;
     }
 
+    const doublesCount = getDoublesCount();
     if (doublesCount !== 3) {
       toast({
         title: "שגיאה",
@@ -136,6 +148,8 @@ const SubmitBet = () => {
     if (timeUntilDeadline <= 0) return "המועד עבר";
     return `נותרו ${hoursLeft} שעות ו-${minutesLeft} דקות`;
   };
+
+  const doublesCount = getDoublesCount();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
@@ -221,13 +235,14 @@ const SubmitBet = () => {
         <Card>
           <CardHeader>
             <CardTitle>16 משחקי הטוטו</CardTitle>
-            <CardDescription>בחר את התוצאות הצפויות. חובה לבחור בדיוק 3 כפולים</CardDescription>
+            <CardDescription>בחר את התוצאות הצפויות. ניתן לבחור שתי אופציות במשחק אחד (כפול). חובה לבחור בדיוק 3 כפולים</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {games.map((game) => {
-                const prediction = predictions.find(p => p.gameId === game.id)?.prediction;
-                const isDouble = predictions.find(p => p.gameId === game.id)?.isDouble;
+                const gamePrediction = predictions.find(p => p.gameId === game.id);
+                const selectedPredictions = gamePrediction?.predictions || [];
+                const isDouble = gamePrediction?.isDouble || false;
                 
                 return (
                   <div key={game.id} className="p-4 border rounded-lg">
@@ -243,33 +258,47 @@ const SubmitBet = () => {
                       {game.homeTeam} נגד {game.awayTeam}
                     </div>
                     
-                    <RadioGroup
-                      value={prediction}
-                      onValueChange={(value) => 
-                        handlePredictionChange(game.id, value, isDouble)
-                      }
-                      disabled={isDeadlinePassed}
-                      className="flex justify-center gap-8"
-                    >
+                    <div className="flex justify-center gap-8">
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
                           1
                         </Label>
-                        <RadioGroupItem value="home" id={`home-${game.id}`} />
+                        <Checkbox
+                          id={`home-${game.id}`}
+                          checked={selectedPredictions.includes('home')}
+                          onCheckedChange={(checked) => 
+                            handlePredictionChange(game.id, 'home', checked as boolean)
+                          }
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('home'))}
+                        />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <Label htmlFor={`draw-${game.id}`} className="text-sm font-medium">
                           X
                         </Label>
-                        <RadioGroupItem value="draw" id={`draw-${game.id}`} />
+                        <Checkbox
+                          id={`draw-${game.id}`}
+                          checked={selectedPredictions.includes('draw')}
+                          onCheckedChange={(checked) => 
+                            handlePredictionChange(game.id, 'draw', checked as boolean)
+                          }
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('draw'))}
+                        />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
                           2
                         </Label>
-                        <RadioGroupItem value="away" id={`away-${game.id}`} />
+                        <Checkbox
+                          id={`away-${game.id}`}
+                          checked={selectedPredictions.includes('away')}
+                          onCheckedChange={(checked) => 
+                            handlePredictionChange(game.id, 'away', checked as boolean)
+                          }
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('away'))}
+                        />
                       </div>
-                    </RadioGroup>
+                    </div>
                   </div>
                 );
               })}
@@ -279,7 +308,7 @@ const SubmitBet = () => {
                 onClick={handleSubmit} 
                 className="w-full" 
                 size="lg"
-                disabled={isDeadlinePassed || doublesCount !== 3}
+                disabled={isDeadlinePassed || doublesCount !== 3 || predictions.length !== 16}
               >
                 <SendHorizontal className="h-4 w-4 mr-2" />
                 שלח טור
