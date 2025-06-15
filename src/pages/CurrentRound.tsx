@@ -23,7 +23,7 @@ interface UserBettingSheet {
 }
 
 const CurrentRound = () => {
-  const currentRound = 2; // This would normally come from your app state
+  const currentRound = 2;
   
   // Sample current round data with full betting sheets
   const currentRoundBets: UserBettingSheet[] = [
@@ -40,14 +40,16 @@ const CurrentRound = () => {
         { gameId: 4, homeTeam: 'עירוני קריית שמונה', awayTeam: 'הפועל ירושלים', prediction: ['X', '2'], isDouble: true },
         { gameId: 5, homeTeam: 'מכבי נתניה', awayTeam: 'הפועל חיפה', prediction: ['1'], isDouble: false },
         { gameId: 6, homeTeam: 'אשדוד', awayTeam: 'בני ברק', prediction: ['1', '2'], isDouble: true },
-        // Adding more games to reach 16
-        ...Array.from({ length: 10 }, (_, i) => ({
-          gameId: i + 7,
-          homeTeam: `קבוצה בית ${i + 7}`,
-          awayTeam: `קבוצה חוץ ${i + 7}`,
-          prediction: [Math.random() > 0.5 ? '1' : '2'],
-          isDouble: false
-        }))
+        { gameId: 7, homeTeam: 'קבוצה בית 7', awayTeam: 'קבוצה חוץ 7', prediction: ['1'], isDouble: false },
+        { gameId: 8, homeTeam: 'קבוצה בית 8', awayTeam: 'קבוצה חוץ 8', prediction: ['2'], isDouble: false },
+        { gameId: 9, homeTeam: 'קבוצה בית 9', awayTeam: 'קבוצה חוץ 9', prediction: ['X'], isDouble: false },
+        { gameId: 10, homeTeam: 'קבוצה בית 10', awayTeam: 'קבוצה חוץ 10', prediction: ['1'], isDouble: false },
+        { gameId: 11, homeTeam: 'קבוצה בית 11', awayTeam: 'קבוצה חוץ 11', prediction: ['2'], isDouble: false },
+        { gameId: 12, homeTeam: 'קבוצה בית 12', awayTeam: 'קבוצה חוץ 12', prediction: ['X'], isDouble: false },
+        { gameId: 13, homeTeam: 'קבוצה בית 13', awayTeam: 'קבוצה חוץ 13', prediction: ['1'], isDouble: false },
+        { gameId: 14, homeTeam: 'קבוצה בית 14', awayTeam: 'קבוצה חוץ 14', prediction: ['2'], isDouble: false },
+        { gameId: 15, homeTeam: 'קבוצה בית 15', awayTeam: 'קבוצה חוץ 15', prediction: ['X'], isDouble: false },
+        { gameId: 16, homeTeam: 'קבוצה בית 16', awayTeam: 'קבוצה חוץ 16', prediction: ['1'], isDouble: false }
       ]
     },
     { 
@@ -63,14 +65,16 @@ const CurrentRound = () => {
         { gameId: 4, homeTeam: 'עירוני קריית שמונה', awayTeam: 'הפועל ירושלים', prediction: ['X', '1'], isDouble: true },
         { gameId: 5, homeTeam: 'מכבי נתניה', awayTeam: 'הפועל חיפה', prediction: ['2'], isDouble: false },
         { gameId: 6, homeTeam: 'אשדוד', awayTeam: 'בני ברק', prediction: ['X', '2'], isDouble: true },
-        // Adding more games to reach 16
-        ...Array.from({ length: 10 }, (_, i) => ({
-          gameId: i + 7,
-          homeTeam: `קבוצה בית ${i + 7}`,
-          awayTeam: `קבוצה חוץ ${i + 7}`,
-          prediction: [Math.random() > 0.5 ? 'X' : '1'],
-          isDouble: false
-        }))
+        { gameId: 7, homeTeam: 'קבוצה בית 7', awayTeam: 'קבוצה חוץ 7', prediction: ['X'], isDouble: false },
+        { gameId: 8, homeTeam: 'קבוצה בית 8', awayTeam: 'קבוצה חוץ 8', prediction: ['1'], isDouble: false },
+        { gameId: 9, homeTeam: 'קבוצה בית 9', awayTeam: 'קבוצה חוץ 9', prediction: ['X'], isDouble: false },
+        { gameId: 10, homeTeam: 'קבוצה בית 10', awayTeam: 'קבוצה חוץ 10', prediction: ['1'], isDouble: false },
+        { gameId: 11, homeTeam: 'קבוצה בית 11', awayTeam: 'קבוצה חוץ 11', prediction: ['2'], isDouble: false },
+        { gameId: 12, homeTeam: 'קבוצה בית 12', awayTeam: 'קבוצה חוץ 12', prediction: ['X'], isDouble: false },
+        { gameId: 13, homeTeam: 'קבוצה בית 13', awayTeam: 'קבוצה חוץ 13', prediction: ['1'], isDouble: false },
+        { gameId: 14, homeTeam: 'קבוצה בית 14', awayTeam: 'קבוצה חוץ 14', prediction: ['2'], isDouble: false },
+        { gameId: 15, homeTeam: 'קבוצה בית 15', awayTeam: 'קבוצה חוץ 15', prediction: ['X'], isDouble: false },
+        { gameId: 16, homeTeam: 'קבוצה בית 16', awayTeam: 'קבוצה חוץ 16', prediction: ['1'], isDouble: false }
       ]
     },
     { 
@@ -81,19 +85,21 @@ const CurrentRound = () => {
       doublesUsed: 3,
       predictions: [
         { gameId: 1, homeTeam: 'מכבי תל אביב', awayTeam: 'הפועל באר שבע', prediction: ['2'], isDouble: false },
-        { gameId: 2, homeTeam: 'בני סכנין', awayTeam: 'מכבי חיפה', prediction: ['X'], isDouble: false },
+        { gameId: 2, homeTeam: 'בני סכנין', awayTeam: 'מכבי חיფה', prediction: ['X'], isDouble: false },
         { gameId: 3, homeTeam: 'הפועל תל אביב', awayTeam: 'מכבי פתח תקווה', prediction: ['1', 'X'], isDouble: true },
         { gameId: 4, homeTeam: 'עירוני קריית שמונה', awayTeam: 'הפועל ירושלים', prediction: ['2'], isDouble: false },
         { gameId: 5, homeTeam: 'מכבי נתניה', awayTeam: 'הפועל חיפה', prediction: ['1', '2'], isDouble: true },
         { gameId: 6, homeTeam: 'אשדוד', awayTeam: 'בני ברק', prediction: ['X', '1'], isDouble: true },
-        // Adding more games to reach 16
-        ...Array.from({ length: 10 }, (_, i) => ({
-          gameId: i + 7,
-          homeTeam: `קבוצה בית ${i + 7}`,
-          awayTeam: `קבוצה חוץ ${i + 7}`,
-          prediction: [Math.random() > 0.5 ? '2' : 'X'],
-          isDouble: false
-        }))
+        { gameId: 7, homeTeam: 'קבוצה בית 7', awayTeam: 'קבוצה חוץ 7', prediction: ['2'], isDouble: false },
+        { gameId: 8, homeTeam: 'קבוצה בית 8', awayTeam: 'קבוצה חוץ 8', prediction: ['X'], isDouble: false },
+        { gameId: 9, homeTeam: 'קבוצה בית 9', awayTeam: 'קבוצה חוץ 9', prediction: ['2'], isDouble: false },
+        { gameId: 10, homeTeam: 'קבוצה בית 10', awayTeam: 'קבוצה חוץ 10', prediction: ['X'], isDouble: false },
+        { gameId: 11, homeTeam: 'קבוצה בית 11', awayTeam: 'קבוצה חוץ 11', prediction: ['2'], isDouble: false },
+        { gameId: 12, homeTeam: 'קבוצה בית 12', awayTeam: 'קבוצה חוץ 12', prediction: ['X'], isDouble: false },
+        { gameId: 13, homeTeam: 'קבוצה בית 13', awayTeam: 'קבוצה חוץ 13', prediction: ['2'], isDouble: false },
+        { gameId: 14, homeTeam: 'קבוצה בית 14', awayTeam: 'קבוצה חוץ 14', prediction: ['X'], isDouble: false },
+        { gameId: 15, homeTeam: 'קבוצה בית 15', awayTeam: 'קבוצה חוץ 15', prediction: ['2'], isDouble: false },
+        { gameId: 16, homeTeam: 'קבוצה בית 16', awayTeam: 'קבוצה חוץ 16', prediction: ['X'], isDouble: false }
       ]
     },
   ];
