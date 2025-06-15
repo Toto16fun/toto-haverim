@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,7 +127,7 @@ const CurrentRound = () => {
             return (
               <div
                 key={option}
-                className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded ${
+                className={`w-6 h-6 flex items-center justify-center text-xs font-medium rounded ${
                   isSelected
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-500'
@@ -141,7 +139,7 @@ const CurrentRound = () => {
           })}
         </div>
         {isDouble && (
-          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center">
+          <div className="text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">
             כפול
           </div>
         )}
@@ -184,56 +182,58 @@ const CurrentRound = () => {
             טורים שהוגשו ({currentRoundBets.length})
           </h2>
           
-          {currentRoundBets.map((userBet) => (
-            <Card key={userBet.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <User className="h-6 w-6 text-blue-600" />
-                    <div>
-                      <h3 className="font-semibold text-lg">{userBet.username}</h3>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        {userBet.isSubmitted ? (
-                          <div className="flex items-center text-green-600">
-                            <CheckCircle className="h-4 w-4 ml-1" />
-                            נשלח ב: {userBet.submissionDate}
+          {currentRoundBets.length > 0 && (
+            <Card className="overflow-x-auto">
+              <CardContent className="p-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right min-w-[80px]">משחק</TableHead>
+                      <TableHead className="text-right min-w-[200px]">קבוצות</TableHead>
+                      {currentRoundBets.map((userBet) => (
+                        <TableHead key={userBet.id} className="text-center min-w-[120px]">
+                          <div className="flex flex-col items-center space-y-1">
+                            <div className="font-semibold">{userBet.username}</div>
+                            <div className="flex items-center text-xs text-gray-600">
+                              {userBet.isSubmitted ? (
+                                <CheckCircle className="h-3 w-3 text-green-600 ml-1" />
+                              ) : (
+                                <XCircle className="h-3 w-3 text-red-600 ml-1" />
+                              )}
+                              {userBet.isSubmitted ? 'נשלח' : 'לא נשלח'}
+                            </div>
+                            <div className="text-xs text-gray-500">כפולים: {userBet.doublesUsed}/3</div>
                           </div>
-                        ) : (
-                          <div className="flex items-center text-red-600">
-                            <XCircle className="h-4 w-4 ml-1" />
-                            לא נשלח
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentRoundBets[0]?.predictions.map((_, gameIndex) => (
+                      <TableRow key={gameIndex}>
+                        <TableCell className="text-center font-medium text-gray-600">
+                          {gameIndex + 1}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="text-sm font-medium">
+                            {currentRoundBets[0].predictions[gameIndex].homeTeam} - {currentRoundBets[0].predictions[gameIndex].awayTeam}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm text-gray-600">כפולים:</div>
-                    <div className="font-medium text-green-600">{userBet.doublesUsed}/3</div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {userBet.predictions.map((prediction) => (
-                    <div key={prediction.gameId} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                      <div className="flex-shrink-0">
-                        {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
-                      </div>
-                      <div className="text-center min-w-0 flex-1 mx-4">
-                        <div className="text-sm font-medium truncate">
-                          {prediction.homeTeam} - {prediction.awayTeam}
-                        </div>
-                      </div>
-                      <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
-                        {prediction.gameId}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </TableCell>
+                        {currentRoundBets.map((userBet) => (
+                          <TableCell key={userBet.id} className="text-center">
+                            {renderPredictionButtons(
+                              userBet.predictions[gameIndex].prediction,
+                              userBet.predictions[gameIndex].isDouble
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
-          ))}
+          )}
 
           {currentRoundBets.length === 0 && (
             <Card>
@@ -249,4 +249,3 @@ const CurrentRound = () => {
 };
 
 export default CurrentRound;
-
