@@ -23,6 +23,8 @@ const Index = () => {
     // Do nothing - button is disabled
   };
 
+  const isAdmin = user?.email === 'tomercohen1995@gmail.com';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto">
@@ -153,36 +155,23 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Users Card - Only active for authenticated users */}
-          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
-            <CardHeader className="text-center">
-              <div className="relative">
+          {/* Users Card - Only visible for admin user */}
+          {isAdmin && (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
                 <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
-                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
-              </div>
-              <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
-              <CardDescription>
-                {user ? "הרשמה וניהול חברי הקבוצה" : "נדרשת התחברות לניהול משתמשים"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user ? (
+                <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
+                <CardDescription>הרשמה וניהול חברי הקבוצה</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <Link to="/users">
                   <Button className="w-full bg-orange-600 hover:bg-orange-700">
                     ניהול חברים
                   </Button>
                 </Link>
-              ) : (
-                <Button 
-                  className="w-full bg-gray-400 cursor-not-allowed" 
-                  disabled
-                  onClick={handleRestrictedAction}
-                >
-                  נדרשת התחברות
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Statistics Card - Always accessible */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
