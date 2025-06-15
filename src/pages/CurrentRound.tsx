@@ -1,6 +1,8 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -119,24 +121,26 @@ const CurrentRound = () => {
   const renderPredictionButtons = (prediction: string[], isDouble: boolean) => {
     const options = ['1', 'X', '2'];
     return (
-      <div className="flex gap-1">
-        {options.map((option) => {
-          const isSelected = prediction.includes(option);
-          return (
-            <div
-              key={option}
-              className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded ${
-                isSelected
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              {option}
-            </div>
-          );
-        })}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1">
+          {options.map((option) => {
+            const isSelected = prediction.includes(option);
+            return (
+              <div
+                key={option}
+                className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded ${
+                  isSelected
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-500'
+                }`}
+              >
+                {option}
+              </div>
+            );
+          })}
+        </div>
         {isDouble && (
-          <div className="text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded ml-1 flex items-center">
+          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center">
             כפול
           </div>
         )}
