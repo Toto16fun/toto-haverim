@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -215,17 +216,17 @@ const CurrentRound = () => {
               <CardContent>
                 <div className="space-y-3">
                   {userBet.predictions.map((prediction) => (
-                    <div key={prediction.gameId} className="flex items-center py-2 border-b border-gray-100 last:border-b-0 gap-4">
-                      <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
-                        {prediction.gameId}
+                    <div key={prediction.gameId} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      <div className="flex-shrink-0">
+                        {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
                       </div>
-                      <div className="text-right min-w-0 flex-1">
+                      <div className="text-center min-w-0 flex-1 mx-4">
                         <div className="text-sm font-medium truncate">
                           {prediction.homeTeam} - {prediction.awayTeam}
                         </div>
                       </div>
-                      <div className="flex-shrink-0">
-                        {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
+                      <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
+                        {prediction.gameId}
                       </div>
                     </div>
                   ))}
@@ -248,3 +249,4 @@ const CurrentRound = () => {
 };
 
 export default CurrentRound;
+
