@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -18,6 +18,10 @@ const Index = () => {
       </div>
     );
   }
+
+  const handleRestrictedAction = () => {
+    // Do nothing - button is disabled
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
@@ -56,70 +60,131 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {user && (
-            <>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="text-center">
-                  <Trophy className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
-                  <CardTitle className="text-xl">הגשת טור</CardTitle>
-                  <CardDescription>מלא את הטור שלך למחזור הנוכחי</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/submit-bet">
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      מלא טור חדש
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+          {/* Submit Bet Card - Only active for authenticated users */}
+          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
+            <CardHeader className="text-center">
+              <div className="relative">
+                <Trophy className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
+                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
+              </div>
+              <CardTitle className="text-xl">הגשת טור</CardTitle>
+              <CardDescription>
+                {user ? "מלא את הטור שלך למחזור הנוכחי" : "נדרשת התחברות להגשת טור"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user ? (
+                <Link to="/submit-bet">
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    מלא טור חדש
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full bg-gray-400 cursor-not-allowed" 
+                  disabled
+                  onClick={handleRestrictedAction}
+                >
+                  נדרשת התחברות
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="text-center">
-                  <Clock className="h-12 w-12 text-green-600 mx-auto mb-2" />
-                  <CardTitle className="text-xl">מחזור נוכחי</CardTitle>
-                  <CardDescription>צפה בטורים שהוגשו במחזור הנוכחי</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/current-round">
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      מחזור נוכחי
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+          {/* Current Round Card - Only active for authenticated users */}
+          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
+            <CardHeader className="text-center">
+              <div className="relative">
+                <Clock className="h-12 w-12 text-green-600 mx-auto mb-2" />
+                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
+              </div>
+              <CardTitle className="text-xl">מחזור נוכחי</CardTitle>
+              <CardDescription>
+                {user ? "צפה בטורים שהוגשו במחזור הנוכחי" : "נדרשת התחברות לצפייה במחזור"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user ? (
+                <Link to="/current-round">
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    מחזור נוכחי
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full bg-gray-400 cursor-not-allowed" 
+                  disabled
+                  onClick={handleRestrictedAction}
+                >
+                  נדרשת התחברות
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="text-center">
-                  <History className="h-12 w-12 text-blue-600 mx-auto mb-2" />
-                  <CardTitle className="text-xl">היסטוריית שליחות</CardTitle>
-                  <CardDescription>צפה בטורים של כל המחזורים</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/history">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      צפה בהיסטוריה
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+          {/* History Card - Only active for authenticated users */}
+          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
+            <CardHeader className="text-center">
+              <div className="relative">
+                <History className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
+              </div>
+              <CardTitle className="text-xl">היסטוריית שליחות</CardTitle>
+              <CardDescription>
+                {user ? "צפה בטורים של כל המחזורים" : "נדרשת התחברות לצפייה בהיסטוריה"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user ? (
+                <Link to="/history">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    צפה בהיסטוריה
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full bg-gray-400 cursor-not-allowed" 
+                  disabled
+                  onClick={handleRestrictedAction}
+                >
+                  נדרשת התחברות
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="text-center">
-                  <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
-                  <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
-                  <CardDescription>הרשמה וניהול חברי הקבוצה</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/users">
-                    <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                      ניהול חברים
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </>
-          )}
+          {/* Users Card - Only active for authenticated users */}
+          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
+            <CardHeader className="text-center">
+              <div className="relative">
+                <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
+                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
+              </div>
+              <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
+              <CardDescription>
+                {user ? "הרשמה וניהול חברי הקבוצה" : "נדרשת התחברות לניהול משתמשים"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {user ? (
+                <Link to="/users">
+                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                    ניהול חברים
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full bg-gray-400 cursor-not-allowed" 
+                  disabled
+                  onClick={handleRestrictedAction}
+                >
+                  נדרשת התחברות
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
+          {/* Statistics Card - Always accessible */}
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="text-center">
               <BarChart3 className="h-12 w-12 text-purple-600 mx-auto mb-2" />
@@ -135,6 +200,7 @@ const Index = () => {
             </CardContent>
           </Card>
 
+          {/* Login Card - Only shown to non-authenticated users */}
           {!user && (
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="text-center">
@@ -149,7 +215,7 @@ const Index = () => {
                   </Button>
                 </Link>
               </CardContent>
-            </Card>
+            </CardContent>
           )}
         </div>
 
