@@ -1,13 +1,12 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, Calendar, AlertCircle, SendHorizontal } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GamePrediction {
   gameId: number;
@@ -16,12 +15,16 @@ interface GamePrediction {
 }
 
 const SubmitBet = () => {
-  const [selectedUser, setSelectedUser] = useState('');
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [predictions, setPredictions] = useState<GamePrediction[]>([]);
   const { toast } = useToast();
 
-  // List of registered users
-  const users = ['תומר', 'דניאל', 'עילאי', 'אורי'];
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
   // Sample games data (16 games)
   const games = Array.from({ length: 16 }, (_, i) => ({
@@ -33,20 +36,17 @@ const SubmitBet = () => {
   // Calculate next Saturday at 13:00
   const getNextSaturday = () => {
     const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const currentDay = now.getDay();
     let daysUntilSaturday;
     
-    if (currentDay === 6) { // It's Saturday
+    if (currentDay === 6) {
       const currentHour = now.getHours();
       if (currentHour < 13) {
-        // Before 13:00 on Saturday - deadline is today at 13:00
         daysUntilSaturday = 0;
       } else {
-        // After 13:00 on Saturday - deadline is next Saturday
         daysUntilSaturday = 7;
       }
     } else {
-      // Any other day - calculate days until next Saturday
       daysUntilSaturday = (6 - currentDay) % 7;
       if (daysUntilSaturday === 0) daysUntilSaturday = 7;
     }
@@ -94,15 +94,6 @@ const SubmitBet = () => {
   };
 
   const handleSubmit = () => {
-    if (!selectedUser) {
-      toast({
-        title: "שגיאה",
-        description: "יש לבחור שם משתמש",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (isDeadlinePassed) {
       toast({
         title: "שגיאה",
@@ -134,7 +125,7 @@ const SubmitBet = () => {
     // Here you would submit the bet
     toast({
       title: "הטור נשלח בהצלחה!",
-      description: `הטור של ${selectedUser} נשלח עם 3 כפולים`,
+      description: `הטור של ${user?.user_metadata?.name || user?.email} נשלח עם 3 כפולים`,
     });
   };
 
@@ -150,6 +141,21 @@ const SubmitBet = () => {
   };
 
   const doublesCount = getDoublesCount();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">טוען...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // This shouldn't render due to redirect
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
@@ -199,23 +205,10 @@ const SubmitBet = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="username">שם המשתמש</Label>
-                <Select
-                  value={selectedUser}
-                  onValueChange={setSelectedUser}
-                  disabled={isDeadlinePassed}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="בחר שם משתמש" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user} value={user}>
-                        {user}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>שם המשתמש</Label>
+                <div className="p-2 bg-gray-50 rounded border text-right">
+                  {user.user_metadata?.name || user.email}
+                </div>
               </div>
             </div>
             <div className="text-sm">
@@ -232,6 +225,7 @@ const SubmitBet = () => {
           </CardContent>
         </Card>
 
+        
         <Card>
           <CardHeader>
             <CardTitle>16 משחקי הטוטו</CardTitle>
@@ -260,16 +254,16 @@ const SubmitBet = () => {
                     
                     <div className="flex justify-center gap-8">
                       <div className="flex items-center space-x-2 space-x-reverse">
-                        <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
-                          2
+                        <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
+                          1
                         </Label>
                         <Checkbox
-                          id={`away-${game.id}`}
-                          checked={selectedPredictions.includes('away')}
+                          id={`home-${game.id}`}
+                          checked={selectedPredictions.includes('home')}
                           onCheckedChange={(checked) => 
-                            handlePredictionChange(game.id, 'away', checked as boolean)
+                            handlePredictionChange(game.id, 'home', checked as boolean)
                           }
-                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('away'))}
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('home'))}
                         />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
@@ -286,16 +280,16 @@ const SubmitBet = () => {
                         />
                       </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
-                        <Label htmlFor={`home-${game.id}`} className="text-sm font-medium">
-                          1
+                        <Label htmlFor={`away-${game.id}`} className="text-sm font-medium">
+                          2
                         </Label>
                         <Checkbox
-                          id={`home-${game.id}`}
-                          checked={selectedPredictions.includes('home')}
+                          id={`away-${game.id}`}
+                          checked={selectedPredictions.includes('away')}
                           onCheckedChange={(checked) => 
-                            handlePredictionChange(game.id, 'home', checked as boolean)
+                            handlePredictionChange(game.id, 'away', checked as boolean)
                           }
-                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('home'))}
+                          disabled={isDeadlinePassed || (selectedPredictions.length >= 2 && !selectedPredictions.includes('away'))}
                         />
                       </div>
                     </div>
