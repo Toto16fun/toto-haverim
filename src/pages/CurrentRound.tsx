@@ -16,15 +16,22 @@ const CurrentRound = () => {
   
   // Sample current round data
   const currentRoundBets: CurrentRoundBet[] = [
-    { id: 1, username: 'דני', submissionDate: '2024-01-22 10:30', doublesUsed: 3 },
-    { id: 2, username: 'מיכל', submissionDate: '2024-01-22 14:15', doublesUsed: 3 },
-    { id: 3, username: 'רון', submissionDate: '2024-01-22 16:45', doublesUsed: 3 },
+    { id: 1, username: 'תומר', submissionDate: '2024-01-22 10:30', doublesUsed: 3 },
+    { id: 2, username: 'דניאל', submissionDate: '2024-01-22 14:15', doublesUsed: 3 },
+    { id: 3, username: 'עילאי', submissionDate: '2024-01-22 16:45', doublesUsed: 3 },
   ];
 
-  const deadline = new Date();
-  deadline.setDay(6); // Saturday
-  deadline.setHours(13, 0, 0, 0); // 13:00
+  // Calculate next Saturday at 13:00
+  const getNextSaturday = () => {
+    const now = new Date();
+    const daysUntilSaturday = (6 - now.getDay()) % 7;
+    const nextSaturday = new Date(now);
+    nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+    nextSaturday.setHours(13, 0, 0, 0);
+    return nextSaturday;
+  };
 
+  const deadline = getNextSaturday();
   const isDeadlinePassed = new Date() > deadline;
 
   return (

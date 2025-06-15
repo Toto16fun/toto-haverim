@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 const Users = () => {
   const [username, setUsername] = useState('');
   const [users, setUsers] = useState<string[]>([
-    'דני', 'יוסי', 'מיכל', 'רון', 'אבי', 'גיל'
+    'תומר', 'דניאל', 'עילאי', 'אורי'
   ]);
   const { toast } = useToast();
 
