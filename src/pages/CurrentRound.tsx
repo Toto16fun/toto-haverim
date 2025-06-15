@@ -121,7 +121,7 @@ const CurrentRound = () => {
   const isDeadlinePassed = new Date() > deadline;
 
   const renderPredictionButtons = (prediction: string[], isDouble: boolean) => {
-    const options = ['1', 'X', '2'];
+    const options = ['2', 'X', '1']; // Reversed order for RTL display
     return (
       <div className="flex items-center gap-2">
         <div className="flex gap-1">
