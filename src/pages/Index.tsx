@@ -215,7 +215,7 @@ const Index = () => {
                   </Button>
                 </Link>
               </CardContent>
-            </CardContent>
+            </Card>
           )}
         </div>
 
