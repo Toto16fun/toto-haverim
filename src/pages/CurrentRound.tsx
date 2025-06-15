@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -85,7 +84,7 @@ const CurrentRound = () => {
       doublesUsed: 3,
       predictions: [
         { gameId: 1, homeTeam: 'מכבי תל אביב', awayTeam: 'הפועל באר שבע', prediction: ['2'], isDouble: false },
-        { gameId: 2, homeTeam: 'בני סכנין', awayTeam: 'מכבי חיფה', prediction: ['X'], isDouble: false },
+        { gameId: 2, homeTeam: 'בני סכנין', awayTeam: 'מכבי חיפה', prediction: ['X'], isDouble: false },
         { gameId: 3, homeTeam: 'הפועל תל אביב', awayTeam: 'מכבי פתח תקווה', prediction: ['1', 'X'], isDouble: true },
         { gameId: 4, homeTeam: 'עירוני קריית שמונה', awayTeam: 'הפועל ירושלים', prediction: ['2'], isDouble: false },
         { gameId: 5, homeTeam: 'מכבי נתניה', awayTeam: 'הפועל חיפה', prediction: ['1', '2'], isDouble: true },
@@ -117,8 +116,32 @@ const CurrentRound = () => {
   const deadline = getNextSaturday();
   const isDeadlinePassed = new Date() > deadline;
 
-  const formatPrediction = (prediction: string[]) => {
-    return prediction.join(', ');
+  const renderPredictionButtons = (prediction: string[], isDouble: boolean) => {
+    const options = ['1', 'X', '2'];
+    return (
+      <div className="flex gap-1">
+        {options.map((option) => {
+          const isSelected = prediction.includes(option);
+          return (
+            <div
+              key={option}
+              className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded ${
+                isSelected
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {option}
+            </div>
+          );
+        })}
+        {isDouble && (
+          <div className="text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded ml-1 flex items-center">
+            כפול
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -186,38 +209,25 @@ const CurrentRound = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">משחק</TableHead>
-                      <TableHead className="text-right">קבוצות</TableHead>
-                      <TableHead className="text-right">ניחוש</TableHead>
-                      <TableHead className="text-right">כפול</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {userBet.predictions.map((prediction) => (
-                      <TableRow key={prediction.gameId}>
-                        <TableCell className="font-medium">{prediction.gameId}</TableCell>
-                        <TableCell className="text-right">
-                          {prediction.homeTeam} נגד {prediction.awayTeam}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-blue-600">
-                          {formatPrediction(prediction.prediction)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {prediction.isDouble ? (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                              כפול
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-3">
+                  {userBet.predictions.map((prediction) => (
+                    <div key={prediction.gameId} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 text-center font-medium text-gray-600">
+                          {prediction.gameId}
+                        </div>
+                        <div className="text-right min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">
+                            {prediction.homeTeam} - {prediction.awayTeam}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        {renderPredictionButtons(prediction.prediction, prediction.isDouble)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           ))}
