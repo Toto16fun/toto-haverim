@@ -9,7 +9,151 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bet_predictions: {
+        Row: {
+          bet_id: string | null
+          created_at: string
+          game_id: string | null
+          id: string
+          is_correct: boolean | null
+          is_double: boolean | null
+          predictions: string[]
+        }
+        Insert: {
+          bet_id?: string | null
+          created_at?: string
+          game_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_double?: boolean | null
+          predictions: string[]
+        }
+        Update: {
+          bet_id?: string | null
+          created_at?: string
+          game_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_double?: boolean | null
+          predictions?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bet_predictions_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "user_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bet_predictions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          actual_result: string | null
+          away_team: string
+          created_at: string
+          game_date: string | null
+          game_number: number
+          home_team: string
+          id: string
+          round_id: string | null
+        }
+        Insert: {
+          actual_result?: string | null
+          away_team: string
+          created_at?: string
+          game_date?: string | null
+          game_number: number
+          home_team: string
+          id?: string
+          round_id?: string | null
+        }
+        Update: {
+          actual_result?: string | null
+          away_team?: string
+          created_at?: string
+          game_date?: string | null
+          game_number?: number
+          home_team?: string
+          id?: string
+          round_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "games_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      toto_rounds: {
+        Row: {
+          created_at: string
+          deadline: string
+          id: string
+          results_updated: boolean | null
+          round_number: number
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          deadline: string
+          id?: string
+          results_updated?: boolean | null
+          round_number: number
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          id?: string
+          results_updated?: boolean | null
+          round_number?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
+      user_bets: {
+        Row: {
+          created_at: string
+          id: string
+          round_id: string | null
+          submitted_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          round_id?: string | null
+          submitted_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          round_id?: string | null
+          submitted_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bets_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
