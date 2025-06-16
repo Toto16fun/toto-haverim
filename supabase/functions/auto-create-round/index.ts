@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     // Deadline is Saturday 13:00 Israel time (11:00 UTC considering daylight saving)
     const deadline = new Date(startDate);
     deadline.setDate(startDate.getDate() + 2); // Saturday after Thursday
-    deadline.setUTCHours(10, 0, 0, 0); // 13:00 Israel time = 10:00 UTC (winter) / 11:00 UTC (summer)
+    deadline.setUTCHours(10, 0, 0, 0); // 13:00 Israel time = 10:00 UTC (winter)
 
     // Create the new round
     const { data: newRound, error: roundError } = await supabase

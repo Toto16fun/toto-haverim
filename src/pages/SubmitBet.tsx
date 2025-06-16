@@ -15,6 +15,7 @@ const SubmitBet = () => {
   const { data: games, isLoading: gamesLoading } = useGamesInRound(currentRound?.id);
   const { data: myBet } = useMyBetForRound(currentRound?.id);
   
+  // Basic admin check - can be enhanced later with proper role system
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
 
   if (!user) {
@@ -43,6 +44,9 @@ const SubmitBet = () => {
       </div>
     );
   }
+
+  // Basic deadline check - prevent submissions after deadline
+  const isDeadlinePassed = currentRound && new Date() > new Date(currentRound.deadline);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
@@ -78,15 +82,29 @@ const SubmitBet = () => {
               <p className="text-gray-600">
                 סגירה: {new Date(currentRound.deadline).toLocaleString('he-IL')}
               </p>
+              {isDeadlinePassed && (
+                <p className="text-red-600 font-semibold mt-2">
+                  הדדליין למחזור זה עבר - לא ניתן להגיש או לערוך טור
+                </p>
+              )}
             </div>
 
             {games && games.length > 0 ? (
-              <BetForm 
-                roundId={currentRound.id}
-                games={games}
-                existingBet={myBet}
-                deadline={currentRound.deadline}
-              />
+              !isDeadlinePassed ? (
+                <BetForm 
+                  roundId={currentRound.id}
+                  games={games}
+                  existingBet={myBet}
+                  deadline={currentRound.deadline}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">הדדליין למחזור זה עבר</p>
+                  {myBet && (
+                    <p className="text-green-600 mt-2">הטור שלך הוגש בהצלחה</p>
+                  )}
+                </div>
+              )
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-600">המשחקים עדיין לא הוגדרו למחזור זה</p>

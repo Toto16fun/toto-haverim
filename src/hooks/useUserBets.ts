@@ -71,6 +71,23 @@ export const useSubmitBet = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
       
+      // Basic validation - check if predictions array is valid
+      if (!predictions || predictions.length === 0) {
+        throw new Error('No predictions provided');
+      }
+      
+      // Validate prediction format
+      for (const pred of predictions) {
+        if (!pred.gameId || !pred.predictions || pred.predictions.length === 0) {
+          throw new Error('Invalid prediction format');
+        }
+        // Check if predictions contain valid values
+        const validPredictions = pred.predictions.every(p => ['1', 'X', '2'].includes(p));
+        if (!validPredictions) {
+          throw new Error('Invalid prediction values');
+        }
+      }
+      
       // Create the bet
       const { data: bet, error: betError } = await supabase
         .from('user_bets')
@@ -120,6 +137,21 @@ export const useUpdateBet = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
       
+      // Basic validation - same as in submit
+      if (!predictions || predictions.length === 0) {
+        throw new Error('No predictions provided');
+      }
+      
+      for (const pred of predictions) {
+        if (!pred.gameId || !pred.predictions || pred.predictions.length === 0) {
+          throw new Error('Invalid prediction format');
+        }
+        const validPredictions = pred.predictions.every(p => ['1', 'X', '2'].includes(p));
+        if (!validPredictions) {
+          throw new Error('Invalid prediction values');
+        }
+      }
+      
       // First, delete existing predictions
       const { error: deleteError } = await supabase
         .from('bet_predictions')
@@ -155,7 +187,6 @@ export const useUpdateBet = () => {
       return updatedBet;
     },
     onSuccess: (updatedBet) => {
-      // Get round_id from the updated bet to invalidate the correct queries
       queryClient.invalidateQueries({ queryKey: ['user-bets', updatedBet.round_id] });
       queryClient.invalidateQueries({ queryKey: ['my-bet', updatedBet.round_id] });
     }

@@ -52,6 +52,20 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_bet_predictions_bet"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "user_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bet_predictions_game"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
         ]
       }
       games: {
@@ -86,6 +100,13 @@ export type Database = {
           round_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_games_round"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "games_round_id_fkey"
             columns: ["round_id"]
@@ -145,6 +166,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_user_bets_round"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_bets_round_id_fkey"
             columns: ["round_id"]
