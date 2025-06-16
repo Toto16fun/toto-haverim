@@ -7,9 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Football-Data.org API - free tier allows 10 calls per minute
-const FOOTBALL_DATA_API_URL = 'https://api.football-data.org/v4'
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -48,40 +45,78 @@ serve(async (req) => {
       )
     }
 
-    // Fetch from multiple leagues to get variety of games
-    const leagues = [
-      '2', // Premier League
-      '135', // Serie A
-      '78', // Bundesliga
-      '140', // La Liga
-    ]
+    let gamesData: any[] = []
 
-    let allMatches: any[] = []
-
-    for (const leagueId of leagues) {
+    // Try to scrape from Winner website
+    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY')
+    
+    if (firecrawlApiKey) {
       try {
-        const response = await fetch(`${FOOTBALL_DATA_API_URL}/competitions/${leagueId}/matches`, {
+        console.log('Scraping Winner website for games data')
+        
+        const firecrawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
+          method: 'POST',
           headers: {
-            'X-Auth-Token': 'YOUR_API_KEY_HERE' // You'll need to get this from football-data.org
-          }
+            'Authorization': `Bearer ${firecrawlApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: 'https://www.winner.co.il/משחקים/וויננר-16/רגיל',
+            formats: ['markdown', 'html']
+          })
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          const upcomingMatches = data.matches
-            .filter((match: any) => new Date(match.utcDate) > new Date())
-            .slice(0, 4) // Take 4 matches from each league
+        if (firecrawlResponse.ok) {
+          const scraped = await firecrawlResponse.json()
+          console.log('Successfully scraped Winner website')
           
-          allMatches = [...allMatches, ...upcomingMatches]
+          // Extract games from the scraped content
+          const content = scraped.data?.markdown || scraped.data?.html || ''
+          
+          // Parse the content to extract game information
+          // Look for patterns like "Team A vs Team B" or "Team A נגד Team B"
+          const gamePatterns = [
+            /([א-ת\w\s]+)\s*נגד\s*([א-ת\w\s]+)/g,
+            /([א-ת\w\s]+)\s*vs\s*([א-ת\w\s]+)/gi,
+            /([א-ת\w\s]+)\s*-\s*([א-ת\w\s]+)/g
+          ]
+          
+          const foundGames: { homeTeam: string, awayTeam: string }[] = []
+          
+          for (const pattern of gamePatterns) {
+            let match
+            while ((match = pattern.exec(content)) !== null && foundGames.length < 16) {
+              const homeTeam = match[1].trim()
+              const awayTeam = match[2].trim()
+              
+              // Filter out very short or invalid team names
+              if (homeTeam.length > 2 && awayTeam.length > 2 && homeTeam !== awayTeam) {
+                foundGames.push({ homeTeam, awayTeam })
+              }
+            }
+            if (foundGames.length >= 16) break
+          }
+          
+          // If we found games, use them
+          if (foundGames.length > 0) {
+            gamesData = foundGames.slice(0, 16).map((game, index) => ({
+              homeTeam: { name: game.homeTeam },
+              awayTeam: { name: game.awayTeam },
+              utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+            }))
+            console.log(`Extracted ${gamesData.length} games from Winner website`)
+          }
+        } else {
+          console.error('Failed to scrape Winner website:', firecrawlResponse.status)
         }
       } catch (error) {
-        console.error(`Error fetching from league ${leagueId}:`, error)
+        console.error('Error scraping Winner website:', error)
       }
     }
 
-    // If we couldn't fetch from API, create dummy games
-    if (allMatches.length === 0) {
-      console.log('Creating dummy games as fallback')
+    // If we couldn't scrape or didn't find games, use dummy data as fallback
+    if (gamesData.length === 0) {
+      console.log('Using dummy games as fallback')
       const dummyTeams = [
         ['מנצ\'סטר יונייטד', 'ליברפול'],
         ['ברצלונה', 'ריאל מדריד'],
@@ -101,15 +136,12 @@ serve(async (req) => {
         ['ספרטק מוסקבה', 'CSKA מוסקבה']
       ]
 
-      allMatches = dummyTeams.map((teams, index) => ({
+      gamesData = dummyTeams.map((teams, index) => ({
         homeTeam: { name: teams[0] },
         awayTeam: { name: teams[1] },
         utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
       }))
     }
-
-    // Take first 16 matches for toto
-    const selectedMatches = allMatches.slice(0, 16)
 
     // Delete existing games for this round
     await supabase
@@ -118,7 +150,7 @@ serve(async (req) => {
       .eq('round_id', roundId)
 
     // Insert new games
-    const gamesToInsert = selectedMatches.map((match, index) => ({
+    const gamesToInsert = gamesData.slice(0, 16).map((match, index) => ({
       round_id: roundId,
       game_number: index + 1,
       home_team: match.homeTeam.name,
@@ -145,7 +177,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: `Successfully fetched and inserted ${insertedGames.length} games`,
-        games: insertedGames
+        games: insertedGames,
+        source: gamesData.length > 0 && firecrawlApiKey ? 'Winner website' : 'Dummy data'
       }),
       { 
         status: 200, 
