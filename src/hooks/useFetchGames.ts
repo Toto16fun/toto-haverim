@@ -8,11 +8,11 @@ export const useFetchGames = () => {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async (roundId: string) => {
+    mutationFn: async ({ roundId, imageData }: { roundId: string; imageData?: string }) => {
       console.log('Calling fetch-games function for round:', roundId);
       
       const { data, error } = await supabase.functions.invoke('fetch-games', {
-        body: { roundId }
+        body: { roundId, imageData }
       });
       
       if (error) {
@@ -22,16 +22,19 @@ export const useFetchGames = () => {
       
       return data;
     },
-    onSuccess: (data, roundId) => {
+    onSuccess: (data, variables) => {
       console.log('Games fetched successfully:', data);
       
       // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['games', roundId] });
+      queryClient.invalidateQueries({ queryKey: ['games', variables.roundId] });
       queryClient.invalidateQueries({ queryKey: ['toto-rounds'] });
+      
+      const source = data.source === 'Image Analysis' ? 'מניתוח תמונה' : 
+                     data.source === 'ChatGPT AI' ? 'מ-ChatGPT' : 'ידנית';
       
       toast({
         title: "משחקים נשלפו בהצלחה!",
-        description: `${data.games?.length || 16} משחקים התווספו למחזור`,
+        description: `${data.games?.length || 16} משחקים התווספו למחזור (${source})`,
       });
     },
     onError: (error) => {

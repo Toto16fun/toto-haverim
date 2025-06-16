@@ -20,7 +20,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { roundId } = await req.json()
+    const { roundId, imageData } = await req.json()
     
     if (!roundId) {
       return new Response(
@@ -54,65 +54,125 @@ serve(async (req) => {
     
     if (openAIApiKey) {
       try {
-        console.log('Asking ChatGPT for current Toto 16 games')
-        
-        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'user',
-                content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
-              }
-            ],
-            temperature: 0.1
+        // If imageData is provided, analyze the image
+        if (imageData) {
+          console.log('Analyzing uploaded image for games')
+          
+          const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'נתח את התמונה והחלץ את 16 המשחקים בטוטו 16. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית. קבוצות הבית וקבוצות החוץ צריכות להיות בעברית.'
+                    },
+                    {
+                      type: 'image_url',
+                      image_url: {
+                        url: imageData
+                      }
+                    }
+                  ]
+                }
+              ],
+              temperature: 0.1
+            })
           })
-        })
 
-        if (openAIResponse.ok) {
-          const aiResult = await openAIResponse.json()
-          const content = aiResult.choices[0]?.message?.content
-          
-          console.log('ChatGPT response:', content)
-          
-          try {
-            // Try to parse JSON from the response
-            const jsonMatch = content.match(/\{[\s\S]*\}/)
-            if (jsonMatch) {
-              const parsedData = JSON.parse(jsonMatch[0])
-              
-              if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
-                gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
-                  homeTeam: { name: game.homeTeam },
-                  awayTeam: { name: game.awayTeam },
-                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-                }))
-                dataSource = 'ChatGPT AI'
-                console.log(`Successfully extracted ${gamesData.length} games from ChatGPT`)
+          if (openAIResponse.ok) {
+            const aiResult = await openAIResponse.json()
+            const content = aiResult.choices[0]?.message?.content
+            
+            console.log('Image analysis response:', content)
+            
+            try {
+              const jsonMatch = content.match(/\{[\s\S]*\}/)
+              if (jsonMatch) {
+                const parsedData = JSON.parse(jsonMatch[0])
+                
+                if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+                  gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
+                    homeTeam: { name: game.homeTeam },
+                    awayTeam: { name: game.awayTeam },
+                    utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                  }))
+                  dataSource = 'Image Analysis'
+                  console.log(`Successfully extracted ${gamesData.length} games from image`)
+                }
               }
+            } catch (parseError) {
+              console.error('Error parsing image analysis response:', parseError)
             }
-          } catch (parseError) {
-            console.error('Error parsing ChatGPT response:', parseError)
           }
         } else {
-          console.error('ChatGPT API request failed:', openAIResponse.status)
+          // Try text-based request to ChatGPT
+          console.log('Asking ChatGPT for current Toto 16 games')
+          
+          const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'user',
+                  content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
+                }
+              ],
+              temperature: 0.1
+            })
+          })
+
+          if (openAIResponse.ok) {
+            const aiResult = await openAIResponse.json()
+            const content = aiResult.choices[0]?.message?.content
+            
+            console.log('ChatGPT response:', content)
+            
+            try {
+              const jsonMatch = content.match(/\{[\s\S]*\}/)
+              if (jsonMatch) {
+                const parsedData = JSON.parse(jsonMatch[0])
+                
+                if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+                  gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
+                    homeTeam: { name: game.homeTeam },
+                    awayTeam: { name: game.awayTeam },
+                    utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                  }))
+                  dataSource = 'ChatGPT AI'
+                  console.log(`Successfully extracted ${gamesData.length} games from ChatGPT`)
+                }
+              }
+            } catch (parseError) {
+              console.error('Error parsing ChatGPT response:', parseError)
+            }
+          } else {
+            console.error('ChatGPT API request failed:', openAIResponse.status)
+          }
         }
       } catch (error) {
-        console.error('Error calling ChatGPT:', error)
+        console.error('Error calling OpenAI:', error)
       }
     }
 
-    // If we couldn't get games from ChatGPT, return error message
+    // If we couldn't get games, return error message requesting manual input
     if (gamesData.length === 0) {
-      console.log('ChatGPT not available, requesting manual input')
+      console.log('AI not available, requesting manual input or image upload')
       return new Response(
         JSON.stringify({ 
-          error: 'נא הזן משחקים ידנית',
+          error: 'נא הזן משחקים ידנית או העלה צילום מסך',
           requiresManualInput: true
         }),
         { 
