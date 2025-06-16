@@ -1,4 +1,5 @@
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -47,74 +48,77 @@ serve(async (req) => {
 
     let gamesData: any[] = []
 
-    // Try to scrape from Winner website
-    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY')
+    // Try to get games from OpenAI
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     
-    if (firecrawlApiKey) {
+    if (openAIApiKey) {
       try {
-        console.log('Scraping Winner website for games data')
+        console.log('Asking ChatGPT for Toto 16 games data')
         
-        const firecrawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
+        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${firecrawlApiKey}`,
+            'Authorization': `Bearer ${openAIApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            url: 'https://www.winner.co.il/משחקים/וויננר-16/רגיל',
-            formats: ['markdown', 'html']
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `אתה עוזר שמתמחה בטוטו 16 ישראלי. תפקידך לחפש ולמצוא את 16 המשחקים של המחזור הנוכחי של טוטו 16 מהאתרים הישראליים הרלוונטיים כמו winner.co.il, pais.co.il ועוד. תמיד תחזיר תשובה בפורמט JSON עם המבנה הבא:
+{
+  "games": [
+    {
+      "homeTeam": "שם קבוצת הבית",
+      "awayTeam": "שם קבוצת החוץ"
+    }
+  ]
+}
+חשוב: תחזיר בדיוק 16 משחקים בעברית, עם שמות הקבוצות המדויקים כפי שהם מופיעים בטוטו 16.`
+              },
+              {
+                role: 'user',
+                content: `חפש את 16 המשחקים של המחזור הנוכחי של טוטו 16 לתאריך ${new Date().toLocaleDateString('he-IL')}. תחזיר אותם בפורמט JSON כפי שהוגדר.`
+              }
+            ],
+            temperature: 0.1
           })
         })
 
-        if (firecrawlResponse.ok) {
-          const scraped = await firecrawlResponse.json()
-          console.log('Successfully scraped Winner website')
+        if (openAIResponse.ok) {
+          const aiResult = await openAIResponse.json()
+          const content = aiResult.choices[0]?.message?.content
           
-          // Extract games from the scraped content
-          const content = scraped.data?.markdown || scraped.data?.html || ''
+          console.log('ChatGPT response:', content)
           
-          // Parse the content to extract game information
-          // Look for patterns like "Team A vs Team B" or "Team A נגד Team B"
-          const gamePatterns = [
-            /([א-ת\w\s]+)\s*נגד\s*([א-ת\w\s]+)/g,
-            /([א-ת\w\s]+)\s*vs\s*([א-ת\w\s]+)/gi,
-            /([א-ת\w\s]+)\s*-\s*([א-ת\w\s]+)/g
-          ]
-          
-          const foundGames: { homeTeam: string, awayTeam: string }[] = []
-          
-          for (const pattern of gamePatterns) {
-            let match
-            while ((match = pattern.exec(content)) !== null && foundGames.length < 16) {
-              const homeTeam = match[1].trim()
-              const awayTeam = match[2].trim()
+          try {
+            // Try to parse JSON from the response
+            const jsonMatch = content.match(/\{[\s\S]*\}/)
+            if (jsonMatch) {
+              const parsedData = JSON.parse(jsonMatch[0])
               
-              // Filter out very short or invalid team names
-              if (homeTeam.length > 2 && awayTeam.length > 2 && homeTeam !== awayTeam) {
-                foundGames.push({ homeTeam, awayTeam })
+              if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+                gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
+                  homeTeam: { name: game.homeTeam },
+                  awayTeam: { name: game.awayTeam },
+                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                }))
+                console.log(`Successfully extracted ${gamesData.length} games from ChatGPT`)
               }
             }
-            if (foundGames.length >= 16) break
-          }
-          
-          // If we found games, use them
-          if (foundGames.length > 0) {
-            gamesData = foundGames.slice(0, 16).map((game, index) => ({
-              homeTeam: { name: game.homeTeam },
-              awayTeam: { name: game.awayTeam },
-              utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-            }))
-            console.log(`Extracted ${gamesData.length} games from Winner website`)
+          } catch (parseError) {
+            console.error('Error parsing ChatGPT response:', parseError)
           }
         } else {
-          console.error('Failed to scrape Winner website:', firecrawlResponse.status)
+          console.error('ChatGPT API request failed:', openAIResponse.status)
         }
       } catch (error) {
-        console.error('Error scraping Winner website:', error)
+        console.error('Error calling ChatGPT:', error)
       }
     }
 
-    // If we couldn't scrape or didn't find games, use dummy data as fallback
+    // If we couldn't get games from ChatGPT, use dummy data as fallback
     if (gamesData.length === 0) {
       console.log('Using dummy games as fallback')
       const dummyTeams = [
@@ -178,7 +182,7 @@ serve(async (req) => {
         success: true, 
         message: `Successfully fetched and inserted ${insertedGames.length} games`,
         games: insertedGames,
-        source: gamesData.length > 0 && firecrawlApiKey ? 'Winner website' : 'Dummy data'
+        source: gamesData.length > 0 && openAIApiKey ? 'ChatGPT AI' : 'Dummy data'
       }),
       { 
         status: 200, 
