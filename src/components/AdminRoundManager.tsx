@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateRound } from '@/hooks/useTotoRounds';
 import { useFetchGames } from '@/hooks/useFetchGames';
+import { useAutoCreateRound } from '@/hooks/useAutoCreateRound';
 import ImageUploadForGames from './ImageUploadForGames';
-import { Calendar, Plus, Download } from 'lucide-react';
+import { Calendar, Plus, Download, Zap } from 'lucide-react';
 
 const AdminRoundManager = () => {
   const [roundNumber, setRoundNumber] = useState('');
@@ -18,6 +19,7 @@ const AdminRoundManager = () => {
   const { toast } = useToast();
   const createRound = useCreateRound();
   const fetchGames = useFetchGames();
+  const autoCreateRound = useAutoCreateRound();
 
   const handleCreateRound = async () => {
     if (!roundNumber || !deadline) {
@@ -77,13 +79,55 @@ const AdminRoundManager = () => {
     });
   };
 
+  const handleAutoCreateRound = async () => {
+    try {
+      await autoCreateRound.mutateAsync();
+    } catch (error) {
+      console.error('Error in auto create round:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Auto Create Round Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            יצירת מחזור אוטומטית (טסט)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-4">
+            פונקציה זו יוצרת מחזור חדש אוטומatically עם משחקים מ-ChatGPT
+          </p>
+          <Button 
+            onClick={handleAutoCreateRound}
+            disabled={autoCreateRound.isPending}
+            className="w-full"
+            variant="secondary"
+          >
+            {autoCreateRound.isPending ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                יוצר מחזור אוטומטי...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                צור מחזור אוטומטי עם משחקים
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Manual Create Round Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            ניהול מחזורים (אדמין)
+            ניהול מחזורים ידני
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -129,6 +173,7 @@ const AdminRoundManager = () => {
         </CardContent>
       </Card>
 
+      {/* Fetch Games Card */}
       {currentRoundId && (
         <Card>
           <CardHeader>
