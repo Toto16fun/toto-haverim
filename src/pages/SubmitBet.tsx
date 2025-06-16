@@ -85,6 +85,7 @@ const SubmitBet = () => {
                 roundId={currentRound.id}
                 games={games}
                 existingBet={myBet}
+                deadline={currentRound.deadline}
               />
             ) : (
               <div className="text-center py-8">

@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import GameRow from './GameRow';
 import { Game } from '@/hooks/useTotoRounds';
-import { useSubmitBet } from '@/hooks/useUserBets';
+import { useSubmitBet, useUpdateBet } from '@/hooks/useUserBets';
 
 interface BetFormProps {
   roundId: string;
   games: Game[];
   existingBet?: any;
+  deadline: string;
 }
 
 interface GamePrediction {
@@ -19,10 +20,15 @@ interface GamePrediction {
   isDouble: boolean;
 }
 
-const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
+const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
   const [predictions, setPredictions] = useState<Record<string, GamePrediction>>({});
   const { toast } = useToast();
   const submitBet = useSubmitBet();
+  const updateBet = useUpdateBet();
+
+  // Check if deadline has passed
+  const isDeadlinePassed = new Date() > new Date(deadline);
+  const isReadOnly = isDeadlinePassed;
 
   // Initialize predictions from existing bet
   useEffect(() => {
@@ -40,6 +46,8 @@ const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
   }, [existingBet]);
 
   const handlePredictionChange = (gameId: string, newPredictions: string[], isDouble: boolean) => {
+    if (isReadOnly) return;
+    
     setPredictions(prev => ({
       ...prev,
       [gameId]: {
@@ -51,6 +59,8 @@ const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
   };
 
   const handleSubmit = async () => {
+    if (isReadOnly) return;
+    
     const predictionsList = Object.values(predictions).filter(p => p.predictions.length > 0);
     
     if (predictionsList.length !== games.length) {
@@ -63,15 +73,29 @@ const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
     }
 
     try {
-      await submitBet.mutateAsync({
-        roundId,
-        predictions: predictionsList
-      });
-      
-      toast({
-        title: "הטור נשמר בהצלחה!",
-        description: "הטור שלך נשמר במערכת"
-      });
+      if (existingBet) {
+        // Update existing bet
+        await updateBet.mutateAsync({
+          betId: existingBet.id,
+          predictions: predictionsList
+        });
+        
+        toast({
+          title: "הטור עודכן בהצלחה!",
+          description: "השינויים שלך נשמרו במערכת"
+        });
+      } else {
+        // Create new bet
+        await submitBet.mutateAsync({
+          roundId,
+          predictions: predictionsList
+        });
+        
+        toast({
+          title: "הטור נשמר בהצלחה!",
+          description: "הטור שלך נשמר במערכת"
+        });
+      }
     } catch (error) {
       toast({
         title: "שגיאה",
@@ -81,14 +105,29 @@ const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
     }
   };
 
-  const isReadOnly = !!existingBet;
+  const getCardTitle = () => {
+    if (isDeadlinePassed) {
+      return existingBet ? 'הטור שלך (נעול)' : 'טור לא הוגש';
+    }
+    return existingBet ? 'ערוך את הטור שלך' : 'מלא את הטור שלך';
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {isReadOnly ? 'הטור שלך' : 'מלא את הטור שלך'}
+          {getCardTitle()}
         </CardTitle>
+        {!isDeadlinePassed && (
+          <p className="text-sm text-gray-600">
+            עריכה אפשרית עד: {new Date(deadline).toLocaleString('he-IL')}
+          </p>
+        )}
+        {isDeadlinePassed && (
+          <p className="text-sm text-red-600">
+            זמן ההגשה הסתיים: {new Date(deadline).toLocaleString('he-IL')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {games.map(game => (
@@ -106,10 +145,21 @@ const BetForm = ({ roundId, games, existingBet }: BetFormProps) => {
           <Button 
             onClick={handleSubmit}
             className="w-full"
-            disabled={submitBet.isPending}
+            disabled={submitBet.isPending || updateBet.isPending}
           >
-            {submitBet.isPending ? 'שומר...' : 'שמור טור'}
+            {submitBet.isPending || updateBet.isPending 
+              ? 'שומר...' 
+              : existingBet 
+                ? 'עדכן טור' 
+                : 'שמור טור'
+            }
           </Button>
+        )}
+        
+        {isDeadlinePassed && !existingBet && (
+          <div className="text-center py-4 text-gray-600">
+            לא הוגש טור למחזור זה
+          </div>
         )}
       </CardContent>
     </Card>

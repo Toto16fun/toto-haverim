@@ -105,3 +105,59 @@ export const useSubmitBet = () => {
     }
   });
 };
+
+export const useUpdateBet = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      betId, 
+      predictions 
+    }: { 
+      betId: string; 
+      predictions: { gameId: string; predictions: string[]; isDouble: boolean }[] 
+    }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      // First, delete existing predictions
+      const { error: deleteError } = await supabase
+        .from('bet_predictions')
+        .delete()
+        .eq('bet_id', betId);
+      
+      if (deleteError) throw deleteError;
+      
+      // Then, insert new predictions
+      const predictionInserts = predictions.map(p => ({
+        bet_id: betId,
+        game_id: p.gameId,
+        predictions: p.predictions,
+        is_double: p.isDouble
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('bet_predictions')
+        .insert(predictionInserts);
+      
+      if (insertError) throw insertError;
+      
+      // Update the bet's submitted_at timestamp
+      const { data: updatedBet, error: updateError } = await supabase
+        .from('user_bets')
+        .update({ submitted_at: new Date().toISOString() })
+        .eq('id', betId)
+        .select()
+        .single();
+      
+      if (updateError) throw updateError;
+      
+      return updatedBet;
+    },
+    onSuccess: (updatedBet) => {
+      // Get round_id from the updated bet to invalidate the correct queries
+      queryClient.invalidateQueries({ queryKey: ['user-bets', updatedBet.round_id] });
+      queryClient.invalidateQueries({ queryKey: ['my-bet', updatedBet.round_id] });
+    }
+  });
+};
