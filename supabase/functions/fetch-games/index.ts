@@ -113,8 +113,8 @@ serve(async (req) => {
             }
           }
         } else {
-          // Try text-based request to ChatGPT
-          console.log('Asking ChatGPT for current Toto 16 games')
+          // Use the specific prompt we defined earlier
+          console.log('Asking ChatGPT for current Toto 16 games with specific prompt')
           
           const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -130,7 +130,8 @@ serve(async (req) => {
                   content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
                 }
               ],
-              temperature: 0.1
+              temperature: 0.1,
+              max_tokens: 2000
             })
           })
 
@@ -159,12 +160,15 @@ serve(async (req) => {
               console.error('Error parsing ChatGPT response:', parseError)
             }
           } else {
-            console.error('ChatGPT API request failed:', openAIResponse.status)
+            const errorResponse = await openAIResponse.json().catch(() => ({}))
+            console.error('ChatGPT API request failed:', openAIResponse.status, errorResponse)
           }
         }
       } catch (error) {
         console.error('Error calling OpenAI:', error)
       }
+    } else {
+      console.log('OpenAI API key not found')
     }
 
     // If we couldn't get games, return error message requesting manual input
