@@ -32,7 +32,7 @@ const AdminRoundManager = () => {
 
     try {
       const result = await createRound.mutateAsync({
-        roundNumber: parseInt(roundNumber),
+        round_number: parseInt(roundNumber),
         deadline: new Date(deadline).toISOString()
       });
       

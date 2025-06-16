@@ -12,7 +12,7 @@ const FetchGamesButton = ({ roundId, disabled = false }: FetchGamesButtonProps) 
   const fetchGames = useFetchGames();
 
   const handleFetchGames = () => {
-    fetchGames.mutate(roundId);
+    fetchGames.mutate({ roundId });
   };
 
   return (
