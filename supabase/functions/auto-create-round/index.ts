@@ -67,51 +67,144 @@ Deno.serve(async (req) => {
 
     console.log('Round created successfully:', newRound);
 
-    // Try to fetch games using ChatGPT - but don't fail if it doesn't work
-    console.log('Attempting to fetch games from ChatGPT...');
+    // Now try to fetch games directly with OpenAI instead of calling fetch-games function
+    console.log('Attempting to fetch games directly from OpenAI...');
     
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    if (!openAIApiKey) {
+      console.log('OpenAI API key not found, returning without games');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          round: newRound,
+          message: `מחזור ${nextRoundNumber} נוצר בהצלחה. מפתח OpenAI לא נמצא - תוכל להוסיף משחקים ידנית.`,
+          gamesStatus: 'no_api_key'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     try {
-      const { data: gamesResponse, error: gamesError } = await supabase.functions.invoke('fetch-games', {
-        body: { 
-          roundId: newRound.id,
-          roundNumber: nextRoundNumber 
-        }
+      console.log('Calling OpenAI API directly...');
+      
+      const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 2000
+        })
       });
 
-      if (gamesError) {
-        console.log('Games fetch failed, but round was created successfully:', gamesError);
-        // Don't throw - round creation was successful even if games fetch failed
+      console.log('OpenAI response status:', openAIResponse.status);
+
+      if (!openAIResponse.ok) {
+        const errorData = await openAIResponse.json().catch(() => ({}));
+        console.error('OpenAI API error:', openAIResponse.status, errorData);
+        
         return new Response(
           JSON.stringify({ 
             success: true, 
             round: newRound,
-            message: `מחזור ${nextRoundNumber} נוצר בהצלחה. לא הצלחנו לשלוף משחקים אוטומטית - תוכל להוסיף אותם ידנית.`,
-            gamesStatus: 'failed'
+            message: `מחזור ${nextRoundNumber} נוצר בהצלחה. שגיאה ב-OpenAI (${openAIResponse.status}) - תוכל להוסיף משחקים ידנית.`,
+            gamesStatus: 'api_error',
+            error: errorData
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log('Games fetched successfully');
+      const aiResult = await openAIResponse.json();
+      const content = aiResult.choices[0]?.message?.content;
+      
+      console.log('OpenAI response content:', content);
+      
+      let gamesData = [];
+      
+      try {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsedData = JSON.parse(jsonMatch[0]);
+          
+          if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+            gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
+              round_id: newRound.id,
+              game_number: index + 1,
+              home_team: game.homeTeam,
+              away_team: game.awayTeam,
+              game_date: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+            }));
+            
+            console.log(`Successfully parsed ${gamesData.length} games from OpenAI`);
+            
+            // Insert games into database
+            const { data: insertedGames, error: insertError } = await supabase
+              .from('games')
+              .insert(gamesData)
+              .select();
+
+            if (insertError) {
+              console.error('Error inserting games:', insertError);
+              return new Response(
+                JSON.stringify({ 
+                  success: true, 
+                  round: newRound,
+                  message: `מחזור ${nextRoundNumber} נוצר בהצלחה. שגיאה בהכנסת משחקים למסד הנתונים - תוכל להוסיף אותם ידנית.`,
+                  gamesStatus: 'db_error'
+                }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+
+            console.log(`Successfully inserted ${insertedGames.length} games`);
+            
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                round: newRound,
+                message: `מחזור ${nextRoundNumber} נוצר בהצלחה עם ${insertedGames.length} משחקים מ-ChatGPT!`,
+                gamesStatus: 'success',
+                games: insertedGames
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing OpenAI response:', parseError);
+      }
+
+      // If we got here, parsing failed
       return new Response(
         JSON.stringify({ 
           success: true, 
           round: newRound,
-          message: `מחזור ${nextRoundNumber} נוצר בהצלחה עם משחקים`,
-          gamesStatus: 'success'
+          message: `מחזור ${nextRoundNumber} נוצר בהצלחה. לא הצלחנו לנתח את התשובה מ-ChatGPT - תוכל להוסיף משחקים ידנית.`,
+          gamesStatus: 'parse_error',
+          rawResponse: content
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 
-    } catch (gamesFetchError) {
-      console.log('Games fetch threw an error, but round was created successfully:', gamesFetchError);
-      // Don't throw - round creation was successful even if games fetch failed
+    } catch (openAIError) {
+      console.error('Error calling OpenAI:', openAIError);
       return new Response(
         JSON.stringify({ 
           success: true, 
           round: newRound,
-          message: `מחזור ${nextRoundNumber} נוצר בהצלחה. לא הצלחנו לשלוף משחקים אוטומטית - תוכל להוסיף אותם ידנית.`,
-          gamesStatus: 'failed'
+          message: `מחזור ${nextRoundNumber} נוצר בהצלחה. שגיאה בקריאה ל-OpenAI - תוכל להוסיף משחקים ידנית.`,
+          gamesStatus: 'connection_error'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
