@@ -88,6 +88,18 @@ export const useSubmitBet = () => {
         }
       }
       
+      // Check if user already has a bet for this round
+      const { data: existingBet } = await supabase
+        .from('user_bets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('round_id', roundId)
+        .maybeSingle();
+      
+      if (existingBet) {
+        throw new Error('You already have a bet for this round. Use update instead.');
+      }
+      
       // Create the bet
       const { data: bet, error: betError } = await supabase
         .from('user_bets')
