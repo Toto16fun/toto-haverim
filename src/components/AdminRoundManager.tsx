@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +32,8 @@ const AdminRoundManager = () => {
     try {
       const result = await createRound.mutateAsync({
         round_number: parseInt(roundNumber),
-        deadline: new Date(deadline).toISOString()
+        deadline: new Date(deadline).toISOString(),
+        start_date: new Date().toISOString().split('T')[0] // Add current date as start_date
       });
       
       setCurrentRoundId(result.id);
