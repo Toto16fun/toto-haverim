@@ -47,6 +47,7 @@ serve(async (req) => {
     }
 
     let gamesData: any[] = []
+    let dataSource = 'manual'
 
     // Try to get games from OpenAI
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
@@ -91,6 +92,7 @@ serve(async (req) => {
                   awayTeam: { name: game.awayTeam },
                   utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
                 }))
+                dataSource = 'ChatGPT AI'
                 console.log(`Successfully extracted ${gamesData.length} games from ChatGPT`)
               }
             }
@@ -105,33 +107,19 @@ serve(async (req) => {
       }
     }
 
-    // If we couldn't get games from ChatGPT, use dummy data as fallback
+    // If we couldn't get games from ChatGPT, return error message
     if (gamesData.length === 0) {
-      console.log('Using dummy games as fallback')
-      const dummyTeams = [
-        ['מכבי תל אביב', 'הפועל תל אביב'],
-        ['מכבי חיפה', 'הפועל חיפה'],
-        ['בית"ר ירושלים', 'הפועל ירושלים'],
-        ['מכבי פתח תקווה', 'הפועל פתח תקווה'],
-        ['מכבי נתניה', 'הפועל כפר סבא'],
-        ['אשדוד', 'עכו'],
-        ['הפועל באר שבע', 'מכבי באר שבע'],
-        ['בני סכנין', 'הפועל עכו'],
-        ['מכבי אשדוד', 'הפועל אשדוד'],
-        ['בני יהודה', 'הפועל רמת גן'],
-        ['מכבי דקל רמת השרון', 'הפועל עילית'],
-        ['בני גת', 'מכבי ראשון לציון'],
-        ['הפועל רעננה', 'מכבי יבנה'],
-        ['בני לוד', 'הפועל גליל עליון'],
-        ['אשדוד ס.ק', 'מכבי עילית'],
-        ['הפועל נצרת', 'מכבי קבלת שבת']
-      ]
-
-      gamesData = dummyTeams.map((teams, index) => ({
-        homeTeam: { name: teams[0] },
-        awayTeam: { name: teams[1] },
-        utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-      }))
+      console.log('ChatGPT not available, requesting manual input')
+      return new Response(
+        JSON.stringify({ 
+          error: 'נא הזן משחקים ידנית',
+          requiresManualInput: true
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     // Delete existing games for this round
@@ -169,7 +157,7 @@ serve(async (req) => {
         success: true, 
         message: `Successfully fetched and inserted ${insertedGames.length} games`,
         games: insertedGames,
-        source: gamesData.length > 0 && openAIApiKey ? 'ChatGPT AI' : 'Dummy data'
+        source: dataSource
       }),
       { 
         status: 200, 
