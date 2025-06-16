@@ -67,31 +67,55 @@ Deno.serve(async (req) => {
 
     console.log('Round created successfully:', newRound);
 
-    // Fetch games using ChatGPT
-    console.log('Fetching games from ChatGPT...');
+    // Try to fetch games using ChatGPT - but don't fail if it doesn't work
+    console.log('Attempting to fetch games from ChatGPT...');
     
-    const { data: gamesResponse, error: gamesError } = await supabase.functions.invoke('fetch-games', {
-      body: { 
-        roundId: newRound.id,
-        roundNumber: nextRoundNumber 
+    try {
+      const { data: gamesResponse, error: gamesError } = await supabase.functions.invoke('fetch-games', {
+        body: { 
+          roundId: newRound.id,
+          roundNumber: nextRoundNumber 
+        }
+      });
+
+      if (gamesError) {
+        console.log('Games fetch failed, but round was created successfully:', gamesError);
+        // Don't throw - round creation was successful even if games fetch failed
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            round: newRound,
+            message: `מחזור ${nextRoundNumber} נוצר בהצלחה. לא הצלחנו לשלוף משחקים אוטומטית - תוכל להוסיף אותם ידנית.`,
+            gamesStatus: 'failed'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    });
 
-    if (gamesError) {
-      console.error('Error fetching games:', gamesError);
-      throw gamesError;
+      console.log('Games fetched successfully');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          round: newRound,
+          message: `מחזור ${nextRoundNumber} נוצר בהצלחה עם משחקים`,
+          gamesStatus: 'success'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (gamesFetchError) {
+      console.log('Games fetch threw an error, but round was created successfully:', gamesFetchError);
+      // Don't throw - round creation was successful even if games fetch failed
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          round: newRound,
+          message: `מחזור ${nextRoundNumber} נוצר בהצלחה. לא הצלחנו לשלוף משחקים אוטומטית - תוכל להוסיף אותם ידנית.`,
+          gamesStatus: 'failed'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
-    console.log('Games fetched successfully');
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        round: newRound,
-        message: `Round ${nextRoundNumber} created successfully with games` 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error in auto-create-round:', error);
