@@ -1,1 +1,5 @@
+
 project_id = "gplltbkfconqjcyfsnel"
+
+[functions.fetch-games]
+verify_jwt = false
