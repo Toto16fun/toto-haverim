@@ -1,12 +1,14 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, User } from 'lucide-react';
+import { ArrowRight, User, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useUserBets } from '@/hooks/useUserBets';
 import GameRow from '@/components/GameRow';
+import NewRoundDialog from '@/components/NewRoundDialog';
 
 const CurrentRound = () => {
   const navigate = useNavigate();
@@ -14,6 +16,10 @@ const CurrentRound = () => {
   const { data: currentRound, isLoading: roundLoading } = useCurrentRound();
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: userBets } = useUserBets(currentRound?.id);
+  const [showNewRoundDialog, setShowNewRoundDialog] = useState(false);
+
+  // Basic admin check
+  const isAdmin = user?.email === 'tomercohen1995@gmail.com';
 
   if (!user) {
     return (
@@ -56,12 +62,25 @@ const CurrentRound = () => {
             חזור לעמוד הראשי
           </Button>
           <h1 className="text-3xl font-bold text-green-800">מחזור נוכחי</h1>
+          
+          {isAdmin && (
+            <Button
+              onClick={() => setShowNewRoundDialog(true)}
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 mr-auto"
+            >
+              <Plus className="h-4 w-4" />
+              פתיחת מחזור חדש
+            </Button>
+          )}
         </div>
 
         {!currentRound ? (
           <div className="text-center py-12">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">אין מחזור פעיל</h2>
             <p className="text-gray-600">עדיין לא נוצר מחזור טוטו חדש</p>
+            {isAdmin && (
+              <p className="text-sm text-gray-500 mt-2">השתמש בכפתור "פתיחת מחזור חדש" כדי להתחיל מחזור חדש</p>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -146,6 +165,11 @@ const CurrentRound = () => {
             </div>
           </div>
         )}
+
+        <NewRoundDialog 
+          open={showNewRoundDialog}
+          onOpenChange={setShowNewRoundDialog}
+        />
       </div>
     </div>
   );
