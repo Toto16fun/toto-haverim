@@ -119,20 +119,37 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       
       setCurrentRoundId(roundResult.id);
       
-      // Analyze image and fetch games
+      // Try to analyze image and fetch games
       const base64Image = await convertToBase64(selectedFile);
       
-      await fetchGames.mutateAsync({ 
-        roundId: roundResult.id, 
-        imageData: base64Image 
-      });
-      
-      setStep('confirm');
-      
-      toast({
-        title: "מחזור נוצר והמשחקים נטענו!",
-        description: `מחזור ${nextRoundNumber} מוכן להפעלה`
-      });
+      try {
+        await fetchGames.mutateAsync({ 
+          roundId: roundResult.id, 
+          imageData: base64Image 
+        });
+        
+        setStep('confirm');
+        
+        toast({
+          title: "מחזור נוצר והמשחקים נטענו!",
+          description: `מחזור ${nextRoundNumber} מוכן להפעלה`
+        });
+        
+      } catch (fetchError: any) {
+        // If AI analysis fails, still proceed to confirmation step
+        console.log('AI analysis failed, proceeding with empty round:', fetchError);
+        
+        if (fetchError.message === 'AI_NOT_AVAILABLE') {
+          setStep('confirm');
+          toast({
+            title: "מחזור נוצר",
+            description: `מחזור ${nextRoundNumber} נוצר. תוכל להוסיף משחקים ידנית מעמוד הניהול`,
+            variant: "default"
+          });
+        } else {
+          throw fetchError; // Re-throw other errors
+        }
+      }
       
     } catch (error) {
       console.error('Error creating round and analyzing image:', error);

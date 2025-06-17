@@ -20,6 +20,11 @@ export const useFetchGames = () => {
         throw error;
       }
       
+      // Check if the response indicates AI is not available
+      if (data && data.requiresManualInput) {
+        throw new Error('AI_NOT_AVAILABLE');
+      }
+      
       return data;
     },
     onSuccess: (data, variables) => {
@@ -37,13 +42,22 @@ export const useFetchGames = () => {
         description: `${data.games?.length || 16} משחקים התווספו למחזור (${source})`,
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error fetching games:', error);
-      toast({
-        title: "שגיאה בשליפת משחקים",
-        description: "לא הצלחנו לשלוף את המשחקים. נסה שוב מאוחר יותר.",
-        variant: "destructive"
-      });
+      
+      if (error.message === 'AI_NOT_AVAILABLE') {
+        toast({
+          title: "בינה מלאכותית לא זמינה",
+          description: "אנא הזן את המשחקים ידנית או נסה שוב מאוחר יותר",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "שגיאה בשליפת משחקים",
+          description: "לא הצלחנו לשלוף את המשחקים. נסה שוב מאוחר יותר.",
+          variant: "destructive"
+        });
+      }
     }
   });
 };
