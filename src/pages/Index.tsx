@@ -2,13 +2,11 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, Zap } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
-import { useAutoCreateRound } from '@/hooks/useAutoCreateRound';
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
-  const autoCreateRound = useAutoCreateRound();
 
   if (loading) {
     return (
@@ -23,14 +21,6 @@ const Index = () => {
 
   const handleRestrictedAction = () => {
     // Do nothing - button is disabled
-  };
-
-  const handleAutoCreateRound = async () => {
-    try {
-      await autoCreateRound.mutateAsync();
-    } catch (error) {
-      console.error('Error in auto create round:', error);
-    }
   };
 
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
@@ -70,43 +60,6 @@ const Index = () => {
             )}
           </div>
         </div>
-
-        {/* Admin Auto Create Round Button */}
-        {isAdmin && (
-          <div className="mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  יצירת מחזור אוטומטית (מנהל)
-                </CardTitle>
-                <CardDescription>
-                  צור מחזור חדש אוטומטית עם משחקים מ-ChatGPT
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  onClick={handleAutoCreateRound}
-                  disabled={autoCreateRound.isPending}
-                  className="w-full"
-                  variant="secondary"
-                >
-                  {autoCreateRound.isPending ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      יוצר מחזור אוטומטי...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4 mr-2" />
-                      צור מחזור אוטומטי עם משחקים
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Submit Bet Card - Only active for authenticated users */}

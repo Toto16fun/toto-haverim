@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useMyBetForRound } from '@/hooks/useUserBets';
 import BetForm from '@/components/BetForm';
-import AdminRoundManager from '@/components/AdminRoundManager';
 
 const SubmitBet = () => {
   const navigate = useNavigate();
@@ -65,13 +64,9 @@ const SubmitBet = () => {
         </div>
 
         {!currentRound ? (
-          <div className="space-y-6">
-            <div className="text-center py-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">אין מחזור פעיל</h2>
-              <p className="text-gray-600">עדיין לא נוצר מחזור טוטו חדש</p>
-            </div>
-            
-            {isAdmin && <AdminRoundManager />}
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">אין מחזור פעיל</h2>
+            <p className="text-gray-600">עדיין לא נוצר מחזור טוטו חדש</p>
           </div>
         ) : (
           <div className="space-y-6">
