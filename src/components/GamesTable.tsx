@@ -77,12 +77,10 @@ const GamesTable = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">תאריך</TableHead>
-                <TableHead className="text-center">שעה</TableHead>
+                <TableHead className="text-center">תאריך ושעה</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
-                <TableHead className="text-center">קבוצת חוץ</TableHead>
-                <TableHead className="text-center">קבוצת בית</TableHead>
-                <TableHead className="text-center">משחק</TableHead>
+                <TableHead className="text-center">איזו וי</TableHead>
+                <TableHead className="text-center">#</TableHead>
                 <TableHead className="text-center">1</TableHead>
                 <TableHead className="text-center">X</TableHead>
                 <TableHead className="text-center">2</TableHead>
@@ -97,10 +95,12 @@ const GamesTable = ({
                 return (
                   <TableRow key={game.id}>
                     <TableCell className="text-center text-sm">
-                      {game.game_date ? formatGameDate(game.game_date) : '-'}
-                    </TableCell>
-                    <TableCell className="text-center text-sm">
-                      {game.game_date ? formatGameTime(game.game_date) : '-'}
+                      <div>
+                        {game.game_date ? formatGameDate(game.game_date) : '-'}
+                      </div>
+                      <div>
+                        {game.game_date ? formatGameTime(game.game_date) : '-'}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       {game.league ? (
@@ -110,10 +110,7 @@ const GamesTable = ({
                       ) : '-'}
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      {game.away_team}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {game.home_team}
+                      <div>{game.away_team} - {game.home_team}</div>
                     </TableCell>
                     <TableCell className="text-center font-medium">
                       {game.game_number}
