@@ -11,6 +11,7 @@ export const useUserBets = (roundId?: string) => {
   return useQuery({
     queryKey: ['user-bets', roundId],
     queryFn: async () => {
+      console.log('🔍 Fetching user bets for round:', roundId);
       let query = supabase
         .from('user_bets')
         .select(`
@@ -24,7 +25,12 @@ export const useUserBets = (roundId?: string) => {
       
       const { data, error } = await query.order('submitted_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching user bets:', error);
+        throw error;
+      }
+      
+      console.log('✅ Fetched user bets:', data?.length || 0, 'bets');
       return data as UserBetWithPredictions[];
     },
     enabled: !!roundId
@@ -39,6 +45,8 @@ export const useMyBetForRound = (roundId?: string) => {
     queryFn: async () => {
       if (!user?.id || !roundId) return null;
       
+      console.log('🔍 Fetching my bet for round:', roundId, 'user:', user.id);
+      
       const { data, error } = await supabase
         .from('user_bets')
         .select(`
@@ -49,7 +57,12 @@ export const useMyBetForRound = (roundId?: string) => {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching my bet:', error);
+        throw error;
+      }
+      
+      console.log('✅ My bet data:', data);
       return data as UserBetWithPredictions | null;
     },
     enabled: !!user?.id && !!roundId
@@ -68,6 +81,8 @@ export const useSubmitBet = () => {
       roundId: string; 
       predictions: { gameId: string; predictions: string[]; isDouble: boolean }[] 
     }) => {
+      console.log('🚀 Starting bet submission...', { roundId, predictionsCount: predictions.length });
+      
       if (!user?.id) throw new Error('User not authenticated');
       
       // Enhanced validation - check the new rules
@@ -115,7 +130,7 @@ export const useSubmitBet = () => {
       
       if (existingBet) {
         // Update existing bet
-        console.log('Found existing bet, updating it...');
+        console.log('Found existing bet, updating it...', existingBet.id);
         
         // First, delete existing predictions
         const { error: deleteError } = await supabase
@@ -158,19 +173,33 @@ export const useSubmitBet = () => {
         is_double: p.isDouble
       }));
       
+      console.log('Inserting predictions...', predictionInserts.length);
+      
       const { error: predictionsError } = await supabase
         .from('bet_predictions')
         .insert(predictionInserts);
       
       if (predictionsError) throw predictionsError;
       
+      console.log('✅ Bet submitted successfully!', { betId, roundId });
+      
       return { id: betId, roundId };
     },
     onSuccess: (data) => {
+      console.log('🔄 Invalidating queries after successful submission...', data);
+      
       // Invalidate all relevant queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['user-bets', data.roundId] });
       queryClient.invalidateQueries({ queryKey: ['my-bet', data.roundId] });
       queryClient.invalidateQueries({ queryKey: ['user-bets'] }); // Also invalidate general user-bets query
+      
+      console.log('✅ Query invalidation completed');
+      
+      // Force a refetch after a small delay to ensure the data is updated
+      setTimeout(() => {
+        console.log('🔄 Force refetching user bets...');
+        queryClient.refetchQueries({ queryKey: ['user-bets', data.roundId] });
+      }, 500);
     }
   });
 };
