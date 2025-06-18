@@ -55,11 +55,28 @@ serve(async (req) => {
       console.log('Processing Excel data with', excelData.length, 'games')
       
       try {
-        gamesData = excelData.slice(0, 16).map((game, index) => ({
-          homeTeam: { name: game.homeTeam },
-          awayTeam: { name: game.awayTeam },
-          utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-        }))
+        gamesData = excelData.slice(0, 16).map((game, index) => {
+          // Parse game date if provided
+          let gameDate = new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+          if (game.gameDate) {
+            try {
+              // Try to parse the provided date
+              const parsedDate = new Date(game.gameDate)
+              if (!isNaN(parsedDate.getTime())) {
+                gameDate = parsedDate.toISOString()
+              }
+            } catch (e) {
+              console.log('Failed to parse date:', game.gameDate, 'using default')
+            }
+          }
+          
+          return {
+            homeTeam: { name: game.homeTeam },
+            awayTeam: { name: game.awayTeam },
+            utcDate: gameDate,
+            league: game.league || null
+          }
+        })
         
         dataSource = 'Excel File'
         console.log('Successfully processed Excel data with', gamesData.length, 'games')

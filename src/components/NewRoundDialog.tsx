@@ -56,15 +56,23 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          // Process the data to extract games
+          // Process the data according to the new structure
           const games = [];
           for (let i = 1; i < jsonData.length && games.length < 16; i++) {
             const row = jsonData[i] as any[];
-            if (row && row.length >= 2 && row[0] && row[1]) {
-              games.push({
-                homeTeam: String(row[0]).trim(),
-                awayTeam: String(row[1]).trim()
-              });
+            if (row && row.length >= 3 && row[0] && row[1] && row[2]) {
+              // Parse the teams from column C (format: "Team1 - Team2")
+              const teamsString = String(row[2]).trim();
+              const teamsParts = teamsString.split(' - ');
+              
+              if (teamsParts.length >= 2) {
+                games.push({
+                  gameDate: row[0] ? String(row[0]).trim() : null,
+                  league: row[1] ? String(row[1]).trim() : null,
+                  homeTeam: teamsParts[0].trim(),
+                  awayTeam: teamsParts[1].trim()
+                });
+              }
             }
           }
           
@@ -257,6 +265,13 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
               <p className="text-sm text-gray-600">
                 גרור קובץ אקסל (*.xlsx) או תמונה, הדבק מהלוח או לחץ לבחירת קובץ
               </p>
+              <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
+                <strong>מבנה קובץ האקסל:</strong><br/>
+                עמודה A: תאריך ושעה<br/>
+                עמודה B: ליגה<br/>
+                עמודה C: קבוצות (קבוצת בית - קבוצת חוץ)<br/>
+                עמודות נוספות: סימונים (1, X, 2)
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div
@@ -310,9 +325,6 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                     <div>
                       <p className="text-lg font-medium">גרור קובץ אקסל או תמונה לכאן</p>
                       <p className="text-sm text-gray-500">או הדבק תמונה עם Ctrl+V</p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        קובץ אקסל: עמודה A = קבוצת בית, עמודה B = קבוצת חוץ
-                      </p>
                     </div>
                     <Button
                       variant="outline"
