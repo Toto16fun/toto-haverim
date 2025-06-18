@@ -56,28 +56,62 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
+          console.log('Excel data parsed:', jsonData);
+          console.log('Total rows:', jsonData.length);
+          
           // Process the data according to the new structure
           const games = [];
           for (let i = 1; i < jsonData.length && games.length < 16; i++) {
             const row = jsonData[i] as any[];
-            if (row && row.length >= 3 && row[0] && row[1] && row[2]) {
-              // Parse the teams from column C (format: "Team1 - Team2")
-              const teamsString = String(row[2]).trim();
-              const teamsParts = teamsString.split(' - ');
+            console.log(`Processing row ${i}:`, row);
+            
+            if (row && row.length >= 3) {
+              const dateValue = row[0];
+              const leagueValue = row[1];
+              const teamsValue = row[2];
               
-              if (teamsParts.length >= 2) {
-                games.push({
-                  gameDate: row[0] ? String(row[0]).trim() : null,
-                  league: row[1] ? String(row[1]).trim() : null,
-                  homeTeam: teamsParts[0].trim(),
-                  awayTeam: teamsParts[1].trim()
-                });
+              console.log('Date:', dateValue, 'League:', leagueValue, 'Teams:', teamsValue);
+              
+              if (teamsValue && typeof teamsValue === 'string') {
+                // Try different separators for teams
+                const separators = [' - ', ' VS ', ' נגד ', ' ضد ', '-', 'VS', 'נגד'];
+                let teamsParts = null;
+                
+                for (const separator of separators) {
+                  if (teamsValue.includes(separator)) {
+                    teamsParts = teamsValue.split(separator);
+                    break;
+                  }
+                }
+                
+                if (teamsParts && teamsParts.length >= 2) {
+                  const homeTeam = teamsParts[0].trim();
+                  const awayTeam = teamsParts[1].trim();
+                  
+                  if (homeTeam && awayTeam) {
+                    console.log(`Adding game: ${homeTeam} vs ${awayTeam}`);
+                    games.push({
+                      gameDate: dateValue ? String(dateValue).trim() : null,
+                      league: leagueValue ? String(leagueValue).trim() : null,
+                      homeTeam: homeTeam,
+                      awayTeam: awayTeam
+                    });
+                  }
+                } else {
+                  console.log('Could not parse teams from:', teamsValue);
+                }
+              } else {
+                console.log('Teams value is invalid:', teamsValue);
               }
+            } else {
+              console.log(`Row ${i} has insufficient columns:`, row);
             }
           }
           
+          console.log('Final games array:', games);
           resolve(games);
         } catch (error) {
+          console.error('Error parsing Excel:', error);
           reject(error);
         }
       };
@@ -178,10 +212,17 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       try {
         if (fileType === 'excel') {
           // Parse Excel file
+          console.log('Starting Excel parsing...');
           const games = await parseExcelFile(selectedFile);
+          console.log('Excel parsing complete, games found:', games.length);
           
           if (games.length === 0) {
-            throw new Error('לא נמצאו משחקים בקובץ האקסל');
+            toast({
+              title: "לא נמצאו משחקים",
+              description: "וודא שקובץ האקסל מכיל נתונים בעמודות A, B, C כפי שמתואר",
+              variant: "destructive"
+            });
+            return;
           }
           
           // Call fetch-games with parsed Excel data
@@ -212,8 +253,8 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
         
         setStep('confirm');
         toast({
-          title: "מחזור נוצר",
-          description: `מחזור ${nextRoundNumber} נוצר. תוכל להוסיף משחקים ידנית מעמוד הניהול`,
+          title: "שגיאה בעיבוד הקובץ",
+          description: `מחזור ${nextRoundNumber} נוצר אבל לא הצלחנו לעבד את הקובץ. תוכל להוסיף משחקים ידנית`,
           variant: "default"
         });
       }
@@ -270,7 +311,10 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                 עמודה A: תאריך ושעה<br/>
                 עמודה B: ליגה<br/>
                 עמודה C: קבוצות (קבוצת בית - קבוצת חוץ)<br/>
-                עמודות נוספות: סימונים (1, X, 2)
+                עמודות נוספות: סימונים (1, X, 2)<br/>
+                <br/>
+                <strong>דוגמאות לפורמט הקבוצות:</strong><br/>
+                "ברצלונה - ריאל מדריד" או "ברצלונה VS ריאל מדריד"
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
