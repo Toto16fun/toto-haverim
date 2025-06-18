@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables, TablesInsert } from '@/integrations/supabase/types';
@@ -165,11 +164,13 @@ export const useSubmitBet = () => {
       
       if (predictionsError) throw predictionsError;
       
-      return { id: betId };
+      return { id: betId, roundId };
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['user-bets', variables.roundId] });
-      queryClient.invalidateQueries({ queryKey: ['my-bet', variables.roundId] });
+    onSuccess: (data) => {
+      // Invalidate all relevant queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ['user-bets', data.roundId] });
+      queryClient.invalidateQueries({ queryKey: ['my-bet', data.roundId] });
+      queryClient.invalidateQueries({ queryKey: ['user-bets'] }); // Also invalidate general user-bets query
     }
   });
 };
