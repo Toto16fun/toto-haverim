@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateRound, useTotoRounds } from '@/hooks/useTotoRounds';
 import { useFetchGames } from '@/hooks/useFetchGames';
-import { Upload, Image, X, Check } from 'lucide-react';
+import { Upload, Image, X, Check, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface NewRoundDialogProps {
   open: boolean;
@@ -19,6 +19,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [currentRoundId, setCurrentRoundId] = useState<string>('');
   const [step, setStep] = useState<'upload' | 'confirm'>('upload');
+  const [fileType, setFileType] = useState<'image' | 'excel' | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -32,6 +33,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     setPreviewUrl('');
     setCurrentRoundId('');
     setIsDragOver(false);
+    setFileType(null);
   };
 
   // Calculate next round number (starting from 1)
@@ -41,6 +43,39 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     }
     const maxRoundNumber = Math.max(...existingRounds.map(round => round.round_number));
     return maxRoundNumber + 1;
+  };
+
+  const parseExcelFile = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Process the data to extract games
+          const games = [];
+          for (let i = 1; i < jsonData.length && games.length < 16; i++) {
+            const row = jsonData[i] as any[];
+            if (row && row.length >= 2 && row[0] && row[1]) {
+              games.push({
+                homeTeam: String(row[0]).trim(),
+                awayTeam: String(row[1]).trim()
+              });
+            }
+          }
+          
+          resolve(games);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   const convertToBase64 = (file: File): Promise<string> => {
@@ -53,14 +88,27 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
   };
 
   const handleFileSelect = (file: File) => {
-    if (file && file.type.startsWith('image/')) {
+    const isImage = file.type.startsWith('image/');
+    const isExcel = file.type.includes('sheet') || 
+                   file.name.endsWith('.xlsx') || 
+                   file.name.endsWith('.xls') ||
+                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                   file.type === 'application/vnd.ms-excel';
+
+    if (isImage || isExcel) {
       setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      setFileType(isImage ? 'image' : 'excel');
+      
+      if (isImage) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        setPreviewUrl('');
+      }
     } else {
       toast({
         title: "קובץ לא תקין",
-        description: "אנא בחר קובץ תמונה בלבד",
+        description: "אנא בחר קובץ תמונה או אקסל בלבד",
         variant: "destructive"
       });
     }
@@ -101,8 +149,8 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
   const handleAnalyzeAndConfirm = async () => {
     if (!selectedFile) {
       toast({
-        title: "חסרה תמונה",
-        description: "אנא בחר תמונה תחילה",
+        title: "חסר קובץ",
+        description: "אנא בחר קובץ תחילה",
         variant: "destructive"
       });
       return;
@@ -119,14 +167,29 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       
       setCurrentRoundId(roundResult.id);
       
-      // Try to analyze image and fetch games
-      const base64Image = await convertToBase64(selectedFile);
-      
       try {
-        await fetchGames.mutateAsync({ 
-          roundId: roundResult.id, 
-          imageData: base64Image 
-        });
+        if (fileType === 'excel') {
+          // Parse Excel file
+          const games = await parseExcelFile(selectedFile);
+          
+          if (games.length === 0) {
+            throw new Error('לא נמצאו משחקים בקובץ האקסל');
+          }
+          
+          // Call fetch-games with parsed Excel data
+          await fetchGames.mutateAsync({ 
+            roundId: roundResult.id, 
+            excelData: games 
+          });
+          
+        } else {
+          // Handle image file
+          const base64Image = await convertToBase64(selectedFile);
+          await fetchGames.mutateAsync({ 
+            roundId: roundResult.id, 
+            imageData: base64Image 
+          });
+        }
         
         setStep('confirm');
         
@@ -136,8 +199,8 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
         });
         
       } catch (fetchError: any) {
-        // If AI analysis fails, still proceed to confirmation step
-        console.log('AI analysis failed, proceeding with empty round:', fetchError);
+        // If analysis fails, still proceed to confirmation step
+        console.log('File analysis failed, proceeding with empty round:', fetchError);
         
         setStep('confirm');
         toast({
@@ -148,7 +211,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       }
       
     } catch (error) {
-      console.error('Error creating round and analyzing image:', error);
+      console.error('Error creating round and analyzing file:', error);
       toast({
         title: "שגיאה ביצירת המחזור",
         description: "לא הצלחנו ליצור את המחזור. נסה שוב מאוחר יותר.",
@@ -188,11 +251,11 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                העלה צילום מסך של המשחקים
+                <FileSpreadsheet className="h-5 w-5" />
+                העלה קובץ אקסל או תמונה של המשחקים
               </CardTitle>
               <p className="text-sm text-gray-600">
-                גרור קובץ, הדבק מהלוח או לחץ לבחירת קובץ
+                גרור קובץ אקסל (*.xlsx) או תמונה, הדבק מהלוח או לחץ לבחירת קובץ
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -209,33 +272,47 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                 tabIndex={0}
                 style={{ outline: 'none' }}
               >
-                {previewUrl ? (
+                {selectedFile ? (
                   <div className="space-y-4">
-                    <img 
-                      src={previewUrl} 
-                      alt="תצוגה מקדימה" 
-                      className="max-w-full h-auto rounded-md mx-auto"
-                      style={{ maxHeight: '300px' }}
-                    />
+                    {fileType === 'image' && previewUrl ? (
+                      <img 
+                        src={previewUrl} 
+                        alt="תצוגה מקדימה" 
+                        className="max-w-full h-auto rounded-md mx-auto"
+                        style={{ maxHeight: '300px' }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center space-x-2">
+                        <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                        <span className="text-lg font-medium">{selectedFile.name}</span>
+                      </div>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
                         setSelectedFile(null);
                         setPreviewUrl('');
+                        setFileType(null);
                       }}
                       className="flex items-center gap-2"
                     >
                       <X className="h-4 w-4" />
-                      הסר תמונה
+                      הסר קובץ
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                    <div className="flex justify-center space-x-4">
+                      <FileSpreadsheet className="h-12 w-12 text-green-400" />
+                      <Image className="h-12 w-12 text-blue-400" />
+                    </div>
                     <div>
-                      <p className="text-lg font-medium">גרור תמונה לכאן</p>
-                      <p className="text-sm text-gray-500">או הדבק עם Ctrl+V</p>
+                      <p className="text-lg font-medium">גרור קובץ אקסל או תמונה לכאן</p>
+                      <p className="text-sm text-gray-500">או הדבק תמונה עם Ctrl+V</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        קובץ אקסל: עמודה A = קבוצת בית, עמודה B = קבוצת חוץ
+                      </p>
                     </div>
                     <Button
                       variant="outline"
@@ -252,7 +329,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileSelect(file);
@@ -268,10 +345,10 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                 {createRound.isPending || fetchGames.isPending ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    יוצר מחזור ומנתח תמונה...
+                    יוצר מחזור ומעבד קובץ...
                   </>
                 ) : (
-                  'צור מחזור ונתח משחקים'
+                  'צור מחזור ועבד משחקים'
                 )}
               </Button>
             </CardContent>

@@ -8,11 +8,15 @@ export const useFetchGames = () => {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ roundId, imageData }: { roundId: string; imageData?: string }) => {
+    mutationFn: async ({ roundId, imageData, excelData }: { 
+      roundId: string; 
+      imageData?: string; 
+      excelData?: any[] 
+    }) => {
       console.log('Calling fetch-games function for round:', roundId);
       
       const { data, error } = await supabase.functions.invoke('fetch-games', {
-        body: { roundId, imageData }
+        body: { roundId, imageData, excelData }
       });
       
       if (error) {
@@ -32,11 +36,12 @@ export const useFetchGames = () => {
       if (data.requiresManualInput) {
         toast({
           title: "מחזור נוצר בהצלחה",
-          description: "לא הצלחנו לחלץ את המשחקים מהתמונה. אנא הוסף את המשחקים ידנית בעמוד הניהול.",
+          description: "לא הצלחנו לחלץ את המשחקים מהקובץ. אנא הוסף את המשחקים ידנית בעמוד הניהול.",
           variant: "default"
         });
       } else {
         const source = data.source === 'Image Analysis' ? 'מניתוח תמונה' : 
+                       data.source === 'Excel File' ? 'מקובץ אקסל' :
                        data.source === 'ChatGPT AI' ? 'מ-ChatGPT' : 'ידנית';
         
         toast({
