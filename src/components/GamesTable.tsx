@@ -77,14 +77,14 @@ const GamesTable = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">תאריך ושעה</TableHead>
-                <TableHead className="text-center">ליגה</TableHead>
-                <TableHead className="text-center">איזו וי</TableHead>
-                <TableHead className="text-center">#</TableHead>
-                <TableHead className="text-center">1</TableHead>
-                <TableHead className="text-center">X</TableHead>
-                <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">כפול</TableHead>
+                <TableHead className="text-center">2</TableHead>
+                <TableHead className="text-center">X</TableHead>
+                <TableHead className="text-center">1</TableHead>
+                <TableHead className="text-center">#</TableHead>
+                <TableHead className="text-center">איזו וי</TableHead>
+                <TableHead className="text-center">ליגה</TableHead>
+                <TableHead className="text-center">תאריך ושעה</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -94,28 +94,14 @@ const GamesTable = ({
                 
                 return (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center text-sm">
-                      <div>
-                        {game.game_date ? formatGameDate(game.game_date) : '-'}
-                      </div>
-                      <div>
-                        {game.game_date ? formatGameTime(game.game_date) : '-'}
-                      </div>
-                    </TableCell>
                     <TableCell className="text-center">
-                      {game.league ? (
-                        <Badge variant="outline" className="text-xs">
-                          {game.league}
+                      {isDouble && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
+                          כפול
                         </Badge>
-                      ) : '-'}
+                      )}
                     </TableCell>
-                    <TableCell className="text-center font-medium">
-                      <div>{game.away_team} - {game.home_team}</div>
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
-                    {options.map(option => (
+                    {options.reverse().map(option => (
                       <TableCell key={option} className="text-center">
                         <Button
                           variant={gamePredictions.includes(option) ? "default" : "outline"}
@@ -132,12 +118,26 @@ const GamesTable = ({
                         </Button>
                       </TableCell>
                     ))}
+                    <TableCell className="text-center font-medium">
+                      {game.game_number}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      <div>{game.away_team} - {game.home_team}</div>
+                    </TableCell>
                     <TableCell className="text-center">
-                      {isDouble && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                          כפול
+                      {game.league ? (
+                        <Badge variant="outline" className="text-xs">
+                          {game.league}
                         </Badge>
-                      )}
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      <div>
+                        {game.game_date ? formatGameDate(game.game_date) : '-'}
+                      </div>
+                      <div>
+                        {game.game_date ? formatGameTime(game.game_date) : '-'}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
