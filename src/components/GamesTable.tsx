@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +20,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['1', 'X', '2']; // Display in correct order: 1, X, 2 from right to left
+  const displayOptions = ['2', 'X', '1']; // Display from right to left: 1, X, 2
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -131,14 +130,14 @@ const GamesTable = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">כפול</TableHead>
-                <TableHead className="text-center">1</TableHead>
-                <TableHead className="text-center">X</TableHead>
-                <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">#</TableHead>
                 <TableHead className="text-center">קבוצות</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
                 <TableHead className="text-center">תאריך ושעה</TableHead>
+                <TableHead className="text-center">1</TableHead>
+                <TableHead className="text-center">X</TableHead>
+                <TableHead className="text-center">2</TableHead>
+                <TableHead className="text-center">כפול</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -148,30 +147,6 @@ const GamesTable = ({
                 
                 return (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center">
-                      {isDouble && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                          כפול
-                        </Badge>
-                      )}
-                    </TableCell>
-                    {displayOptions.map(option => (
-                      <TableCell key={option} className="text-center">
-                        <Button
-                          variant={gamePredictions.includes(option) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleOptionClick(game.id, option)}
-                          disabled={isReadOnly}
-                          className={`w-8 h-8 ${
-                            gamePredictions.includes(option) 
-                              ? 'bg-green-600 hover:bg-green-700' 
-                              : ''
-                          }`}
-                        >
-                          {option}
-                        </Button>
-                      </TableCell>
-                    ))}
                     <TableCell className="text-center font-medium">
                       {game.game_number}
                     </TableCell>
@@ -192,6 +167,30 @@ const GamesTable = ({
                       <div>
                         {game.game_date ? formatGameTime(game.game_date) : '-'}
                       </div>
+                    </TableCell>
+                    {displayOptions.reverse().map(option => (
+                      <TableCell key={option} className="text-center">
+                        <Button
+                          variant={gamePredictions.includes(option) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleOptionClick(game.id, option)}
+                          disabled={isReadOnly}
+                          className={`w-8 h-8 ${
+                            gamePredictions.includes(option) 
+                              ? 'bg-green-600 hover:bg-green-700' 
+                              : ''
+                          }`}
+                        >
+                          {option}
+                        </Button>
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-center">
+                      {isDouble && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
+                          כפול
+                        </Badge>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
