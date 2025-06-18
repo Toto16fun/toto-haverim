@@ -80,8 +80,8 @@ const GamesTable = ({
                 <TableHead className="text-center">תאריך</TableHead>
                 <TableHead className="text-center">שעה</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
-                <TableHead className="text-center">קבוצת בית</TableHead>
                 <TableHead className="text-center">קבוצת חוץ</TableHead>
+                <TableHead className="text-center">קבוצת בית</TableHead>
                 <TableHead className="text-center">משחק</TableHead>
                 <TableHead className="text-center">1</TableHead>
                 <TableHead className="text-center">X</TableHead>
@@ -110,10 +110,10 @@ const GamesTable = ({
                       ) : '-'}
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      {game.home_team}
+                      {game.away_team}
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      {game.away_team}
+                      {game.home_team}
                     </TableCell>
                     <TableCell className="text-center font-medium">
                       {game.game_number}
