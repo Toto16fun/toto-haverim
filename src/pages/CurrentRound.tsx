@@ -122,7 +122,7 @@ const CurrentRound = () => {
               </CardHeader>
             </Card>
 
-            {/* Games Table */}
+            {/* Games Table - Overview */}
             {games && games.length > 0 && (
               <GamesTable
                 games={games}
