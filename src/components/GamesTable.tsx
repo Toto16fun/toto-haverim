@@ -77,12 +77,12 @@ const GamesTable = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">משחק</TableHead>
                 <TableHead className="text-center">תאריך</TableHead>
                 <TableHead className="text-center">שעה</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
                 <TableHead className="text-center">קבוצת בית</TableHead>
                 <TableHead className="text-center">קבוצת חוץ</TableHead>
+                <TableHead className="text-center">משחק</TableHead>
                 <TableHead className="text-center">1</TableHead>
                 <TableHead className="text-center">X</TableHead>
                 <TableHead className="text-center">2</TableHead>
@@ -96,9 +96,6 @@ const GamesTable = ({
                 
                 return (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
                     <TableCell className="text-center text-sm">
                       {game.game_date ? formatGameDate(game.game_date) : '-'}
                     </TableCell>
@@ -117,6 +114,9 @@ const GamesTable = ({
                     </TableCell>
                     <TableCell className="text-center font-medium">
                       {game.away_team}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {game.game_number}
                     </TableCell>
                     {options.map(option => (
                       <TableCell key={option} className="text-center">

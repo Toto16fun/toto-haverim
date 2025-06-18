@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables, TablesInsert } from '@/integrations/supabase/types';
 
 export type TotoRound = Tables<'toto_rounds'>;
-export type Game = Tables<'games'>;
+export type Game = Tables<'games'> & { league?: string | null };
 export type UserBet = Tables<'user_bets'>;
 export type BetPrediction = Tables<'bet_predictions'>;
 
