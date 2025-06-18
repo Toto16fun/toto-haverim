@@ -16,7 +16,7 @@ export const useUserBets = (roundId?: string) => {
         .from('user_bets')
         .select(`
           *,
-          bet_predictions (*)
+          bet_predictions!bet_predictions_bet_id_fkey (*)
         `);
       
       if (roundId) {
@@ -51,7 +51,7 @@ export const useMyBetForRound = (roundId?: string) => {
         .from('user_bets')
         .select(`
           *,
-          bet_predictions (*)
+          bet_predictions!bet_predictions_bet_id_fkey (*)
         `)
         .eq('round_id', roundId)
         .eq('user_id', user.id)
