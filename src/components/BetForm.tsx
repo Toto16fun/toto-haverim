@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import GamesTable from './GamesTable';
 import { Game } from '@/hooks/useTotoRounds';
 import { useSubmitBet, useUpdateBet } from '@/hooks/useUserBets';
@@ -56,8 +57,27 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     }));
   };
 
+  // Calculate validation status
+  const getValidationStatus = () => {
+    const predictionsList = Object.entries(predictions)
+      .filter(([_, p]) => p.predictions.length > 0);
+    
+    const doubleCount = predictionsList.filter(([_, p]) => p.isDouble).length;
+    const allGamesFilled = predictionsList.length === games.length;
+    const exactlyThreeDoubles = doubleCount === 3;
+
+    return {
+      allGamesFilled,
+      exactlyThreeDoubles,
+      doubleCount,
+      canSubmit: allGamesFilled && exactlyThreeDoubles && !isReadOnly
+    };
+  };
+
+  const validation = getValidationStatus();
+
   const handleSubmit = async () => {
-    if (isReadOnly) return;
+    if (isReadOnly || !validation.canSubmit) return;
     
     const predictionsList = Object.entries(predictions)
       .filter(([_, p]) => p.predictions.length > 0)
@@ -66,19 +86,9 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
         predictions: p.predictions,
         isDouble: p.isDouble
       }));
-    
-    if (predictionsList.length !== games.length) {
-      toast({
-        title: "טור לא שלם",
-        description: "יש למלא ניחוש לכל המשחקים",
-        variant: "destructive"
-      });
-      return;
-    }
 
     try {
       if (existingBet) {
-        // Update existing bet
         await updateBet.mutateAsync({
           betId: existingBet.id,
           predictions: predictionsList
@@ -89,7 +99,6 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           description: "השינויים שלך נשמרו במערכת"
         });
       } else {
-        // Create new bet
         await submitBet.mutateAsync({
           roundId,
           predictions: predictionsList
@@ -109,29 +118,91 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     }
   };
 
-  const getCardTitle = () => {
+  const getStatusDisplay = () => {
     if (isDeadlinePassed) {
-      return existingBet ? 'הטור שלך (נעול)' : 'טור לא הוגש';
+      return {
+        status: "מחזור נעול",
+        color: "bg-red-100 text-red-800",
+        message: `הדדליין עבר: ${new Date(deadline).toLocaleString('he-IL')}`
+      };
     }
-    return existingBet ? 'ערוך את הטור שלך' : 'מלא את הטור שלך';
+
+    if (existingBet) {
+      return {
+        status: "טור הוגש - עריכה אפשרית",
+        color: "bg-green-100 text-green-800",
+        message: `עריכה אפשרית עד: ${new Date(deadline).toLocaleString('he-IL')}`
+      };
+    }
+
+    return {
+      status: "טור טיוטה",
+      color: "bg-yellow-100 text-yellow-800",
+      message: `הגשה עד: ${new Date(deadline).toLocaleString('he-IL')}`
+    };
   };
+
+  const statusDisplay = getStatusDisplay();
+
+  const getValidationMessage = () => {
+    if (isDeadlinePassed) return null;
+
+    const messages = [];
+    
+    if (!validation.allGamesFilled) {
+      messages.push(`יש למלא את כל המשחקים (${Object.keys(predictions).filter(k => predictions[k].predictions.length > 0).length}/${games.length})`);
+    }
+    
+    if (!validation.exactlyThreeDoubles) {
+      messages.push(`יש לבחור בדיוק 3 כפולים (נבחרו ${validation.doubleCount})`);
+    }
+
+    return messages;
+  };
+
+  const validationMessages = getValidationMessage();
 
   return (
     <div className="space-y-4">
+      {/* Status Card */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {getCardTitle()}
-          </CardTitle>
-          {!isDeadlinePassed && (
-            <p className="text-sm text-gray-600">
-              עריכה אפשרית עד: {new Date(deadline).toLocaleString('he-IL')}
-            </p>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">
+              {isDeadlinePassed 
+                ? existingBet ? 'הטור שלך (נעול)' : 'טור לא הוגש'
+                : existingBet ? 'ערוך את הטור שלך' : 'מלא את הטור שלך'}
+            </CardTitle>
+            <Badge className={statusDisplay.color}>
+              {statusDisplay.status}
+            </Badge>
+          </div>
+          <p className="text-sm text-gray-600">
+            {statusDisplay.message}
+          </p>
+          
+          {/* Validation Messages */}
+          {!isDeadlinePassed && validationMessages && validationMessages.length > 0 && (
+            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <p className="text-sm font-medium text-orange-800 mb-1">דרישות להגשה:</p>
+              <ul className="text-sm text-orange-700 space-y-1">
+                {validationMessages.map((message, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                    {message}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
-          {isDeadlinePassed && (
-            <p className="text-sm text-red-600">
-              זמן ההגשה הסתיים: {new Date(deadline).toLocaleString('he-IL')}
-            </p>
+
+          {/* Success Message */}
+          {!isDeadlinePassed && validation.canSubmit && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800">
+                ✓ הטור מוכן להגשה!
+              </p>
+            </div>
           )}
         </CardHeader>
       </Card>
@@ -148,7 +219,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
         <Button 
           onClick={handleSubmit}
           className="w-full"
-          disabled={submitBet.isPending || updateBet.isPending}
+          disabled={!validation.canSubmit || submitBet.isPending || updateBet.isPending}
         >
           {submitBet.isPending || updateBet.isPending 
             ? 'שומר...' 
@@ -160,8 +231,9 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       )}
       
       {isDeadlinePassed && !existingBet && (
-        <div className="text-center py-4 text-gray-600">
-          לא הוגש טור למחזור זה
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-600 text-lg font-medium mb-2">לא הוגש טור למחזור זה</p>
+          <p className="text-sm text-gray-500">הדדליין עבר ולא ניתן עוד להגיש טור</p>
         </div>
       )}
     </div>

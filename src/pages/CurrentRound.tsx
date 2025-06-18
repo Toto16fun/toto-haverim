@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, User, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
@@ -48,6 +50,9 @@ const CurrentRound = () => {
     );
   }
 
+  // Check if deadline has passed
+  const isDeadlinePassed = currentRound && new Date() > new Date(currentRound.deadline);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
       <div className="max-w-full mx-auto">
@@ -84,17 +89,24 @@ const CurrentRound = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Round Status Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-center">
-                  מחזור {currentRound.round_number}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-center">
+                    מחזור {currentRound.round_number}
+                  </CardTitle>
+                  <Badge className={isDeadlinePassed ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
+                    {isDeadlinePassed ? "מחזור נעול" : "מחזור פעיל"}
+                  </Badge>
+                </div>
                 <p className="text-center text-gray-600">
-                  סגירה: {new Date(currentRound.deadline).toLocaleString('he-IL')}
+                  {isDeadlinePassed ? "נעול מאז:" : "סגירה:"} {new Date(currentRound.deadline).toLocaleString('he-IL')}
                 </p>
               </CardHeader>
             </Card>
 
+            {/* Games Table */}
             {games && games.length > 0 && (
               <GamesTable
                 games={games}
@@ -103,59 +115,90 @@ const CurrentRound = () => {
               />
             )}
 
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                טורים שהוגשו ({userBets?.length || 0})
-              </h2>
-              <div className="space-y-3">
-                {userBets?.map(bet => (
-                  <Card key={bet.id}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-500" />
-                          <div>
-                            <p className="font-medium">{bet.user_id === user.id ? 'הטור שלי' : `משתמש ${bet.user_id.slice(0, 8)}`}</p>
-                            <p className="text-sm text-gray-600">
-                              הוגש: {new Date(bet.submitted_at).toLocaleString('he-IL')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {bet.bet_predictions?.length || 0} ניחושים
-                        </div>
-                      </div>
-                      
-                      {bet.bet_predictions && bet.bet_predictions.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-gray-700">תחזיות:</h4>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {bet.bet_predictions.map(prediction => {
-                              const game = games?.find(g => g.id === prediction.game_id);
-                              return (
-                                <div key={prediction.id} className="flex justify-between bg-gray-50 p-2 rounded">
-                                  <span>משחק {game?.game_number || '?'}</span>
-                                  <span className="font-medium">
-                                    {prediction.predictions.join(', ')}
-                                    {prediction.is_double && ' (כפול)'}
-                                  </span>
+            {/* Submitted Bets Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  טורים שהוגשו ({userBets?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userBets && userBets.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-center">משתמש</TableHead>
+                          <TableHead className="text-center">זמן הגשה</TableHead>
+                          <TableHead className="text-center">כמות כפולים</TableHead>
+                          <TableHead className="text-center">משחקים עם ניחושים</TableHead>
+                          <TableHead className="text-center">פרטי הטור</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {userBets.map(bet => {
+                          const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
+                          const gameCount = bet.bet_predictions?.length || 0;
+                          
+                          return (
+                            <TableRow key={bet.id}>
+                              <TableCell className="text-center font-medium">
+                                <div className="flex items-center justify-center gap-2">
+                                  <User className="h-4 w-4 text-gray-500" />
+                                  {bet.user_id === user.id ? 'הטור שלי' : `משתמש ${bet.user_id.slice(0, 8)}`}
                                 </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {!userBets?.length && (
-                  <p className="text-gray-600 text-center py-4">
-                    עדיין לא הוגשו טורים
-                  </p>
+                              </TableCell>
+                              <TableCell className="text-center text-sm">
+                                {new Date(bet.submitted_at).toLocaleString('he-IL')}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant={doubleCount === 3 ? "default" : "destructive"}>
+                                  {doubleCount}/3
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant={gameCount === 16 ? "default" : "destructive"}>
+                                  {gameCount}/16
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {bet.bet_predictions && bet.bet_predictions.length > 0 && (
+                                  <div className="max-w-md">
+                                    <details className="cursor-pointer">
+                                      <summary className="text-blue-600 hover:text-blue-800">
+                                        הצג תחזיות
+                                      </summary>
+                                      <div className="mt-2 grid grid-cols-2 gap-1 text-xs bg-gray-50 p-2 rounded">
+                                        {bet.bet_predictions.map(prediction => {
+                                          const game = games?.find(g => g.id === prediction.game_id);
+                                          return (
+                                            <div key={prediction.id} className="flex justify-between">
+                                              <span>משחק {game?.game_number || '?'}</span>
+                                              <span className="font-medium">
+                                                {prediction.predictions.join(', ')}
+                                                {prediction.is_double && ' (כפול)'}
+                                              </span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </details>
+                                  </div>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-600">
+                    עדיין לא הוגשו טורים למחזור זה
+                  </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

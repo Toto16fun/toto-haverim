@@ -71,21 +71,37 @@ export const useSubmitBet = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
       
-      // Basic validation - check if predictions array is valid
+      // Enhanced validation - check the new rules
       if (!predictions || predictions.length === 0) {
         throw new Error('No predictions provided');
       }
+
+      // Validate that all games have predictions
+      if (predictions.length !== 16) {
+        throw new Error('All 16 games must have predictions');
+      }
       
-      // Validate prediction format
+      // Validate prediction format and count doubles
+      let doubleCount = 0;
       for (const pred of predictions) {
         if (!pred.gameId || !pred.predictions || pred.predictions.length === 0) {
           throw new Error('Invalid prediction format');
         }
+        
         // Check if predictions contain valid values
         const validPredictions = pred.predictions.every(p => ['1', 'X', '2'].includes(p));
         if (!validPredictions) {
           throw new Error('Invalid prediction values');
         }
+        
+        if (pred.isDouble) {
+          doubleCount++;
+        }
+      }
+
+      // Validate exactly 3 doubles
+      if (doubleCount !== 3) {
+        throw new Error(`Must have exactly 3 doubles, found ${doubleCount}`);
       }
       
       // Check if user already has a bet for this round
@@ -149,11 +165,16 @@ export const useUpdateBet = () => {
     }) => {
       if (!user?.id) throw new Error('User not authenticated');
       
-      // Basic validation - same as in submit
+      // Enhanced validation - same as submit
       if (!predictions || predictions.length === 0) {
         throw new Error('No predictions provided');
       }
-      
+
+      if (predictions.length !== 16) {
+        throw new Error('All 16 games must have predictions');
+      }
+
+      let doubleCount = 0;
       for (const pred of predictions) {
         if (!pred.gameId || !pred.predictions || pred.predictions.length === 0) {
           throw new Error('Invalid prediction format');
@@ -162,6 +183,14 @@ export const useUpdateBet = () => {
         if (!validPredictions) {
           throw new Error('Invalid prediction values');
         }
+        
+        if (pred.isDouble) {
+          doubleCount++;
+        }
+      }
+
+      if (doubleCount !== 3) {
+        throw new Error(`Must have exactly 3 doubles, found ${doubleCount}`);
       }
       
       // First, delete existing predictions
