@@ -20,6 +20,7 @@ const GameRow = ({
   isReadOnly = false 
 }: GameRowProps) => {
   const options = ['1', 'X', '2'];
+  const displayOptions = ['2', 'X', '1']; // Right to left display order - same as GamesTable
   
   const handleOptionClick = (option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -84,7 +85,7 @@ const GameRow = ({
           </div>
           
           <div className="flex gap-2 items-center">
-            {options.map(option => (
+            {displayOptions.map(option => (
               <Button
                 key={option}
                 variant={predictions.includes(option) ? "default" : "outline"}
