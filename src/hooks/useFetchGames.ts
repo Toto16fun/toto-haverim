@@ -20,11 +20,6 @@ export const useFetchGames = () => {
         throw error;
       }
       
-      // Check if the response indicates AI is not available
-      if (data && data.requiresManualInput) {
-        throw new Error('AI_NOT_AVAILABLE');
-      }
-      
       return data;
     },
     onSuccess: (data, variables) => {
@@ -34,30 +29,30 @@ export const useFetchGames = () => {
       queryClient.invalidateQueries({ queryKey: ['games', variables.roundId] });
       queryClient.invalidateQueries({ queryKey: ['toto-rounds'] });
       
-      const source = data.source === 'Image Analysis' ? 'מניתוח תמונה' : 
-                     data.source === 'ChatGPT AI' ? 'מ-ChatGPT' : 'ידנית';
-      
-      toast({
-        title: "משחקים נשלפו בהצלחה!",
-        description: `${data.games?.length || 16} משחקים התווספו למחזור (${source})`,
-      });
+      if (data.requiresManualInput) {
+        toast({
+          title: "מחזור נוצר בהצלחה",
+          description: "לא הצלחנו לחלץ את המשחקים מהתמונה. אנא הוסף את המשחקים ידנית בעמוד הניהול.",
+          variant: "default"
+        });
+      } else {
+        const source = data.source === 'Image Analysis' ? 'מניתוח תמונה' : 
+                       data.source === 'ChatGPT AI' ? 'מ-ChatGPT' : 'ידנית';
+        
+        toast({
+          title: "משחקים נשלפו בהצלחה!",
+          description: `${data.games?.length || 16} משחקים התווספו למחזור (${source})`,
+        });
+      }
     },
     onError: (error: any) => {
       console.error('Error fetching games:', error);
       
-      if (error.message === 'AI_NOT_AVAILABLE') {
-        toast({
-          title: "בינה מלאכותית לא זמינה",
-          description: "אנא הזן את המשחקים ידנית או נסה שוב מאוחר יותר",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "שגיאה בשליפת משחקים",
-          description: "לא הצלחנו לשלוף את המשחקים. נסה שוב מאוחר יותר.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "שגיאה בשליפת משחקים",
+        description: "לא הצלחנו לשלוף את המשחקים. המחזור נוצר עם משחקים ריקים שניתן לערוך ידנית.",
+        variant: "destructive"
+      });
     }
   });
 };

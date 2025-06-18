@@ -48,59 +48,43 @@ serve(async (req) => {
 
     let gamesData: any[] = []
     let dataSource = 'Manual Input Required'
+    let requiresManualInput = false
 
-    // Try to get games from OpenAI
+    // Try to get games from OpenAI only if API key exists and imageData is provided
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     
-    if (openAIApiKey) {
-      console.log('OpenAI API key found, attempting to analyze...')
+    if (openAIApiKey && imageData) {
+      console.log('OpenAI API key found, attempting to analyze image...')
       
       try {
-        // If imageData is provided, analyze the image
-        if (imageData) {
-          console.log('Analyzing uploaded image for games')
-          
-          const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openAIApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o',
-              messages: [
-                {
-                  role: 'system',
-                  content: `אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות טוטו 16. 
-                  התפקיד שלך הוא לחלץ במדויק את כל פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.
-                  חשוב להבין שהתמונה מכילה טבלה עם עמודות: ליגה, תאריך ושעה, מספר משחק, קבוצת בית נגד קבוצת חוץ.`
-                },
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: `אנא נתח את צילום המסך הזה של טוטו 16 וחלץ את כל המשחקים בדיוק כפי שהם מופיעים.
+        console.log('Analyzing uploaded image for games')
+        
+        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'system',
+                content: `אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות טוטו 16. 
+                התפקיד שלך הוא לחלץ במדויק את כל פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.`
+              },
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: `אנא נתח את צילום המסך הזה של טוטו 16 וחלץ את כל המשחקים.
 
-התמונה מציגה טבלה עם המידע הבא לכל משחק:
-- ליגה (למשל: פרמייר ליג, ליגה ספרדית, וכו')
-- תאריך ושעה של המשחק
-- מספר משחק (1-16)
-- קבוצת בית נגד קבוצת חוץ
-
-אנא צור טבלה מסודרת עם כל הפרטים האלה ואז חלץ את שמות הקבוצות.
-
-דוגמה לפורמט הטבלה שאני מצפה לראות:
-| מספר | ליגה | תאריך ושעה | קבוצת בית | קבוצת חוץ |
-|------|------|------------|-----------|----------|
-| 1    | פרמייר ליג | 15/06 20:30 | מנצ'סטר יונייטד | ליברפול |
-
-לאחר מכן, החזר את התוצאה בפורמט JSON הבא בלבד:
+החזר את התוצאה בפורמט JSON הבא בלבד:
 {
-  "table": "הטבלה המלאה בפורמט markdown",
   "games": [
-    {"gameNumber": 1, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ", "league": "שם הליגה", "datetime": "תאריך ושעה"},
-    {"gameNumber": 2, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ", "league": "שם הליגה", "datetime": "תאריך ושעה"}
+    {"gameNumber": 1, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"},
+    {"gameNumber": 2, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}
   ]
 }
 
@@ -108,191 +92,98 @@ serve(async (req) => {
 - וודא שאתה מחלץ בדיוק 16 משחקים
 - השתמש בשמות הקבוצות המדויקים מהתמונה
 - אל תמציא שמות קבוצות
-- שמור על הסדר המופיע בתמונה (משחק 1 עד 16)
-- כלול את כל הפרטים: ליגה, תאריך ושעה`
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: imageData,
-                        detail: 'high'
-                      }
+- כלול רק את ה-JSON, ללא טקסט נוסף`
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: {
+                      url: imageData,
+                      detail: 'high'
                     }
-                  ]
-                }
-              ],
-              temperature: 0,
-              max_tokens: 3000
-            })
+                  }
+                ]
+              }
+            ],
+            temperature: 0,
+            max_tokens: 2000
           })
+        })
 
-          console.log('OpenAI Response Status:', openAIResponse.status)
+        console.log('OpenAI Response Status:', openAIResponse.status)
 
-          if (openAIResponse.ok) {
-            const aiResult = await openAIResponse.json()
-            const content = aiResult.choices[0]?.message?.content
-            
-            console.log('OpenAI Image Analysis Response:', content)
-            
-            if (!content) {
-              console.error('No content in OpenAI response')
-              throw new Error('No content received from OpenAI')
-            }
-            
+        if (openAIResponse.ok) {
+          const aiResult = await openAIResponse.json()
+          const content = aiResult.choices[0]?.message?.content
+          
+          console.log('OpenAI Response Content:', content)
+          
+          if (content) {
             try {
-              // Clean the content - remove markdown formatting and extra text
-              let cleanedContent = content.trim()
+              // Try to extract JSON from the response
+              const jsonMatch = content.match(/\{[\s\S]*\}/)
               
-              // Remove markdown code blocks if present
-              cleanedContent = cleanedContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '')
-              
-              // Try to find JSON in the response
-              const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
-              
-              if (!jsonMatch) {
-                console.error('No JSON found in response. Full response:', cleanedContent)
-                throw new Error('No JSON structure found in AI response')
-              }
-              
-              const jsonString = jsonMatch[0]
-              console.log('Extracted JSON string:', jsonString)
-              
-              const parsedData = JSON.parse(jsonString)
-              console.log('Parsed data structure:', JSON.stringify(parsedData, null, 2))
-              
-              if (parsedData.table) {
-                console.log('Generated table:', parsedData.table)
-              }
-              
-              if (parsedData.games && Array.isArray(parsedData.games)) {
-                if (parsedData.games.length === 0) {
-                  console.error('Games array is empty')
-                  throw new Error('No games found in response')
-                }
+              if (jsonMatch) {
+                const parsedData = JSON.parse(jsonMatch[0])
+                console.log('Parsed data:', parsedData)
                 
-                console.log(`Found ${parsedData.games.length} games in response`)
-                
-                // Validate each game has required fields
-                const validGames = parsedData.games.filter((game, index) => {
-                  const isValid = game.homeTeam && game.awayTeam && 
+                if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+                  const validGames = parsedData.games.filter(game => 
+                    game.homeTeam && game.awayTeam && 
                     typeof game.homeTeam === 'string' && 
                     typeof game.awayTeam === 'string' &&
                     game.homeTeam.trim() !== '' && 
                     game.awayTeam.trim() !== ''
+                  )
                   
-                  if (!isValid) {
-                    console.error(`Invalid game at index ${index}:`, game)
+                  if (validGames.length > 0) {
+                    console.log(`Successfully extracted ${validGames.length} games from image`)
+                    
+                    gamesData = validGames.slice(0, 16).map((game, index) => ({
+                      homeTeam: { name: game.homeTeam.trim() },
+                      awayTeam: { name: game.awayTeam.trim() },
+                      utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                    }))
+                    
+                    dataSource = 'Image Analysis'
+                  } else {
+                    throw new Error('No valid games found in response')
                   }
-                  
-                  return isValid
-                })
-                
-                if (validGames.length === 0) {
-                  console.error('No valid games found. All games:', parsedData.games)
-                  throw new Error('No valid games with homeTeam and awayTeam found')
+                } else {
+                  throw new Error('Invalid games data structure')
                 }
-                
-                console.log(`Validated ${validGames.length} games out of ${parsedData.games.length}`)
-                
-                gamesData = validGames.slice(0, 16).map((game, index) => ({
-                  homeTeam: { name: game.homeTeam.trim() },
-                  awayTeam: { name: game.awayTeam.trim() },
-                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString(),
-                  league: game.league || '',
-                  datetime: game.datetime || ''
-                }))
-                
-                dataSource = 'Image Analysis with Table Structure'
-                console.log(`Successfully extracted ${gamesData.length} games from image:`)
-                gamesData.forEach((game, index) => {
-                  console.log(`${index + 1}. ${game.homeTeam.name} vs ${game.awayTeam.name} (${game.league})`)
-                })
-                
               } else {
-                console.error('Invalid games data structure - missing or invalid games array:', parsedData)
-                throw new Error('Invalid response structure - games array not found or invalid')
+                throw new Error('No JSON found in response')
               }
             } catch (parseError) {
-              console.error('Error parsing image analysis response:', parseError)
-              console.error('Raw content that failed to parse:', content)
-              throw parseError
+              console.error('Error parsing AI response:', parseError)
+              requiresManualInput = true
             }
           } else {
-            const errorText = await openAIResponse.text()
-            console.error('OpenAI API request failed:', openAIResponse.status, errorText)
-            throw new Error(`OpenAI API failed: ${openAIResponse.status} - ${errorText}`)
+            console.error('Empty response from OpenAI')
+            requiresManualInput = true
           }
         } else {
-          // Use the specific prompt we defined earlier
-          console.log('Asking ChatGPT for current Toto 16 games with specific prompt')
+          const errorText = await openAIResponse.text()
+          console.error('OpenAI API failed:', openAIResponse.status, errorText)
           
-          const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openAIApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [
-                {
-                  role: 'user',
-                  content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
-                }
-              ],
-              temperature: 0.1,
-              max_tokens: 2000
-            })
-          })
-
-          if (openAIResponse.ok) {
-            const aiResult = await openAIResponse.json()
-            const content = aiResult.choices[0]?.message?.content
-            
-            console.log('ChatGPT response:', content)
-            
-            try {
-              const jsonMatch = content.match(/\{[\s\S]*\}/)
-              if (jsonMatch) {
-                const parsedData = JSON.parse(jsonMatch[0])
-                
-                if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
-                  gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
-                    homeTeam: { name: game.homeTeam },
-                    awayTeam: { name: game.awayTeam },
-                    utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-                  }))
-                  dataSource = 'ChatGPT AI'
-                  console.log(`Successfully extracted ${gamesData.length} games from ChatGPT`)
-                }
-              }
-            } catch (parseError) {
-              console.error('Error parsing ChatGPT response:', parseError)
-            }
+          // Check if it's a quota/billing issue
+          if (openAIResponse.status === 429) {
+            console.log('OpenAI quota exceeded - requiring manual input')
+            requiresManualInput = true
           } else {
-            const errorResponse = await openAIResponse.json().catch(() => ({}))
-            console.error('ChatGPT API request failed:', openAIResponse.status, errorResponse)
+            throw new Error(`OpenAI API failed: ${openAIResponse.status}`)
           }
         }
       } catch (error) {
         console.error('Error calling OpenAI:', error)
-        
-        // Return more detailed error information
-        return new Response(
-          JSON.stringify({ 
-            error: 'AI analysis failed', 
-            details: error.message,
-            hasApiKey: !!openAIApiKey,
-            hasImageData: !!imageData 
-          }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        requiresManualInput = true
       }
     } else {
-      console.log('OpenAI API key not found')
+      console.log('OpenAI API key not available or no image data provided')
+      requiresManualInput = true
     }
 
-    // If AI failed to get games, create empty placeholder games
+    // If AI analysis failed or is not available, create empty placeholder games
     if (gamesData.length === 0) {
       console.log('Creating empty placeholder games for manual input')
       gamesData = Array.from({ length: 16 }, (_, index) => ({
@@ -301,6 +192,7 @@ serve(async (req) => {
         utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
       }))
       dataSource = 'Empty Placeholders'
+      requiresManualInput = true
     }
 
     // Delete existing games for this round
@@ -340,7 +232,8 @@ serve(async (req) => {
         success: true, 
         message: `Successfully inserted ${insertedGames.length} games`,
         games: insertedGames,
-        source: dataSource
+        source: dataSource,
+        requiresManualInput: requiresManualInput
       }),
       { 
         status: 200, 
