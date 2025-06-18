@@ -47,7 +47,7 @@ serve(async (req) => {
     }
 
     let gamesData: any[] = []
-    let dataSource = 'manual'
+    let dataSource = 'Manual Input Required'
 
     // Try to get games from OpenAI
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
@@ -127,7 +127,7 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'user',
-                  content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
+                  content: 'תן לי רשימה של 16 המשcheckBoxחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
                 }
               ],
               temperature: 0.1,
@@ -171,19 +171,15 @@ serve(async (req) => {
       console.log('OpenAI API key not found')
     }
 
-    // If we couldn't get games, return error message requesting manual input
+    // If AI failed to get games, create empty placeholder games
     if (gamesData.length === 0) {
-      console.log('AI not available, requesting manual input or image upload')
-      return new Response(
-        JSON.stringify({ 
-          error: 'נא הזן משחקים ידנית או העלה צילום מסך',
-          requiresManualInput: true
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      console.log('Creating empty placeholder games for manual input')
+      gamesData = Array.from({ length: 16 }, (_, index) => ({
+        homeTeam: { name: `קבוצת בית ${index + 1}` },
+        awayTeam: { name: `קבוצת חוץ ${index + 1}` },
+        utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+      }))
+      dataSource = 'Empty Placeholders'
     }
 
     // Delete existing games for this round
@@ -219,7 +215,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully fetched and inserted ${insertedGames.length} games`,
+        message: `Successfully inserted ${insertedGames.length} games`,
         games: insertedGames,
         source: dataSource
       }),
