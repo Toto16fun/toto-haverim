@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowRight, User, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
@@ -19,6 +18,7 @@ const CurrentRound = () => {
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: userBets } = useUserBets(currentRound?.id);
   const [showNewRoundDialog, setShowNewRoundDialog] = useState(false);
+  const [expandedBetId, setExpandedBetId] = useState<string | null>(null);
 
   // Basic admin check
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
@@ -52,6 +52,22 @@ const CurrentRound = () => {
 
   // Check if deadline has passed
   const isDeadlinePassed = currentRound && new Date() > new Date(currentRound.deadline);
+
+  // Convert bet predictions to format expected by GamesTable
+  const getBetPredictionsForDisplay = (bet: any) => {
+    if (!bet.bet_predictions || !games) return {};
+    
+    const predictions: Record<string, { predictions: string[]; isDouble: boolean }> = {};
+    
+    bet.bet_predictions.forEach((prediction: any) => {
+      predictions[prediction.game_id] = {
+        predictions: prediction.predictions,
+        isDouble: prediction.is_double
+      };
+    });
+    
+    return predictions;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
@@ -115,7 +131,7 @@ const CurrentRound = () => {
               />
             )}
 
-            {/* Submitted Bets Table */}
+            {/* Submitted Bets */}
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -124,73 +140,57 @@ const CurrentRound = () => {
               </CardHeader>
               <CardContent>
                 {userBets && userBets.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-center">משתמש</TableHead>
-                          <TableHead className="text-center">זמן הגשה</TableHead>
-                          <TableHead className="text-center">כמות כפולים</TableHead>
-                          <TableHead className="text-center">משחקים עם ניחושים</TableHead>
-                          <TableHead className="text-center">פרטי הטור</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {userBets.map(bet => {
-                          const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
-                          const gameCount = bet.bet_predictions?.length || 0;
-                          
-                          return (
-                            <TableRow key={bet.id}>
-                              <TableCell className="text-center font-medium">
-                                <div className="flex items-center justify-center gap-2">
-                                  <User className="h-4 w-4 text-gray-500" />
+                  <div className="space-y-4">
+                    {userBets.map(bet => {
+                      const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
+                      const gameCount = bet.bet_predictions?.length || 0;
+                      const isExpanded = expandedBetId === bet.id;
+                      const betPredictions = getBetPredictionsForDisplay(bet);
+                      
+                      return (
+                        <div key={bet.id} className="border rounded-lg p-4 bg-white">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-gray-500" />
+                                <span className="font-medium">
                                   {bet.user_id === user.id ? 'הטור שלי' : `משתמש ${bet.user_id.slice(0, 8)}`}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center text-sm">
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-500">
                                 {new Date(bet.submitted_at).toLocaleString('he-IL')}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant={doubleCount === 3 ? "default" : "destructive"}>
-                                  {doubleCount}/3
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant={gameCount === 16 ? "default" : "destructive"}>
-                                  {gameCount}/16
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {bet.bet_predictions && bet.bet_predictions.length > 0 && (
-                                  <div className="max-w-md">
-                                    <details className="cursor-pointer">
-                                      <summary className="text-blue-600 hover:text-blue-800">
-                                        הצג תחזיות
-                                      </summary>
-                                      <div className="mt-2 grid grid-cols-2 gap-1 text-xs bg-gray-50 p-2 rounded">
-                                        {bet.bet_predictions.map(prediction => {
-                                          const game = games?.find(g => g.id === prediction.game_id);
-                                          return (
-                                            <div key={prediction.id} className="flex justify-between">
-                                              <span>משחק {game?.game_number || '?'}</span>
-                                              <span className="font-medium">
-                                                {prediction.predictions.join(', ')}
-                                                {prediction.is_double && ' (כפול)'}
-                                              </span>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </details>
-                                  </div>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={doubleCount === 3 ? "default" : "destructive"}>
+                                כפולים: {doubleCount}/3
+                              </Badge>
+                              <Badge variant={gameCount === 16 ? "default" : "destructive"}>
+                                משחקים: {gameCount}/16
+                              </Badge>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedBetId(isExpanded ? null : bet.id)}
+                              >
+                                {isExpanded ? 'הסתר' : 'הצג'} תחזיות
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {isExpanded && games && (
+                            <div className="mt-4">
+                              <GamesTable
+                                games={games}
+                                predictions={betPredictions}
+                                isReadOnly={true}
+                                title={`תחזיות ${bet.user_id === user.id ? 'שלי' : 'של המשתמש'}`}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-600">
