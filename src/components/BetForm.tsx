@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import GamesTable from './GamesTable';
 import { Game } from '@/hooks/useTotoRounds';
-import { useSubmitBet, useUpdateBet } from '@/hooks/useUserBets';
+import { useSubmitBet } from '@/hooks/useUserBets';
 
 interface BetFormProps {
   roundId: string;
@@ -25,7 +25,6 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
   const [predictions, setPredictions] = useState<Record<string, { predictions: string[]; isDouble: boolean }>>({});
   const { toast } = useToast();
   const submitBet = useSubmitBet();
-  const updateBet = useUpdateBet();
 
   // Check if deadline has passed
   const isDeadlinePassed = new Date() > new Date(deadline);
@@ -120,30 +119,16 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
 
       console.log('All validations passed, submitting...');
 
-      // Automatically choose between create and update based on existingBet
-      if (existingBet) {
-        console.log('Updating existing bet with ID:', existingBet.id);
-        await updateBet.mutateAsync({
-          betId: existingBet.id,
-          predictions: predictionsList
-        });
-        
-        toast({
-          title: "הטור עודכן בהצלחה!",
-          description: "השינויים שלך נשמרו במערכת"
-        });
-      } else {
-        console.log('Creating new bet for round:', roundId);
-        await submitBet.mutateAsync({
-          roundId,
-          predictions: predictionsList
-        });
-        
-        toast({
-          title: "הטור נשלח בהצלחה!",
-          description: "הטור שלך נשמר במערכת"
-        });
-      }
+      // Now we just use submitBet for everything - it handles both create and update internally
+      await submitBet.mutateAsync({
+        roundId,
+        predictions: predictionsList
+      });
+      
+      toast({
+        title: existingBet ? "הטור עודכן בהצלחה!" : "הטור נשלח בהצלחה!",
+        description: existingBet ? "השינויים שלך נשמרו במערכת" : "הטור שלך נשמר במערכת"
+      });
     } catch (error: any) {
       console.error('Submission error:', error);
       
@@ -208,7 +193,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
             <CardTitle className="text-lg">
               {isDeadlinePassed 
                 ? existingBet ? 'הטור שלך (נעול)' : 'טור לא הוגש'
-                : existingBet ? 'ערוך את הטור שלך' : 'מלא את הטור שלך'}
+                : existingBet ? 'ערוך את הטור שלך' : 'מלא את הטور שלך'}
             </CardTitle>
             <Badge className={statusDisplay.color}>
               {statusDisplay.status}
@@ -256,13 +241,11 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
         <Button 
           onClick={handleSubmit}
           className="w-full"
-          disabled={!validation.canSubmit || submitBet.isPending || updateBet.isPending}
+          disabled={!validation.canSubmit || submitBet.isPending}
         >
-          {submitBet.isPending || updateBet.isPending 
+          {submitBet.isPending 
             ? 'שולח...' 
-            : existingBet 
-              ? 'עדכן טור' 
-              : 'שלח טור'
+            : 'שלח טור'
           }
         </Button>
       )}

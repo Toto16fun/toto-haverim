@@ -104,21 +104,56 @@ export const useSubmitBet = () => {
         throw new Error(`Must have exactly 3 doubles, found ${doubleCount}`);
       }
       
-      // Create the bet (removed the check for existing bet since we want to allow creation regardless)
-      const { data: bet, error: betError } = await supabase
+      // Check if user already has a bet for this round
+      const { data: existingBet } = await supabase
         .from('user_bets')
-        .insert({
-          user_id: user.id,
-          round_id: roundId
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('round_id', roundId)
+        .maybeSingle();
       
-      if (betError) throw betError;
+      let betId: string;
+      
+      if (existingBet) {
+        // Update existing bet
+        console.log('Found existing bet, updating it...');
+        
+        // First, delete existing predictions
+        const { error: deleteError } = await supabase
+          .from('bet_predictions')
+          .delete()
+          .eq('bet_id', existingBet.id);
+        
+        if (deleteError) throw deleteError;
+        
+        // Update the bet's submitted_at timestamp
+        const { error: updateError } = await supabase
+          .from('user_bets')
+          .update({ submitted_at: new Date().toISOString() })
+          .eq('id', existingBet.id);
+        
+        if (updateError) throw updateError;
+        
+        betId = existingBet.id;
+      } else {
+        // Create new bet
+        console.log('Creating new bet...');
+        const { data: bet, error: betError } = await supabase
+          .from('user_bets')
+          .insert({
+            user_id: user.id,
+            round_id: roundId
+          })
+          .select()
+          .single();
+        
+        if (betError) throw betError;
+        betId = bet.id;
+      }
       
       // Create predictions
       const predictionInserts = predictions.map(p => ({
-        bet_id: bet.id,
+        bet_id: betId,
         game_id: p.gameId,
         predictions: p.predictions,
         is_double: p.isDouble
@@ -130,7 +165,7 @@ export const useSubmitBet = () => {
       
       if (predictionsError) throw predictionsError;
       
-      return bet;
+      return { id: betId };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-bets', variables.roundId] });
