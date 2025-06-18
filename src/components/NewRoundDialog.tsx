@@ -109,11 +109,12 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     }
 
     try {
-      // Create round with auto-generated number and no deadline
+      // Create round with auto-generated number and deadline (7 days from now)
       const nextRoundNumber = getNextRoundNumber();
       const roundResult = await createRound.mutateAsync({
         round_number: nextRoundNumber,
-        start_date: new Date().toISOString().split('T')[0]
+        start_date: new Date().toISOString().split('T')[0],
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       });
       
       setCurrentRoundId(roundResult.id);
