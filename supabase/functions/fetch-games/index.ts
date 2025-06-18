@@ -53,6 +53,8 @@ serve(async (req) => {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
     
     if (openAIApiKey) {
+      console.log('OpenAI API key found, attempting to analyze...')
+      
       try {
         // If imageData is provided, analyze the image
         if (imageData) {
@@ -72,7 +74,7 @@ serve(async (req) => {
                   content: [
                     {
                       type: 'text',
-                      text: 'נתח את התמונה והחלץ את 16 המשחקים בטוטו 16. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית. קבוצות הבית וקבוצות החוץ צריכות להיות בעברית.'
+                      text: 'נתח את התמונה והחלץ את 16 המשחקים בטוטו. החזר את התשובה בפורמט JSON בלבד עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית. אל תכתוב שום הסבר נוסף, רק את ה-JSON.'
                     },
                     {
                       type: 'image_url',
@@ -87,30 +89,47 @@ serve(async (req) => {
             })
           })
 
+          console.log('OpenAI Response Status:', openAIResponse.status)
+
           if (openAIResponse.ok) {
             const aiResult = await openAIResponse.json()
             const content = aiResult.choices[0]?.message?.content
             
-            console.log('Image analysis response:', content)
+            console.log('OpenAI Image Analysis Response:', content)
             
             try {
-              const jsonMatch = content.match(/\{[\s\S]*\}/)
-              if (jsonMatch) {
-                const parsedData = JSON.parse(jsonMatch[0])
-                
-                if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
-                  gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
-                    homeTeam: { name: game.homeTeam },
-                    awayTeam: { name: game.awayTeam },
-                    utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-                  }))
-                  dataSource = 'Image Analysis'
-                  console.log(`Successfully extracted ${gamesData.length} games from image`)
+              // Try to parse JSON directly first
+              let parsedData;
+              try {
+                parsedData = JSON.parse(content);
+              } catch (parseError) {
+                // If direct parsing fails, try to extract JSON from text
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  parsedData = JSON.parse(jsonMatch[0]);
+                } else {
+                  throw new Error('No JSON found in response');
                 }
+              }
+              
+              if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
+                gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
+                  homeTeam: { name: game.homeTeam },
+                  awayTeam: { name: game.awayTeam },
+                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                }))
+                dataSource = 'Image Analysis'
+                console.log(`Successfully extracted ${gamesData.length} games from image`)
+              } else {
+                console.error('Invalid games data structure:', parsedData)
               }
             } catch (parseError) {
               console.error('Error parsing image analysis response:', parseError)
+              console.error('Raw content:', content)
             }
+          } else {
+            const errorResponse = await openAIResponse.text()
+            console.error('OpenAI API request failed:', openAIResponse.status, errorResponse)
           }
         } else {
           // Use the specific prompt we defined earlier
@@ -127,7 +146,7 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'user',
-                  content: 'תן לי רשימה של 16 המשcheckBoxחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
+                  content: 'תן לי רשימה של 16 המשחקים בטוטו 16 למחזור הקרוב. לפי סדר המשחקים המופיע בתוכנית הטוטו. החזר את התשובה בפורמט JSON עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית.'
                 }
               ],
               temperature: 0.1,
@@ -197,6 +216,8 @@ serve(async (req) => {
       game_date: match.utcDate
     }))
 
+    console.log('Inserting games:', gamesToInsert)
+
     const { data: insertedGames, error: insertError } = await supabase
       .from('games')
       .insert(gamesToInsert)
@@ -205,7 +226,7 @@ serve(async (req) => {
     if (insertError) {
       console.error('Error inserting games:', insertError)
       return new Response(
-        JSON.stringify({ error: 'Failed to insert games' }),
+        JSON.stringify({ error: 'Failed to insert games', details: insertError }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -228,7 +249,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fetch-games function:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
