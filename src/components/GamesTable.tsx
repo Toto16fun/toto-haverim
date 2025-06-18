@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['1', 'X', '2']; // Display from right to left: 1, X, 2
+  const displayOptions = ['1', 'X', '2']; // For betting view
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -119,7 +120,7 @@ const GamesTable = ({
     );
   }
 
-  // For betting view, show full table with betting options
+  // For betting view, show full table with betting options - Hebrew RTL order
   return (
     <Card>
       <CardHeader>
@@ -130,14 +131,14 @@ const GamesTable = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">#</TableHead>
-                <TableHead className="text-center">קבוצות</TableHead>
-                <TableHead className="text-center">ליגה</TableHead>
-                <TableHead className="text-center">תאריך ושעה</TableHead>
-                <TableHead className="text-center">1</TableHead>
-                <TableHead className="text-center">X</TableHead>
-                <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">כפול</TableHead>
+                <TableHead className="text-center">2</TableHead>
+                <TableHead className="text-center">X</TableHead>
+                <TableHead className="text-center">1</TableHead>
+                <TableHead className="text-center">תאריך ושעה</TableHead>
+                <TableHead className="text-center">ליגה</TableHead>
+                <TableHead className="text-center">קבוצות</TableHead>
+                <TableHead className="text-center">#</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,18 +148,57 @@ const GamesTable = ({
                 
                 return (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      <div>{game.home_team} - {game.away_team}</div>
+                    <TableCell className="text-center">
+                      {isDouble && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
+                          כפול
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {game.league ? (
-                        <Badge variant="outline" className="text-xs">
-                          {game.league}
-                        </Badge>
-                      ) : '-'}
+                      <Button
+                        variant={gamePredictions.includes('2') ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleOptionClick(game.id, '2')}
+                        disabled={isReadOnly}
+                        className={`w-8 h-8 ${
+                          gamePredictions.includes('2') 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : ''
+                        }`}
+                      >
+                        2
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant={gamePredictions.includes('X') ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleOptionClick(game.id, 'X')}
+                        disabled={isReadOnly}
+                        className={`w-8 h-8 ${
+                          gamePredictions.includes('X') 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : ''
+                        }`}
+                      >
+                        X
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant={gamePredictions.includes('1') ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleOptionClick(game.id, '1')}
+                        disabled={isReadOnly}
+                        className={`w-8 h-8 ${
+                          gamePredictions.includes('1') 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : ''
+                        }`}
+                      >
+                        1
+                      </Button>
                     </TableCell>
                     <TableCell className="text-center text-sm">
                       <div>
@@ -168,29 +208,18 @@ const GamesTable = ({
                         {game.game_date ? formatGameTime(game.game_date) : '-'}
                       </div>
                     </TableCell>
-                    {displayOptions.map(option => (
-                      <TableCell key={option} className="text-center">
-                        <Button
-                          variant={gamePredictions.includes(option) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleOptionClick(game.id, option)}
-                          disabled={isReadOnly}
-                          className={`w-8 h-8 ${
-                            gamePredictions.includes(option) 
-                              ? 'bg-green-600 hover:bg-green-700' 
-                              : ''
-                          }`}
-                        >
-                          {option}
-                        </Button>
-                      </TableCell>
-                    ))}
                     <TableCell className="text-center">
-                      {isDouble && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                          כפול
+                      {game.league ? (
+                        <Badge variant="outline" className="text-xs">
+                          {game.league}
                         </Badge>
-                      )}
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      <div>{game.home_team} - {game.away_team}</div>
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {game.game_number}
                     </TableCell>
                   </TableRow>
                 );
