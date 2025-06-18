@@ -57,15 +57,19 @@ const CurrentRound = () => {
   const getBetPredictionsForDisplay = (bet: any) => {
     if (!bet.bet_predictions || !games) return {};
     
+    console.log('Converting bet predictions for display:', bet.bet_predictions);
+    
     const predictions: Record<string, { predictions: string[]; isDouble: boolean }> = {};
     
     bet.bet_predictions.forEach((prediction: any) => {
+      console.log('Processing prediction:', prediction);
       predictions[prediction.game_id] = {
-        predictions: prediction.predictions,
-        isDouble: prediction.is_double
+        predictions: prediction.predictions || [],
+        isDouble: prediction.is_double || false
       };
     });
     
+    console.log('Final predictions format:', predictions);
     return predictions;
   };
 
@@ -145,7 +149,6 @@ const CurrentRound = () => {
                       const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
                       const gameCount = bet.bet_predictions?.length || 0;
                       const isExpanded = expandedBetId === bet.id;
-                      const betPredictions = getBetPredictionsForDisplay(bet);
                       
                       return (
                         <div key={bet.id} className="border rounded-lg p-4 bg-white">
@@ -182,8 +185,8 @@ const CurrentRound = () => {
                             <div className="mt-4">
                               <GamesTable
                                 games={games}
-                                predictions={betPredictions}
-                                isReadOnly={true}
+                                predictions={getBetPredictionsForDisplay(bet)}
+                                isReadOnly={false}
                                 title={`תחזיות ${bet.user_id === user.id ? 'שלי' : 'של המשתמש'}`}
                               />
                             </div>
