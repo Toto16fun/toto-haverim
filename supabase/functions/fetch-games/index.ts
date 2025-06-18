@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -70,9 +69,10 @@ serve(async (req) => {
             }
           }
           
+          // The first team in Excel (right to left) is home team, second is away team
           return {
-            homeTeam: { name: game.homeTeam },
-            awayTeam: { name: game.awayTeam },
+            homeTeam: { name: game.homeTeam }, // First team is home team
+            awayTeam: { name: game.awayTeam }, // Second team is away team
             utcDate: gameDate,
             league: game.league || null,
             gameTime: game.gameDate || null
@@ -109,7 +109,8 @@ serve(async (req) => {
                 {
                   role: 'system',
                   content: `אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות טוטו 16. 
-                  התפקיד שלך הוא לחלץ במדויק את כל פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.`
+                  התפקיד שלך הוא לחלץ במדויק את כל פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.
+                  הקבוצה הראשונה מימין לשמאל היא קבוצת הבית, הקבוצה השנייה היא קבוצת החוץ.`
                 },
                 {
                   role: 'user',
@@ -121,13 +122,15 @@ serve(async (req) => {
 החזר את התוצאה בפורמט JSON הבא בלבד:
 {
   "games": [
-    {"gameNumber": 1, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"},
-    {"gameNumber": 2, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}
+    {"gameNumber": 1, "homeTeam": "שם קבוצת הבית (ראשונה מימין)", "awayTeam": "שם קבוצת החוץ (שנייה מימין)"},
+    {"gameNumber": 2, "homeTeam": "שם קבוצת הבית (ראשונה מימין)", "awayTeam": "שם קבוצת החוץ (שנייה מימין)"}
   ]
 }
 
 חשוב מאוד:
 - וודא שאתה מחלץ בדיוק 16 משחקים
+- הקבוצה הראשונה מימין לשמאל היא קבוצת הבית
+- הקבוצה השנייה מימין לשמאל היא קבוצת החוץ
 - השתמש בשמות הקבוצות המדויקים מהתמונה
 - אל תמציא שמות קבוצות
 - כלול רק את ה-JSON, ללא טקסט נוסף`
@@ -176,9 +179,10 @@ serve(async (req) => {
                     if (validGames.length > 0) {
                       console.log(`Successfully extracted ${validGames.length} games from image`)
                       
+                      // Keep the correct order: homeTeam is first, awayTeam is second
                       gamesData = validGames.slice(0, 16).map((game, index) => ({
-                        homeTeam: { name: game.homeTeam.trim() },
-                        awayTeam: { name: game.awayTeam.trim() },
+                        homeTeam: { name: game.homeTeam.trim() }, // First team (home)
+                        awayTeam: { name: game.awayTeam.trim() }, // Second team (away)
                         utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
                       }))
                       
@@ -243,12 +247,12 @@ serve(async (req) => {
       .delete()
       .eq('round_id', roundId)
 
-    // Insert new games with league and time information
+    // Insert new games with correct team order
     const gamesToInsert = gamesData.slice(0, 16).map((match, index) => ({
       round_id: roundId,
       game_number: index + 1,
-      home_team: match.homeTeam.name,
-      away_team: match.awayTeam.name,
+      home_team: match.homeTeam.name, // Correct: first team is home
+      away_team: match.awayTeam.name,  // Correct: second team is away
       game_date: match.utcDate,
       league: match.league || null
     }))

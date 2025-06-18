@@ -21,7 +21,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['2', 'X', '1']; // Right to left display order
+  const displayOptions = ['1', 'X', '2']; // Display in correct order
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -79,9 +79,9 @@ const GamesTable = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="text-center">כפול</TableHead>
-                <TableHead className="text-center">2</TableHead>
-                <TableHead className="text-center">X</TableHead>
                 <TableHead className="text-center">1</TableHead>
+                <TableHead className="text-center">X</TableHead>
+                <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">#</TableHead>
                 <TableHead className="text-center">איזו וי</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
@@ -123,7 +123,7 @@ const GamesTable = ({
                       {game.game_number}
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      <div>{game.away_team} - {game.home_team}</div>
+                      <div>{game.home_team} - {game.away_team}</div>
                     </TableCell>
                     <TableCell className="text-center">
                       {game.league ? (

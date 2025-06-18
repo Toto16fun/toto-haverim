@@ -20,7 +20,7 @@ const GameRow = ({
   isReadOnly = false 
 }: GameRowProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['2', 'X', '1']; // Right to left display order - same as GamesTable
+  const displayOptions = ['1', 'X', '2']; // Correct order
   
   const handleOptionClick = (option: string) => {
     if (isReadOnly || !onPredictionChange) return;
