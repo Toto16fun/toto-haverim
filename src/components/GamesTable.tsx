@@ -21,7 +21,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['1', 'X', '2']; // Display in correct order
+  const displayOptions = ['1', 'X', '2']; // Display in correct order: 1, X, 2 from right to left
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -68,6 +68,59 @@ const GamesTable = ({
     }
   };
 
+  // If it's read-only, show simplified table without betting options
+  if (isReadOnly) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center">#</TableHead>
+                  <TableHead className="text-center">קבוצות</TableHead>
+                  <TableHead className="text-center">ליגה</TableHead>
+                  <TableHead className="text-center">תאריך ושעה</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {games.map(game => (
+                  <TableRow key={game.id}>
+                    <TableCell className="text-center font-medium">
+                      {game.game_number}
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      <div>{game.home_team} - {game.away_team}</div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {game.league ? (
+                        <Badge variant="outline" className="text-xs">
+                          {game.league}
+                        </Badge>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">
+                      <div>
+                        {game.game_date ? formatGameDate(game.game_date) : '-'}
+                      </div>
+                      <div>
+                        {game.game_date ? formatGameTime(game.game_date) : '-'}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // For betting view, show full table with betting options
   return (
     <Card>
       <CardHeader>
@@ -83,7 +136,7 @@ const GamesTable = ({
                 <TableHead className="text-center">X</TableHead>
                 <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">#</TableHead>
-                <TableHead className="text-center">איזו וי</TableHead>
+                <TableHead className="text-center">קבוצות</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
                 <TableHead className="text-center">תאריך ושעה</TableHead>
               </TableRow>
