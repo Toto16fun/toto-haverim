@@ -113,7 +113,6 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       const nextRoundNumber = getNextRoundNumber();
       const roundResult = await createRound.mutateAsync({
         round_number: nextRoundNumber,
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default to 7 days from now
         start_date: new Date().toISOString().split('T')[0]
       });
       
@@ -139,23 +138,19 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
         // If AI analysis fails, still proceed to confirmation step
         console.log('AI analysis failed, proceeding with empty round:', fetchError);
         
-        if (fetchError.message === 'AI_NOT_AVAILABLE') {
-          setStep('confirm');
-          toast({
-            title: "מחזור נוצר",
-            description: `מחזור ${nextRoundNumber} נוצר. תוכל להוסיף משחקים ידנית מעמוד הניהול`,
-            variant: "default"
-          });
-        } else {
-          throw fetchError; // Re-throw other errors
-        }
+        setStep('confirm');
+        toast({
+          title: "מחזור נוצר",
+          description: `מחזור ${nextRoundNumber} נוצר. תוכל להוסיף משחקים ידנית מעמוד הניהול`,
+          variant: "default"
+        });
       }
       
     } catch (error) {
       console.error('Error creating round and analyzing image:', error);
       toast({
         title: "שגיאה ביצירת המחזור",
-        description: "לא הצלחנו ליצור את המחזור. אנא נסה שוב.",
+        description: "לא הצלחנו ליצור את המחזור. נסה שוב מאוחר יותר.",
         variant: "destructive"
       });
     }
@@ -292,16 +287,16 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-green-50 p-4 rounded-md">
-                <p className="text-green-800 font-medium">המחזור נוצר והמשחקים נטענו בהצלחה!</p>
+                <p className="text-green-800 font-medium">המחזור נוצר בהצלחה!</p>
                 <p className="text-green-700 text-sm mt-1">
-                  מחזור {nextRoundNumber} מוכן להפעלה. לחיצה על "הפעל מחזור" תאפס את המחזור הקודם ותפעיל את החדש.
+                  מחזור {nextRoundNumber} מוכן להפעלה. לחיצה על "הפעל מחזור" תפעיל את המחזור החדש.
                 </p>
               </div>
               
               <div className="bg-yellow-50 p-4 rounded-md">
                 <p className="text-yellow-800 font-medium">שים לב!</p>
                 <p className="text-yellow-700 text-sm mt-1">
-                  פעולה זו תמחק את כל הטורים הקיימים במחזור הנוכחי ותתחיל מחזור חדש.
+                  פעולה זו תתחיל מחזור חדש עבור כל המשתמשים.
                 </p>
               </div>
 
