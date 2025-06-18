@@ -8,6 +8,7 @@ import { ArrowRight, User, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useUserBets } from '@/hooks/useUserBets';
+import { useUserProfiles } from '@/hooks/useUserProfiles';
 import GamesTable from '@/components/GamesTable';
 import NewRoundDialog from '@/components/NewRoundDialog';
 
@@ -17,11 +18,18 @@ const CurrentRound = () => {
   const { data: currentRound, isLoading: roundLoading } = useCurrentRound();
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: userBets } = useUserBets(currentRound?.id);
+  const { data: userProfiles } = useUserProfiles();
   const [showNewRoundDialog, setShowNewRoundDialog] = useState(false);
   const [expandedBetId, setExpandedBetId] = useState<string | null>(null);
 
   // Basic admin check
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
+
+  // Helper function to get user name by ID
+  const getUserName = (userId: string) => {
+    const profile = userProfiles?.find(p => p.id === userId);
+    return profile?.name || `משתמש ${userId.slice(0, 8)}`;
+  };
 
   if (!user) {
     return (
@@ -149,6 +157,7 @@ const CurrentRound = () => {
                       const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
                       const gameCount = bet.bet_predictions?.length || 0;
                       const isExpanded = expandedBetId === bet.id;
+                      const userName = getUserName(bet.user_id);
                       
                       return (
                         <div key={bet.id} className="border rounded-lg p-4 bg-white">
@@ -157,7 +166,7 @@ const CurrentRound = () => {
                               <div className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-gray-500" />
                                 <span className="font-medium">
-                                  {bet.user_id === user.id ? 'הטור שלי' : `משתמש ${bet.user_id.slice(0, 8)}`}
+                                  {bet.user_id === user.id ? 'הטור שלי' : userName}
                                 </span>
                               </div>
                               <span className="text-sm text-gray-500">
@@ -187,7 +196,7 @@ const CurrentRound = () => {
                                 games={games}
                                 predictions={getBetPredictionsForDisplay(bet)}
                                 isReadOnly={false}
-                                title={`תחזיות ${bet.user_id === user.id ? 'שלי' : 'של המשתמש'}`}
+                                title={`תחזיות ${bet.user_id === user.id ? 'שלי' : `של ${userName}`}`}
                               />
                             </div>
                           )}
