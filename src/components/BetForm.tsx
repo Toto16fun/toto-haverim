@@ -79,15 +79,46 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
   const handleSubmit = async () => {
     if (isReadOnly || !validation.canSubmit) return;
     
-    const predictionsList = Object.entries(predictions)
-      .filter(([_, p]) => p.predictions.length > 0)
-      .map(([gameId, p]) => ({
-        gameId,
-        predictions: p.predictions,
-        isDouble: p.isDouble
-      }));
-
     try {
+      // Add console logs for debugging
+      console.log('Starting submission process...');
+      console.log('Current predictions:', predictions);
+      console.log('Games count:', games.length);
+      console.log('Validation status:', validation);
+      
+      const predictionsList = Object.entries(predictions)
+        .filter(([_, p]) => p.predictions.length > 0)
+        .map(([gameId, p]) => ({
+          gameId,
+          predictions: p.predictions,
+          isDouble: p.isDouble
+        }));
+
+      console.log('Formatted predictions list:', predictionsList);
+
+      // Additional validation before submission
+      if (predictionsList.length !== 16) {
+        throw new Error(`יש למלא את כל 16 המשחקים. מולאו רק ${predictionsList.length} משחקים.`);
+      }
+
+      const doublesCount = predictionsList.filter(p => p.isDouble).length;
+      if (doublesCount !== 3) {
+        throw new Error(`יש לבחור בדיוק 3 כפולים. נבחרו ${doublesCount} כפולים.`);
+      }
+
+      // Validate that all predictions contain valid values
+      for (const pred of predictionsList) {
+        if (!pred.predictions || pred.predictions.length === 0) {
+          throw new Error('כל משחק חייב לכלול לפחות תחזית אחת');
+        }
+        const hasValidPredictions = pred.predictions.every(p => ['1', 'X', '2'].includes(p));
+        if (!hasValidPredictions) {
+          throw new Error('תחזיות חייבות להיות 1, X או 2 בלבד');
+        }
+      }
+
+      console.log('All validations passed, submitting...');
+
       if (existingBet) {
         await updateBet.mutateAsync({
           betId: existingBet.id,
@@ -105,14 +136,16 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
         });
         
         toast({
-          title: "הטור נשמר בהצלחה!",
+          title: "הטור נשלח בהצלחה!",
           description: "הטור שלך נשמר במערכת"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      
       toast({
-        title: "שגיאה",
-        description: "לא הצלחנו לשמור את הטור",
+        title: "שגיאה בשליחת הטור",
+        description: error.message || "לא הצלחנו לשמור את הטור. אנא נסה שוב.",
         variant: "destructive"
       });
     }
@@ -200,7 +233,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           {!isDeadlinePassed && validation.canSubmit && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800">
-                ✓ הטור מוכן להגשה!
+                ✓ הטור מוכן לשליחה!
               </p>
             </div>
           )}
@@ -222,10 +255,10 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           disabled={!validation.canSubmit || submitBet.isPending || updateBet.isPending}
         >
           {submitBet.isPending || updateBet.isPending 
-            ? 'שומר...' 
+            ? 'שולח...' 
             : existingBet 
               ? 'עדכן טור' 
-              : 'שמור טור'
+              : 'שלח טור'
           }
         </Button>
       )}
