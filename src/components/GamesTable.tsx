@@ -21,7 +21,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['1', 'X', '2']; // Fixed order for display
+  const displayOptions = ['2', 'X', '1']; // Right to left display order
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -102,7 +102,7 @@ const GamesTable = ({
                         </Badge>
                       )}
                     </TableCell>
-                    {displayOptions.reverse().map(option => (
+                    {displayOptions.map(option => (
                       <TableCell key={option} className="text-center">
                         <Button
                           variant={gamePredictions.includes(option) ? "default" : "outline"}
