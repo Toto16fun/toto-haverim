@@ -70,22 +70,42 @@ serve(async (req) => {
               model: 'gpt-4o',
               messages: [
                 {
+                  role: 'system',
+                  content: 'אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות. תפקידך לחלץ במדויק את פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.'
+                },
+                {
                   role: 'user',
                   content: [
                     {
                       type: 'text',
-                      text: 'נתח את התמונה והחלץ את 16 המשחקים בטוטו. החזר את התשובה בפורמט JSON בלבד עם המבנה הבא: {"games": [{"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}]} עם בדיוק 16 משחקים בעברית. אל תכתוב שום הסבר נוסף, רק את ה-JSON.'
+                      text: `נתח את התמונה הזו של טוטו 16 וחלץ את כל המשחקים. 
+                      
+                      התמונה מציגה רשימת משחקים עם קבוצות בית וקבוצות חוץ.
+                      חלץ בדיוק את שמות הקבוצות כפי שהם מופיעים בתמונה.
+                      
+                      החזר תשובה בפורמט JSON הבא בלבד, ללא הסברים נוספים:
+                      {
+                        "games": [
+                          {"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"},
+                          {"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}
+                        ]
+                      }
+                      
+                      וודא שאתה מחלץ בדיוק 16 משחקים.
+                      השתמש בשמות הקבוצות המדויקים מהתמונה.`
                     },
                     {
                       type: 'image_url',
                       image_url: {
-                        url: imageData
+                        url: imageData,
+                        detail: 'high'
                       }
                     }
                   ]
                 }
               ],
-              temperature: 0.1
+              temperature: 0,
+              max_tokens: 2000
             })
           })
 
@@ -95,41 +115,73 @@ serve(async (req) => {
             const aiResult = await openAIResponse.json()
             const content = aiResult.choices[0]?.message?.content
             
-            console.log('OpenAI Image Analysis Response:', content)
+            console.log('OpenAI Image Analysis Response (full):', content)
+            
+            if (!content) {
+              console.error('No content in OpenAI response')
+              throw new Error('No content received from OpenAI')
+            }
             
             try {
-              // Try to parse JSON directly first
-              let parsedData;
-              try {
-                parsedData = JSON.parse(content);
-              } catch (parseError) {
-                // If direct parsing fails, try to extract JSON from text
-                const jsonMatch = content.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                  parsedData = JSON.parse(jsonMatch[0]);
-                } else {
-                  throw new Error('No JSON found in response');
-                }
+              // Clean the content - remove markdown formatting and extra text
+              let cleanedContent = content.trim()
+              
+              // Remove markdown code blocks if present
+              cleanedContent = cleanedContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '')
+              
+              // Try to find JSON in the response
+              const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
+              
+              if (!jsonMatch) {
+                console.error('No JSON found in response:', cleanedContent)
+                throw new Error('No JSON structure found in AI response')
               }
               
-              if (parsedData.games && Array.isArray(parsedData.games) && parsedData.games.length > 0) {
-                gamesData = parsedData.games.slice(0, 16).map((game, index) => ({
-                  homeTeam: { name: game.homeTeam },
-                  awayTeam: { name: game.awayTeam },
+              const jsonString = jsonMatch[0]
+              console.log('Extracted JSON string:', jsonString)
+              
+              const parsedData = JSON.parse(jsonString)
+              console.log('Parsed data:', parsedData)
+              
+              if (parsedData.games && Array.isArray(parsedData.games)) {
+                if (parsedData.games.length === 0) {
+                  console.error('Games array is empty')
+                  throw new Error('No games found in response')
+                }
+                
+                // Validate each game has homeTeam and awayTeam
+                const validGames = parsedData.games.filter(game => 
+                  game.homeTeam && game.awayTeam && 
+                  typeof game.homeTeam === 'string' && 
+                  typeof game.awayTeam === 'string'
+                )
+                
+                if (validGames.length === 0) {
+                  console.error('No valid games found:', parsedData.games)
+                  throw new Error('No valid games with homeTeam and awayTeam found')
+                }
+                
+                gamesData = validGames.slice(0, 16).map((game, index) => ({
+                  homeTeam: { name: game.homeTeam.trim() },
+                  awayTeam: { name: game.awayTeam.trim() },
                   utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
                 }))
                 dataSource = 'Image Analysis'
-                console.log(`Successfully extracted ${gamesData.length} games from image`)
+                console.log(`Successfully extracted ${gamesData.length} games from image:`, 
+                  gamesData.map(g => `${g.homeTeam.name} vs ${g.awayTeam.name}`))
               } else {
-                console.error('Invalid games data structure:', parsedData)
+                console.error('Invalid games data structure - missing games array:', parsedData)
+                throw new Error('Invalid response structure - games array not found')
               }
             } catch (parseError) {
               console.error('Error parsing image analysis response:', parseError)
-              console.error('Raw content:', content)
+              console.error('Raw content that failed to parse:', content)
+              throw parseError
             }
           } else {
-            const errorResponse = await openAIResponse.text()
-            console.error('OpenAI API request failed:', openAIResponse.status, errorResponse)
+            const errorText = await openAIResponse.text()
+            console.error('OpenAI API request failed:', openAIResponse.status, errorText)
+            throw new Error(`OpenAI API failed: ${openAIResponse.status} - ${errorText}`)
           }
         } else {
           // Use the specific prompt we defined earlier
@@ -185,6 +237,17 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error('Error calling OpenAI:', error)
+        
+        // Return more detailed error information
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI analysis failed', 
+            details: error.message,
+            hasApiKey: !!openAIApiKey,
+            hasImageData: !!imageData 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
       }
     } else {
       console.log('OpenAI API key not found')
