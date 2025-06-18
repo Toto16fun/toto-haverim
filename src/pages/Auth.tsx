@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,8 +35,7 @@ const Auth = () => {
       options: {
         data: {
           name: name,
-        },
-        emailRedirectTo: `${window.location.origin}/`
+        }
       }
     });
 
@@ -50,8 +48,9 @@ const Auth = () => {
     } else {
       toast({
         title: "נרשמת בהצלחה!",
-        description: "בדוק את האימייל שלך לאישור ההרשמה",
+        description: "ברוך הבא לקבוצת הטוטו",
       });
+      navigate('/');
     }
     
     setIsLoading(false);
