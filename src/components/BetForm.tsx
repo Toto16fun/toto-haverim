@@ -85,6 +85,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       console.log('Current predictions:', predictions);
       console.log('Games count:', games.length);
       console.log('Validation status:', validation);
+      console.log('Existing bet:', existingBet);
       
       const predictionsList = Object.entries(predictions)
         .filter(([_, p]) => p.predictions.length > 0)
@@ -119,7 +120,9 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
 
       console.log('All validations passed, submitting...');
 
+      // Automatically choose between create and update based on existingBet
       if (existingBet) {
+        console.log('Updating existing bet with ID:', existingBet.id);
         await updateBet.mutateAsync({
           betId: existingBet.id,
           predictions: predictionsList
@@ -130,6 +133,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           description: "השינויים שלך נשמרו במערכת"
         });
       } else {
+        console.log('Creating new bet for round:', roundId);
         await submitBet.mutateAsync({
           roundId,
           predictions: predictionsList
