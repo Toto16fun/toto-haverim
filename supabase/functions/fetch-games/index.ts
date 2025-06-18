@@ -71,28 +71,45 @@ serve(async (req) => {
               messages: [
                 {
                   role: 'system',
-                  content: 'אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות. תפקידך לחלץ במדויק את פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.'
+                  content: `אתה מומחה בחילוץ נתוני משחקי כדורגל מתמונות טוטו 16. 
+                  התפקיד שלך הוא לחלץ במדויק את כל פרטי המשחקים מהתמונה ולהחזיר אותם בפורמט JSON נקי.
+                  חשוב להבין שהתמונה מכילה טבלה עם עמודות: ליגה, תאריך ושעה, מספר משחק, קבוצת בית נגד קבוצת חוץ.`
                 },
                 {
                   role: 'user',
                   content: [
                     {
                       type: 'text',
-                      text: `נתח את התמונה הזו של טוטו 16 וחלץ את כל המשחקים. 
-                      
-                      התמונה מציגה רשימת משחקים עם קבוצות בית וקבוצות חוץ.
-                      חלץ בדיוק את שמות הקבוצות כפי שהם מופיעים בתמונה.
-                      
-                      החזר תשובה בפורמט JSON הבא בלבד, ללא הסברים נוספים:
-                      {
-                        "games": [
-                          {"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"},
-                          {"homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ"}
-                        ]
-                      }
-                      
-                      וודא שאתה מחלץ בדיוק 16 משחקים.
-                      השתמש בשמות הקבוצות המדויקים מהתמונה.`
+                      text: `אנא נתח את צילום המסך הזה של טוטו 16 וחלץ את כל המשחקים בדיוק כפי שהם מופיעים.
+
+התמונה מציגה טבלה עם המידע הבא לכל משחק:
+- ליגה (למשל: פרמייר ליג, ליגה ספרדית, וכו')
+- תאריך ושעה של המשחק
+- מספר משחק (1-16)
+- קבוצת בית נגד קבוצת חוץ
+
+אנא צור טבלה מסודרת עם כל הפרטים האלה ואז חלץ את שמות הקבוצות.
+
+דוגמה לפורמט הטבלה שאני מצפה לראות:
+| מספר | ליגה | תאריך ושעה | קבוצת בית | קבוצת חוץ |
+|------|------|------------|-----------|----------|
+| 1    | פרמייר ליג | 15/06 20:30 | מנצ'סטר יונייטד | ליברפול |
+
+לאחר מכן, החזר את התוצאה בפורמט JSON הבא בלבד:
+{
+  "table": "הטבלה המלאה בפורמט markdown",
+  "games": [
+    {"gameNumber": 1, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ", "league": "שם הליגה", "datetime": "תאריך ושעה"},
+    {"gameNumber": 2, "homeTeam": "שם קבוצת הבית", "awayTeam": "שם קבוצת החוץ", "league": "שם הליגה", "datetime": "תאריך ושעה"}
+  ]
+}
+
+חשוב מאוד:
+- וודא שאתה מחלץ בדיוק 16 משחקים
+- השתמש בשמות הקבוצות המדויקים מהתמונה
+- אל תמציא שמות קבוצות
+- שמור על הסדר המופיע בתמונה (משחק 1 עד 16)
+- כלול את כל הפרטים: ליגה, תאריך ושעה`
                     },
                     {
                       type: 'image_url',
@@ -105,7 +122,7 @@ serve(async (req) => {
                 }
               ],
               temperature: 0,
-              max_tokens: 2000
+              max_tokens: 3000
             })
           })
 
@@ -115,7 +132,7 @@ serve(async (req) => {
             const aiResult = await openAIResponse.json()
             const content = aiResult.choices[0]?.message?.content
             
-            console.log('OpenAI Image Analysis Response (full):', content)
+            console.log('OpenAI Image Analysis Response:', content)
             
             if (!content) {
               console.error('No content in OpenAI response')
@@ -133,7 +150,7 @@ serve(async (req) => {
               const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
               
               if (!jsonMatch) {
-                console.error('No JSON found in response:', cleanedContent)
+                console.error('No JSON found in response. Full response:', cleanedContent)
                 throw new Error('No JSON structure found in AI response')
               }
               
@@ -141,7 +158,11 @@ serve(async (req) => {
               console.log('Extracted JSON string:', jsonString)
               
               const parsedData = JSON.parse(jsonString)
-              console.log('Parsed data:', parsedData)
+              console.log('Parsed data structure:', JSON.stringify(parsedData, null, 2))
+              
+              if (parsedData.table) {
+                console.log('Generated table:', parsedData.table)
+              }
               
               if (parsedData.games && Array.isArray(parsedData.games)) {
                 if (parsedData.games.length === 0) {
@@ -149,29 +170,47 @@ serve(async (req) => {
                   throw new Error('No games found in response')
                 }
                 
-                // Validate each game has homeTeam and awayTeam
-                const validGames = parsedData.games.filter(game => 
-                  game.homeTeam && game.awayTeam && 
-                  typeof game.homeTeam === 'string' && 
-                  typeof game.awayTeam === 'string'
-                )
+                console.log(`Found ${parsedData.games.length} games in response`)
+                
+                // Validate each game has required fields
+                const validGames = parsedData.games.filter((game, index) => {
+                  const isValid = game.homeTeam && game.awayTeam && 
+                    typeof game.homeTeam === 'string' && 
+                    typeof game.awayTeam === 'string' &&
+                    game.homeTeam.trim() !== '' && 
+                    game.awayTeam.trim() !== ''
+                  
+                  if (!isValid) {
+                    console.error(`Invalid game at index ${index}:`, game)
+                  }
+                  
+                  return isValid
+                })
                 
                 if (validGames.length === 0) {
-                  console.error('No valid games found:', parsedData.games)
+                  console.error('No valid games found. All games:', parsedData.games)
                   throw new Error('No valid games with homeTeam and awayTeam found')
                 }
+                
+                console.log(`Validated ${validGames.length} games out of ${parsedData.games.length}`)
                 
                 gamesData = validGames.slice(0, 16).map((game, index) => ({
                   homeTeam: { name: game.homeTeam.trim() },
                   awayTeam: { name: game.awayTeam.trim() },
-                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                  utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString(),
+                  league: game.league || '',
+                  datetime: game.datetime || ''
                 }))
-                dataSource = 'Image Analysis'
-                console.log(`Successfully extracted ${gamesData.length} games from image:`, 
-                  gamesData.map(g => `${g.homeTeam.name} vs ${g.awayTeam.name}`))
+                
+                dataSource = 'Image Analysis with Table Structure'
+                console.log(`Successfully extracted ${gamesData.length} games from image:`)
+                gamesData.forEach((game, index) => {
+                  console.log(`${index + 1}. ${game.homeTeam.name} vs ${game.awayTeam.name} (${game.league})`)
+                })
+                
               } else {
-                console.error('Invalid games data structure - missing games array:', parsedData)
-                throw new Error('Invalid response structure - games array not found')
+                console.error('Invalid games data structure - missing or invalid games array:', parsedData)
+                throw new Error('Invalid response structure - games array not found or invalid')
               }
             } catch (parseError) {
               console.error('Error parsing image analysis response:', parseError)
