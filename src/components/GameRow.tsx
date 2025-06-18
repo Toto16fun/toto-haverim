@@ -40,22 +40,47 @@ const GameRow = ({
     onPredictionChange(game.id, newPredictions, newPredictions.length > 1);
   };
 
+  const formatGameDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('he-IL', {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <Card className="mb-2">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <div className="text-sm font-medium mb-1">
-              משחק {game.game_number}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium">משחק {game.game_number}</span>
+              {game.league && (
+                <Badge variant="outline" className="text-xs">
+                  {game.league}
+                </Badge>
+              )}
             </div>
-            <div className="text-lg">
+            <div className="text-lg font-semibold mb-1">
               {game.home_team} נגד {game.away_team}
             </div>
-            {game.actual_result && (
-              <Badge variant="secondary" className="mt-1">
-                תוצאה: {game.actual_result}
-              </Badge>
-            )}
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              {game.game_date && (
+                <span>{formatGameDate(game.game_date)}</span>
+              )}
+              {game.actual_result && (
+                <Badge variant="secondary">
+                  תוצאה: {game.actual_result}
+                </Badge>
+              )}
+            </div>
           </div>
           
           <div className="flex gap-2 items-center">

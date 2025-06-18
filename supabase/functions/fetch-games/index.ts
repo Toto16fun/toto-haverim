@@ -74,7 +74,8 @@ serve(async (req) => {
             homeTeam: { name: game.homeTeam },
             awayTeam: { name: game.awayTeam },
             utcDate: gameDate,
-            league: game.league || null
+            league: game.league || null,
+            gameTime: game.gameDate || null
           }
         })
         
@@ -242,13 +243,14 @@ serve(async (req) => {
       .delete()
       .eq('round_id', roundId)
 
-    // Insert new games
+    // Insert new games with league and time information
     const gamesToInsert = gamesData.slice(0, 16).map((match, index) => ({
       round_id: roundId,
       game_number: index + 1,
       home_team: match.homeTeam.name,
       away_team: match.awayTeam.name,
-      game_date: match.utcDate
+      game_date: match.utcDate,
+      league: match.league || null
     }))
 
     console.log('Inserting games:', gamesToInsert)
