@@ -20,7 +20,7 @@ const GamesTable = ({
   title = "משחקי המחזור"
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
-  const displayOptions = ['2', 'X', '1']; // Display from right to left: 1, X, 2
+  const displayOptions = ['1', 'X', '2']; // Display from right to left: 1, X, 2
   
   const handleOptionClick = (gameId: string, option: string) => {
     if (isReadOnly || !onPredictionChange) return;
@@ -79,18 +79,15 @@ const GamesTable = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-center">#</TableHead>
                   <TableHead className="text-center">קבוצות</TableHead>
                   <TableHead className="text-center">ליגה</TableHead>
                   <TableHead className="text-center">תאריך ושעה</TableHead>
+                  <TableHead className="text-center">#</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {games.map(game => (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
                     <TableCell className="text-center font-medium">
                       <div>{game.home_team} - {game.away_team}</div>
                     </TableCell>
@@ -108,6 +105,9 @@ const GamesTable = ({
                       <div>
                         {game.game_date ? formatGameTime(game.game_date) : '-'}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {game.game_number}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -168,7 +168,7 @@ const GamesTable = ({
                         {game.game_date ? formatGameTime(game.game_date) : '-'}
                       </div>
                     </TableCell>
-                    {displayOptions.reverse().map(option => (
+                    {displayOptions.map(option => (
                       <TableCell key={option} className="text-center">
                         <Button
                           variant={gamePredictions.includes(option) ? "default" : "outline"}
