@@ -77,6 +77,7 @@ export type Database = {
           game_number: number
           home_team: string
           id: string
+          league: string | null
           round_id: string | null
         }
         Insert: {
@@ -87,6 +88,7 @@ export type Database = {
           game_number: number
           home_team: string
           id?: string
+          league?: string | null
           round_id?: string | null
         }
         Update: {
@@ -97,6 +99,7 @@ export type Database = {
           game_number?: number
           home_team?: string
           id?: string
+          league?: string | null
           round_id?: string | null
         }
         Relationships: [
