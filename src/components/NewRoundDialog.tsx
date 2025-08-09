@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
   const [fileType, setFileType] = useState<'image' | 'excel' | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
   const createRound = useCreateRound();
   const fetchGames = useFetchGames();
@@ -267,12 +269,15 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
           });
         }
         
-        setStep('confirm');
-        
+        // Navigate directly to fixture image review for editing games
         toast({
-          title: "מחזור נוצר והמשחקים נטענו!",
-          description: `מחזור ${nextRoundNumber} מוכן להפעלה`
+          title: "מחזור נוצר בהצלחה",
+          description: `מחזור ${nextRoundNumber} נוצר כטיוטה. מעבר לעריכת המשחקים...`
         });
+        
+        resetDialog();
+        onOpenChange(false);
+        navigate(`/admin/fixture-image?roundId=${roundResult.id}`);
         
       } catch (fetchError: any) {
         // If analysis fails, still proceed to confirmation step

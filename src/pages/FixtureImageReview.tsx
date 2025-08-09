@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ImageUploadForFixtures } from '@/components/ImageUploadForFixtures';
-import { previewFixtureImage, saveFixtureImage, type FixtureGame } from '@/hooks/useFixtureImage';
+import { previewFixtureImage, saveEditedGames, type FixtureGame } from '@/hooks/useFixtureImage';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentRound } from '@/hooks/useTotoRounds';
 import { Check, AlertTriangle, ArrowRight, Home } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function FixtureImageReview() {
     }
   };
 
-  const updateGame = (index: number, field: 'home' | 'away', value: string) => {
+  const updateGame = (index: number, field: 'home' | 'away' | 'kickoff', value: string) => {
     if (!games) return;
     const newGames = [...games];
     newGames[index] = { ...newGames[index], [field]: value };
@@ -77,11 +77,11 @@ export default function FixtureImageReview() {
   };
 
   const handleSave = async () => {
-    if (!games || !roundId || !imageUrl) return;
+    if (!games || !roundId) return;
     
     setIsSaving(true);
     try {
-      const result = await saveFixtureImage(roundId, imageUrl);
+      const result = await saveEditedGames(roundId, games);
       toast({
         title: "נשמר בהצלחה",
         description: `נשמרו ${result.saved} משחקים למחזור`,
@@ -155,17 +155,25 @@ export default function FixtureImageReview() {
                   )}
                 </div>
                 <CardDescription>
-                  ערוך את שמות הקבוצות במידת הצורך לפני השמירה
+                  ערוך את שמות הקבוצות ושעות המשחק לפני השמירה
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Header row */}
+                <div className="grid grid-cols-12 gap-2 items-center pb-2 border-b font-medium text-sm">
+                  <div className="col-span-1 text-center">#</div>
+                  <div className="col-span-4">קבוצת בית</div>
+                  <div className="col-span-4">קבוצת חוץ</div>
+                  <div className="col-span-3">שעה</div>
+                </div>
+                
                 <div className="grid gap-3 max-h-96 overflow-y-auto">
                   {games.map((game, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-1 text-center text-sm font-medium">
                         {index + 1}
                       </div>
-                      <div className="col-span-5">
+                      <div className="col-span-4">
                         <Input
                           value={game.home}
                           onChange={(e) => updateGame(index, 'home', e.target.value)}
@@ -173,14 +181,19 @@ export default function FixtureImageReview() {
                           className="text-sm"
                         />
                       </div>
-                      <div className="col-span-1 text-center text-xs text-muted-foreground">
-                        נגד
-                      </div>
-                      <div className="col-span-5">
+                      <div className="col-span-4">
                         <Input
                           value={game.away}
                           onChange={(e) => updateGame(index, 'away', e.target.value)}
                           placeholder="קבוצת חוץ"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <Input
+                          value={game.kickoff}
+                          onChange={(e) => updateGame(index, 'kickoff', e.target.value)}
+                          placeholder="שעה"
                           className="text-sm"
                         />
                       </div>

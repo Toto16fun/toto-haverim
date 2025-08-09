@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface FixtureGame {
   home: string;
   away: string;
+  kickoff: string;
 }
 
 export interface PreviewResult {
@@ -40,6 +41,19 @@ export async function saveFixtureImage(roundId: string, imageUrl: string): Promi
   if (error) {
     console.error('Error saving fixture image:', error);
     throw new Error(error.message || 'Failed to save image');
+  }
+  
+  return data as SaveResult;
+}
+
+export async function saveEditedGames(roundId: string, games: FixtureGame[]): Promise<SaveResult> {
+  const { data, error } = await supabase.functions.invoke('parse-fixture-image', { 
+    body: { action: 'save', roundId, games } 
+  });
+  
+  if (error) {
+    console.error('Error saving edited games:', error);
+    throw new Error(error.message || 'Failed to save games');
   }
   
   return data as SaveResult;
