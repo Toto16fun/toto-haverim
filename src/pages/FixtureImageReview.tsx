@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ImageUploadForFixtures } from '@/components/ImageUploadForFixtures';
 import { previewFixtureImage, saveEditedGames, type FixtureGame } from '@/hooks/useFixtureImage';
@@ -134,105 +133,116 @@ export default function FixtureImageReview() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
+      {!games ? (
+        <div className="max-w-2xl mx-auto">
           <ImageUploadForFixtures 
             onImageUploaded={handleImageUploaded}
             isLoading={isProcessing}
           />
         </div>
-
-        {games && (
-          <div>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>משחקי המחזור</CardTitle>
+      ) : (
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>משחקי המחזור</CardTitle>
+                <div className="flex items-center gap-2">
                   {typeof confidence === 'number' && (
                     <Badge variant={confidence > 0.8 ? 'default' : 'destructive'}>
                       דיוק: {(confidence * 100).toFixed(1)}%
                     </Badge>
                   )}
-                </div>
-                <CardDescription>
-                  ערוך את שמות הקבוצות ושעות המשחק לפני השמירה
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Header row */}
-                <div className="grid grid-cols-12 gap-2 items-center pb-2 border-b font-medium text-sm">
-                  <div className="col-span-1 text-center">#</div>
-                  <div className="col-span-4">קבוצת בית</div>
-                  <div className="col-span-4">קבוצת חוץ</div>
-                  <div className="col-span-3">שעה</div>
-                </div>
-                
-                <div className="grid gap-3 max-h-96 overflow-y-auto">
-                  {games.map((game, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-1 text-center text-sm font-medium">
-                        {index + 1}
-                      </div>
-                      <div className="col-span-4">
-                        <Input
-                          value={game.home}
-                          onChange={(e) => updateGame(index, 'home', e.target.value)}
-                          placeholder="קבוצת בית"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="col-span-4">
-                        <Input
-                          value={game.away}
-                          onChange={(e) => updateGame(index, 'away', e.target.value)}
-                          placeholder="קבוצת חוץ"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <Input
-                          value={game.kickoff}
-                          onChange={(e) => updateGame(index, 'kickoff', e.target.value)}
-                          placeholder="שעה"
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    {isValid ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-destructive" />
-                    )}
-                    <span className="text-sm">
-                      {games.length}/16 משחקים {isValid ? 'מוכנים לשמירה' : 'חסרים או לא תקינים'}
-                    </span>
-                  </div>
-                  
-                  <Button 
-                    onClick={handleSave}
-                    disabled={!isValid || isSaving || isProcessing}
-                    size="lg"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setGames(null);
+                      setImageUrl('');
+                      setConfidence(undefined);
+                    }}
                   >
-                    {isSaving ? (
-                      'שומר...'
-                    ) : (
-                      <>
-                        שמור ועבור למחזור
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                      </>
-                    )}
+                    העלה תמונה חדשה
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+              </div>
+              <CardDescription>
+                ערוך את שמות הקבוצות ושעות המשחק לפני השמירה
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Header row */}
+              <div className="grid grid-cols-12 gap-2 items-center pb-2 border-b font-medium text-sm">
+                <div className="col-span-1 text-center">#</div>
+                <div className="col-span-4">קבוצת בית</div>
+                <div className="col-span-4">קבוצת חוץ</div>
+                <div className="col-span-3">שעה</div>
+              </div>
+              
+              <div className="grid gap-3 max-h-96 overflow-y-auto">
+                {games.map((game, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-1 text-center text-sm font-medium">
+                      {index + 1}
+                    </div>
+                    <div className="col-span-4">
+                      <Input
+                        value={game.home}
+                        onChange={(e) => updateGame(index, 'home', e.target.value)}
+                        placeholder="קבוצת בית"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <Input
+                        value={game.away}
+                        onChange={(e) => updateGame(index, 'away', e.target.value)}
+                        placeholder="קבוצת חוץ"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        value={game.kickoff}
+                        onChange={(e) => updateGame(index, 'kickoff', e.target.value)}
+                        placeholder="שעה"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  {isValid ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-destructive" />
+                  )}
+                  <span className="text-sm">
+                    {games.length}/16 משחקים {isValid ? 'מוכנים לשמירה' : 'חסרים או לא תקינים'}
+                  </span>
+                </div>
+                
+                <Button 
+                  onClick={handleSave}
+                  disabled={!isValid || isSaving || isProcessing}
+                  size="lg"
+                >
+                  {isSaving ? (
+                    'שומר...'
+                  ) : (
+                    <>
+                      שמור ועבור למחזור
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {isProcessing && (
         <Card>
