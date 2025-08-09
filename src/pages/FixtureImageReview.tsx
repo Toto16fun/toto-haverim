@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ImageUploadForFixtures } from '@/components/ImageUploadForFixtures';
-import { previewFixtureImage, saveEditedGames, type FixtureGame } from '@/hooks/useFixtureImage';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentRound } from '@/hooks/useTotoRounds';
-import { Check, AlertTriangle, ArrowRight, Home } from 'lucide-react';
+import { Check, AlertTriangle, ArrowRight, Home, Upload, Image as ImageIcon } from 'lucide-react';
+import { previewFixtureImage, saveEditedGames, uploadImageToStorage, type FixtureGame } from '@/hooks/useFixtureImage';
 
 export default function FixtureImageReview() {
   const [searchParams] = useSearchParams();
@@ -18,7 +17,9 @@ export default function FixtureImageReview() {
   
   const roundId = searchParams.get('roundId') || currentRound?.id;
   
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   const [games, setGames] = useState<FixtureGame[] | null>(null);
   const [confidence, setConfidence] = useState<number | undefined>();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,13 +36,46 @@ export default function FixtureImageReview() {
     }
   }, [roundId, navigate, toast]);
 
-  const handleImageUploaded = async (uploadedImageUrl: string) => {
-    console.log('handleImageUploaded called with:', uploadedImageUrl);
-    setImageUrl(uploadedImageUrl);
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "שגיאה",
+          description: "אנא בחר קובץ תמונה בלבד",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "שגיאה", 
+          description: "הקובץ גדול מדי. מקסימום 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUploadAndProcess = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
     setIsProcessing(true);
     
     try {
-      const result = await previewFixtureImage(uploadedImageUrl);
+      // Upload image to storage
+      const imageUrl = await uploadImageToStorage(selectedFile);
+      
+      // Process image with AI
+      const result = await previewFixtureImage(imageUrl);
       setGames(result.preview);
       setConfidence(result.confidence);
       
@@ -65,6 +99,7 @@ export default function FixtureImageReview() {
         variant: "destructive",
       });
     } finally {
+      setIsUploading(false);
       setIsProcessing(false);
     }
   };
@@ -101,6 +136,13 @@ export default function FixtureImageReview() {
     }
   };
 
+  const resetToUpload = () => {
+    setSelectedFile(null);
+    setPreviewUrl('');
+    setGames(null);
+    setConfidence(undefined);
+  };
+
   const isValid = games && games.length === 16 && games.every(g => g.home && g.away);
 
   if (!roundId) {
@@ -135,13 +177,57 @@ export default function FixtureImageReview() {
       </div>
 
       {!games ? (
+        // Upload section - only shown when no games are processed yet
         <div className="max-w-2xl mx-auto">
-          <ImageUploadForFixtures 
-            onImageUploaded={handleImageUploaded}
-            isLoading={isProcessing}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5" />
+                העלאת תמונת לוח זמנים
+              </CardTitle>
+              <CardDescription>
+                העלה צילום מסך של לוח הזמנים לעיבוד אוטומטי של המשחקים
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  disabled={isUploading || isProcessing}
+                />
+              </div>
+
+              {previewUrl && (
+                <div className="space-y-2">
+                  <div className="border rounded-lg p-2">
+                    <img 
+                      src={previewUrl} 
+                      alt="Preview" 
+                      className="max-w-full h-auto max-h-64 mx-auto rounded"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Button
+                onClick={handleUploadAndProcess}
+                disabled={!selectedFile || isUploading || isProcessing}
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {isUploading || isProcessing ? 'מעבד...' : 'עבד תמונה'}
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                התמונה תעובד באמצעות AI כדי לחלץ את פרטי המשחקים. לאחר העיבוד תוכל לערוך ולאשר את הנתונים.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       ) : (
+        // Games editing section - shown after processing
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
@@ -156,11 +242,7 @@ export default function FixtureImageReview() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setGames(null);
-                      setImageUrl('');
-                      setConfidence(undefined);
-                    }}
+                    onClick={resetToUpload}
                   >
                     העלה תמונה חדשה
                   </Button>
@@ -227,7 +309,7 @@ export default function FixtureImageReview() {
                 
                 <Button 
                   onClick={handleSave}
-                  disabled={!isValid || isSaving || isProcessing}
+                  disabled={!isValid || isSaving}
                   size="lg"
                 >
                   {isSaving ? (
@@ -243,20 +325,6 @@ export default function FixtureImageReview() {
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {isProcessing && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-              <h3 className="text-lg font-medium mb-2">מעבד תמונה...</h3>
-              <p className="text-muted-foreground">
-                זה עשוי לקחת כמה שניות. אנא המתן.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );
