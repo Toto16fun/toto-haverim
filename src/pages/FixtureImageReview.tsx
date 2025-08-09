@@ -3,13 +3,11 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ImageUploadForFixtures } from '@/components/ImageUploadForFixtures';
-import { previewFixtureImage, saveFixtureImage, type FixtureGame } from '@/hooks/useFixtureImage';
 import { useToast } from '@/hooks/use-toast';
-import { useCurrentRound } from '@/hooks/useTotoRounds';
-import { Check, AlertTriangle, ArrowRight, Home } from 'lucide-react';
+import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
+import { supabase } from '@/integrations/supabase/client';
+import { Check, AlertTriangle, Save, Home } from 'lucide-react';
 
 export default function FixtureImageReview() {
   const [searchParams] = useSearchParams();
@@ -18,11 +16,9 @@ export default function FixtureImageReview() {
   const { data: currentRound } = useCurrentRound();
   
   const roundId = searchParams.get('roundId') || currentRound?.id;
+  const { data: games, refetch } = useGamesInRound(roundId);
   
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [games, setGames] = useState<FixtureGame[] | null>(null);
-  const [confidence, setConfidence] = useState<number | undefined>();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [editedGames, setEditedGames] = useState<{[key: string]: {home_team: string, away_team: string}}>({});
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -36,64 +32,58 @@ export default function FixtureImageReview() {
     }
   }, [roundId, navigate, toast]);
 
-  const handleImageUploaded = async (uploadedImageUrl: string) => {
-    setImageUrl(uploadedImageUrl);
-    setIsProcessing(true);
-    
-    try {
-      const result = await previewFixtureImage(uploadedImageUrl);
-      setGames(result.preview);
-      setConfidence(result.confidence);
-      
-      if (result.confidence < 0.8) {
-        toast({
-          title: "דיוק נמוך",
-          description: `דיוק הזיהוי: ${(result.confidence * 100).toFixed(1)}%. אנא בדוק ועדכן את פרטי המשחקים.`,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "זוהה בהצלחה",
-          description: `זוהו ${result.preview.length} משחקים בדיוק של ${(result.confidence * 100).toFixed(1)}%`,
-        });
+  const updateGame = (gameId: string, field: 'home_team' | 'away_team', value: string) => {
+    setEditedGames(prev => ({
+      ...prev,
+      [gameId]: {
+        ...prev[gameId],
+        [field]: value
       }
-    } catch (error) {
-      console.error('Error processing image:', error);
-      toast({
-        title: "שגיאה בעיבוד",
-        description: "לא הצלחנו לעבד את התמונה. נסה שוב או השתמש בתמונה אחרת.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+    }));
   };
 
-  const updateGame = (index: number, field: 'home' | 'away', value: string) => {
-    if (!games) return;
-    const newGames = [...games];
-    newGames[index] = { ...newGames[index], [field]: value };
-    setGames(newGames);
+  const getGameValue = (gameId: string, field: 'home_team' | 'away_team', originalValue: string) => {
+    return editedGames[gameId]?.[field] ?? originalValue;
   };
 
   const handleSave = async () => {
-    if (!games || !roundId || !imageUrl) return;
+    if (!games || !roundId) return;
     
     setIsSaving(true);
     try {
-      const result = await saveFixtureImage(roundId, imageUrl);
+      // Update each edited game
+      for (const [gameId, changes] of Object.entries(editedGames)) {
+        if (changes.home_team !== undefined || changes.away_team !== undefined) {
+          const { error } = await supabase
+            .from('games')
+            .update({
+              ...(changes.home_team !== undefined && { home_team: changes.home_team }),
+              ...(changes.away_team !== undefined && { away_team: changes.away_team })
+            })
+            .eq('id', gameId);
+
+          if (error) {
+            throw error;
+          }
+        }
+      }
+
       toast({
         title: "נשמר בהצלחה",
-        description: `נשמרו ${result.saved} משחקים למחזור`,
+        description: "שמות הקבוצות עודכנו במחזור",
       });
       
-      // Navigate to round management or home
+      // Clear edited games and refetch data
+      setEditedGames({});
+      refetch();
+      
+      // Navigate to current round
       navigate(`/current-round`);
     } catch (error) {
       console.error('Error saving games:', error);
       toast({
         title: "שגיאה בשמירה",
-        description: "לא הצלחנו לשמור את המשחקים. נסה שוב.",
+        description: "לא הצלחנו לשמור את שמות הקבוצות. נסה שוב.",
         variant: "destructive",
       });
     } finally {
@@ -101,7 +91,7 @@ export default function FixtureImageReview() {
     }
   };
 
-  const isValid = games && games.length === 16 && games.every(g => g.home && g.away);
+  const hasChanges = Object.keys(editedGames).length > 0;
 
   if (!roundId) {
     return (
@@ -128,108 +118,105 @@ export default function FixtureImageReview() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">עיבוד תמונת לוח זמנים</h1>
+        <h1 className="text-3xl font-bold mb-2">עריכת משחקים</h1>
         <p className="text-muted-foreground">
-          העלה צילום מסך של לוח הזמנים וערוך את פרטי המשחקים לפני השמירה
+          ערוך את שמות הקבוצות במחזור הנוכחי
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
-          <ImageUploadForFixtures 
-            onImageUploaded={handleImageUploaded}
-            isLoading={isProcessing}
-          />
-        </div>
-
-        {games && (
-          <div>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>משחקי המחזור</CardTitle>
-                  {typeof confidence === 'number' && (
-                    <Badge variant={confidence > 0.8 ? 'default' : 'destructive'}>
-                      דיוק: {(confidence * 100).toFixed(1)}%
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription>
-                  ערוך את שמות הקבוצות במידת הצורך לפני השמירה
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 max-h-96 overflow-y-auto">
-                  {games.map((game, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-1 text-center text-sm font-medium">
-                        {index + 1}
-                      </div>
-                      <div className="col-span-5">
-                        <Input
-                          value={game.home}
-                          onChange={(e) => updateGame(index, 'home', e.target.value)}
-                          placeholder="קבוצת בית"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="col-span-1 text-center text-xs text-muted-foreground">
-                        נגד
-                      </div>
-                      <div className="col-span-5">
-                        <Input
-                          value={game.away}
-                          onChange={(e) => updateGame(index, 'away', e.target.value)}
-                          placeholder="קבוצת חוץ"
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    {isValid ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-destructive" />
-                    )}
-                    <span className="text-sm">
-                      {games.length}/16 משחקים {isValid ? 'מוכנים לשמירה' : 'חסרים או לא תקינים'}
-                    </span>
+      {games && games.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>משחקי מחזור {currentRound?.round_number}</CardTitle>
+              <div className="flex items-center gap-2">
+                {hasChanges && (
+                  <Badge variant="secondary">
+                    {Object.keys(editedGames).length} שינויים
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <CardDescription>
+              לחץ על שמות הקבוצות כדי לערוך אותם
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 max-h-96 overflow-y-auto">
+              {games.map((game) => (
+                <div key={game.id} className="grid grid-cols-12 gap-2 items-center border rounded-lg p-3">
+                  <div className="col-span-1 text-center text-sm font-medium">
+                    {game.game_number}
                   </div>
-                  
-                  <Button 
-                    onClick={handleSave}
-                    disabled={!isValid || isSaving || isProcessing}
-                    size="lg"
-                  >
-                    {isSaving ? (
-                      'שומר...'
-                    ) : (
-                      <>
-                        שמור ועבור למחזור
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                      </>
-                    )}
-                  </Button>
+                  <div className="col-span-5">
+                    <Input
+                      value={getGameValue(game.id, 'home_team', game.home_team)}
+                      onChange={(e) => updateGame(game.id, 'home_team', e.target.value)}
+                      placeholder="קבוצת בית"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="col-span-1 text-center text-xs text-muted-foreground">
+                    נגד
+                  </div>
+                  <div className="col-span-5">
+                    <Input
+                      value={getGameValue(game.id, 'away_team', game.away_team)}
+                      onChange={(e) => updateGame(game.id, 'away_team', e.target.value)}
+                      placeholder="קבוצת חוץ"
+                      className="text-sm"
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
 
-      {isProcessing && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-sm">
+                  {games.length} משחקים במחזור
+                </span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => navigate('/current-round')}
+                  variant="outline"
+                >
+                  ביטול
+                </Button>
+                <Button 
+                  onClick={handleSave}
+                  disabled={!hasChanges || isSaving}
+                  size="lg"
+                >
+                  {isSaving ? (
+                    'שומר...'
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 ml-2" />
+                      שמור שינויים
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-              <h3 className="text-lg font-medium mb-2">מעבד תמונה...</h3>
-              <p className="text-muted-foreground">
-                זה עשוי לקחת כמה שניות. אנא המתן.
+              <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">אין משחקים במחזור</h3>
+              <p className="text-muted-foreground mb-4">
+                לא נמצאו משחקים במחזור הנוכחי. אנא הוסף משחקים תחילה.
               </p>
+              <Button onClick={() => navigate('/')} variant="outline">
+                <Home className="w-4 h-4 mr-2" />
+                חזור לעמוד הבית
+              </Button>
             </div>
           </CardContent>
         </Card>
