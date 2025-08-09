@@ -172,6 +172,24 @@ export type Database = {
         }
         Relationships: []
       }
+      team_aliases: {
+        Row: {
+          alias: string
+          canonical: string
+          id: number
+        }
+        Insert: {
+          alias: string
+          canonical: string
+          id?: number
+        }
+        Update: {
+          alias?: string
+          canonical?: string
+          id?: number
+        }
+        Relationships: []
+      }
       toto_rounds: {
         Row: {
           created_at: string
@@ -249,7 +267,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      normalize_team_name: {
+        Args: { p_name: string }
+        Returns: string
+      }
+      validate_fixtures_json: {
+        Args: { p_json: Json }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
