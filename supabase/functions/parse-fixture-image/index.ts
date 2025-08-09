@@ -22,7 +22,7 @@ async function visionToJson(imageUrl: string) {
       content: [
         { 
           type: "text", 
-          text: "Extract EXACTLY 16 football fixtures from this image. Return JSON ONLY in this schema: {\"games\": [{\"home\": string, \"away\": string, \"kickoff\": string} x16], \"confidence\": number (0..1)}. For kickoff, extract the time as shown in the image (HH:MM format if possible, or keep original text if not a clear time). No extra fields. Normalize spacing and dashes. If less than 16 can be read, still return games you see and confidence < 0.9."
+          text: "Extract EXACTLY 16 football fixtures from this image. Return JSON ONLY in this schema: {\"games\": [{\"home\": string, \"away\": string} x16], \"confidence\": number (0..1)}. No extra fields. Normalize spacing and dashes. If less than 16 can be read, still return games you see and confidence < 0.9."
         },
         { 
           type: "image_url", 
@@ -56,7 +56,7 @@ async function visionToJson(imageUrl: string) {
   
   try {
     const parsed = JSON.parse(text);
-    return parsed as { games: {home: string, away: string, kickoff: string}[]; confidence: number };
+    return parsed as { games: {home: string, away: string}[]; confidence: number };
   } catch (parseError) {
     console.error('Failed to parse OpenAI response:', text);
     throw new Error('Invalid JSON response from OpenAI');
@@ -79,108 +79,12 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, roundId, action, games: overrideGames } = await req.json() as { 
-      imageUrl?: string; 
+    const { imageUrl, roundId, action } = await req.json() as { 
+      imageUrl: string; 
       roundId?: string; 
-      action?: 'preview'|'save';
-      games?: {home: string, away: string, kickoff: string}[];
+      action?: 'preview'|'save' 
     };
     
-    console.log(`Processing with action: ${action || 'preview'}`);
-
-    // Handle manual override (from UI editing)
-    if (action === 'save' && overrideGames) {
-      if (!roundId) {
-        return new Response(
-          JSON.stringify({ error: 'roundId required for save' }), 
-          { status: 400, headers: corsHeaders }
-        );
-      }
-
-      // Get round info for date conversion
-      const { data: round, error: roundError } = await sb
-        .from('toto_rounds')
-        .select('id,status,start_date')
-        .eq('id', roundId)
-        .single();
-      
-      if (roundError || !round) {
-        return new Response(
-          JSON.stringify({ error: 'round not found' }), 
-          { status: 404, headers: corsHeaders }
-        );
-      }
-
-      // Delete existing games for this round
-      const { error: deleteError } = await sb
-        .from('games')
-        .delete()
-        .eq('round_id', roundId);
-      
-      if (deleteError) {
-        console.error('Error deleting existing games:', deleteError);
-        throw deleteError;
-      }
-
-      // Normalize team names and prepare games for insertion
-      const gamesToInsert = [];
-      for (let i = 0; i < overrideGames.length; i++) {
-        const g = overrideGames[i];
-        const home = await aliasNormalize((g.home || '').trim());
-        const away = await aliasNormalize((g.away || '').trim());
-        const kickoffStr = (g.kickoff || '').trim();
-        
-        // Try to parse kickoff time if it's in HH:MM format
-        let kickoffAt = null;
-        if (kickoffStr.match(/^\d{1,2}:\d{2}$/)) {
-          try {
-            // Convert to UTC based on round start_date (assuming Israel timezone)
-            const roundDate = new Date(round.start_date);
-            const [hours, minutes] = kickoffStr.split(':').map(Number);
-            
-            // Create date in Israel timezone and convert to UTC
-            const gameDateTime = new Date(roundDate.getFullYear(), roundDate.getMonth(), roundDate.getDate(), hours, minutes);
-            // Adjust for Israel timezone (UTC+2/+3 depending on DST)
-            const israelOffset = 2; // Simplified - should check DST
-            kickoffAt = new Date(gameDateTime.getTime() - (israelOffset * 60 * 60 * 1000)).toISOString();
-          } catch (e) {
-            console.warn(`Failed to parse kickoff time: ${kickoffStr}`, e);
-          }
-        }
-
-        gamesToInsert.push({
-          round_id: roundId,
-          home_team: home,
-          away_team: away,
-          game_number: i + 1,
-          kickoff_str: kickoffStr,
-          kickoff_at: kickoffAt
-        });
-      }
-
-      const { error: insertError } = await sb
-        .from('games')
-        .insert(gamesToInsert);
-      
-      if (insertError) {
-        console.error('Error inserting games:', insertError);
-        throw insertError;
-      }
-
-      console.log(`Successfully saved ${gamesToInsert.length} games to round ${roundId}`);
-      
-      return new Response(
-        JSON.stringify({ 
-          ok: true, 
-          saved: gamesToInsert.length, 
-          confidence: 1.0, 
-          ok16: gamesToInsert.length === 16
-        }), 
-        { headers: { ...corsHeaders, 'content-type': 'application/json' } }
-      );
-    }
-
-    // Process image (for preview or save without override)
     if (!imageUrl) {
       return new Response(
         JSON.stringify({ error: 'imageUrl required' }), 
@@ -188,24 +92,24 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Processing image with action: ${action || 'preview'}`);
+
     // 1) OCR+LLM → JSON
     const raw = await visionToJson(imageUrl);
     console.log(`OCR extracted ${raw.games?.length || 0} games with confidence ${raw.confidence}`);
 
-    // 2) Normalize aliases + trim + prepare preview
-    const normalized = [];
+    // 2) Normalize aliases + trim
+    const normalized = [] as { home: string; away: string }[];
     for (const g of raw.games ?? []) {
-      const home = await aliasNormalize((g.home || '').trim());
-      const away = await aliasNormalize((g.away || '').trim());
-      const kickoff = (g.kickoff || '').trim();
-      
-      normalized.push({ home, away, kickoff });
+      const home = (await aliasNormalize((g.home||'').trim())) || '';
+      const away = (await aliasNormalize((g.away||'').trim())) || '';
+      normalized.push({ home, away });
     }
 
     // 3) Validation
     const ok16 = normalized.length === 16 && normalized.every(g => g.home && g.away);
 
-    // 4) Save if requested (without override)
+    // 4) Save if requested
     if (action === 'save') {
       if (!roundId) {
         return new Response(
@@ -214,10 +118,10 @@ serve(async (req) => {
         );
       }
       
-      // Get round info for date conversion
+      // Verify round exists
       const { data: round, error: roundError } = await sb
         .from('toto_rounds')
-        .select('id,status,start_date')
+        .select('id,status')
         .eq('id', roundId)
         .single();
       
@@ -239,30 +143,13 @@ serve(async (req) => {
         throw deleteError;
       }
 
-      // Insert new games with kickoff parsing
-      const gamesToInsert = normalized.map((g, index) => {
-        let kickoffAt = null;
-        if (g.kickoff.match(/^\d{1,2}:\d{2}$/)) {
-          try {
-            const roundDate = new Date(round.start_date);
-            const [hours, minutes] = g.kickoff.split(':').map(Number);
-            const gameDateTime = new Date(roundDate.getFullYear(), roundDate.getMonth(), roundDate.getDate(), hours, minutes);
-            const israelOffset = 2; // Simplified timezone conversion
-            kickoffAt = new Date(gameDateTime.getTime() - (israelOffset * 60 * 60 * 1000)).toISOString();
-          } catch (e) {
-            console.warn(`Failed to parse kickoff time: ${g.kickoff}`, e);
-          }
-        }
-
-        return {
-          round_id: roundId,
-          home_team: g.home,
-          away_team: g.away,
-          game_number: index + 1,
-          kickoff_str: g.kickoff,
-          kickoff_at: kickoffAt
-        };
-      });
+      // Insert new games with game_number
+      const gamesToInsert = normalized.map((g, index) => ({
+        round_id: roundId,
+        home_team: g.home,
+        away_team: g.away,
+        game_number: index + 1
+      }));
 
       const { error: insertError } = await sb
         .from('games')
