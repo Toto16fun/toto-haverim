@@ -22,7 +22,7 @@ async function visionToJson(imageUrl: string) {
       content: [
         { 
           type: "text", 
-          text: "Extract EXACTLY 16 football fixtures from this image. Return JSON ONLY in this schema: {\"games\": [{\"home\": string, \"away\": string} x16], \"confidence\": number (0..1)}. No extra fields. Normalize spacing and dashes. If less than 16 can be read, still return games you see and confidence < 0.9."
+          text: "Extract EXACTLY 16 football fixtures from this image. Return JSON ONLY in this schema: {\"games\": [{\"home\": string, \"away\": string, \"date\": string, \"time\": string} x16], \"confidence\": number (0..1)}. Extract the actual date and time for each game from the image. Date should be in YYYY-MM-DD format, time should be in HH:MM format. No extra fields. Normalize spacing and dashes. If less than 16 can be read, still return games you see and confidence < 0.9."
         },
         { 
           type: "image_url", 
@@ -56,7 +56,7 @@ async function visionToJson(imageUrl: string) {
   
   try {
     const parsed = JSON.parse(text);
-    return parsed as { games: {home: string, away: string}[]; confidence: number };
+    return parsed as { games: {home: string, away: string, date: string, time: string}[]; confidence: number };
   } catch (parseError) {
     console.error('Failed to parse OpenAI response:', text);
     throw new Error('Invalid JSON response from OpenAI');
@@ -98,12 +98,28 @@ serve(async (req) => {
     const raw = await visionToJson(imageUrl);
     console.log(`OCR extracted ${raw.games?.length || 0} games with confidence ${raw.confidence}`);
 
-    // 2) Normalize aliases + trim
-    const normalized = [] as { home: string; away: string }[];
+    // 2) Normalize aliases + trim + process dates
+    const normalized = [] as { home: string; away: string; date: string; time: string; gameDate: string }[];
     for (const g of raw.games ?? []) {
       const home = (await aliasNormalize((g.home||'').trim())) || '';
       const away = (await aliasNormalize((g.away||'').trim())) || '';
-      normalized.push({ home, away });
+      const date = (g.date||'').trim();
+      const time = (g.time||'').trim();
+      
+      // Combine date and time into ISO string for game_date field
+      let gameDate = '';
+      if (date && time) {
+        try {
+          gameDate = new Date(`${date}T${time}:00.000Z`).toISOString();
+        } catch (e) {
+          console.warn(`Invalid date/time: ${date} ${time}`, e);
+          gameDate = new Date().toISOString(); // fallback to current time
+        }
+      } else {
+        gameDate = new Date().toISOString(); // fallback to current time
+      }
+      
+      normalized.push({ home, away, date, time, gameDate });
     }
 
     // 3) Validation
@@ -143,12 +159,13 @@ serve(async (req) => {
         throw deleteError;
       }
 
-      // Insert new games with game_number
+      // Insert new games with game_number and actual game dates
       const gamesToInsert = normalized.map((g, index) => ({
         round_id: roundId,
         home_team: g.home,
         away_team: g.away,
-        game_number: index + 1
+        game_number: index + 1,
+        game_date: g.gameDate
       }));
 
       const { error: insertError } = await sb
