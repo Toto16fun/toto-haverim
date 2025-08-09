@@ -165,32 +165,16 @@ export const useSubmitBet = () => {
         betId = bet.id;
       }
       
-      // Map UI format to DB format (expand doubles to individual rows)
+      // Map UI format to DB format - keep doubles as single rows with multiple predictions
       const predictionInserts = [];
       for (const p of predictions) {
-        if (p.isDouble && p.predictions.length === 2) {
-          // Create two separate rows for double predictions
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: [p.predictions[0]], // First pick
-            is_double: true
-          });
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: [p.predictions[1]], // Second pick
-            is_double: true
-          });
-        } else {
-          // Single prediction
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: p.predictions,
-            is_double: p.isDouble
-          });
-        }
+        // Always create a single row per game, regardless if it's double or not
+        predictionInserts.push({
+          bet_id: betId,
+          game_id: p.gameId,
+          predictions: p.predictions, // Array of predictions (1 or 2 items)
+          is_double: p.isDouble
+        });
       }
       
       console.log('Inserting predictions...', predictionInserts.length);
@@ -274,32 +258,16 @@ export const useUpdateBet = () => {
       
       if (deleteError) throw deleteError;
       
-      // Map UI format to DB format (expand doubles to individual rows) 
+      // Map UI format to DB format - keep doubles as single rows with multiple predictions
       const predictionInserts = [];
       for (const p of predictions) {
-        if (p.isDouble && p.predictions.length === 2) {
-          // Create two separate rows for double predictions
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: [p.predictions[0]], // First pick
-            is_double: true
-          });
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: [p.predictions[1]], // Second pick
-            is_double: true
-          });
-        } else {
-          // Single prediction
-          predictionInserts.push({
-            bet_id: betId,
-            game_id: p.gameId,
-            predictions: p.predictions,
-            is_double: p.isDouble
-          });
-        }
+        // Always create a single row per game, regardless if it's double or not
+        predictionInserts.push({
+          bet_id: betId,
+          game_id: p.gameId,
+          predictions: p.predictions, // Array of predictions (1 or 2 items)
+          is_double: p.isDouble
+        });
       }
       
       const { error: insertError } = await supabase
