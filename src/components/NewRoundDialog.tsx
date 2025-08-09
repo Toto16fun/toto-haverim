@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCreateRound, useTotoRounds } from '@/hooks/useTotoRounds';
 import { useFetchGames } from '@/hooks/useFetchGames';
 import { Upload, Image, X, Check, FileSpreadsheet } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 
 interface NewRoundDialogProps {
@@ -199,12 +200,37 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     }
 
     try {
-      // Create round with auto-generated number and deadline (7 days from now)
+      // Lock the previous round if it exists
+      if (existingRounds && existingRounds.length > 0) {
+        const currentRound = existingRounds[0];
+        if (currentRound.status === 'active') {
+          try {
+            await supabase.functions.invoke('lockRound', {
+              body: { roundId: currentRound.id }
+            });
+            console.log('Previous round locked successfully');
+          } catch (lockError) {
+            console.error('Failed to lock previous round:', lockError);
+            // Continue with round creation even if lock fails
+          }
+        }
+      }
+
+      // Calculate next Saturday at 13:00 Israel time as deadline
       const nextRoundNumber = getNextRoundNumber();
+      const getNextSaturdayDeadline = () => {
+        const now = new Date();
+        const daysUntilSaturday = (6 - now.getDay()) % 7 || 7; // 0=Sunday, 6=Saturday
+        const nextSaturday = new Date(now);
+        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+        nextSaturday.setHours(10, 0, 0, 0); // 13:00 Israel time = 10:00 UTC (winter time)
+        return nextSaturday;
+      };
+
       const roundResult = await createRound.mutateAsync({
         round_number: nextRoundNumber,
         start_date: new Date().toISOString().split('T')[0],
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        deadline: getNextSaturdayDeadline().toISOString()
       });
       
       setCurrentRoundId(roundResult.id);
