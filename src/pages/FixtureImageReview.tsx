@@ -36,6 +36,7 @@ export default function FixtureImageReview() {
   }, [roundId, navigate, toast]);
 
   const handleImageUploaded = async (uploadedImageUrl: string) => {
+    console.log('handleImageUploaded called with:', uploadedImageUrl);
     setImageUrl(uploadedImageUrl);
     setIsProcessing(true);
     
