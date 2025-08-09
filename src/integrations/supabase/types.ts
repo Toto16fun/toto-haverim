@@ -142,6 +142,36 @@ export type Database = {
         }
         Relationships: []
       }
+      round_scores: {
+        Row: {
+          created_at: string
+          hits: number
+          id: string
+          is_payer: boolean
+          rank: number | null
+          round_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hits?: number
+          id?: string
+          is_payer?: boolean
+          rank?: number | null
+          round_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hits?: number
+          id?: string
+          is_payer?: boolean
+          rank?: number | null
+          round_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       toto_rounds: {
         Row: {
           created_at: string
@@ -150,6 +180,7 @@ export type Database = {
           results_updated: boolean | null
           round_number: number
           start_date: string
+          status: string | null
         }
         Insert: {
           created_at?: string
@@ -158,6 +189,7 @@ export type Database = {
           results_updated?: boolean | null
           round_number: number
           start_date: string
+          status?: string | null
         }
         Update: {
           created_at?: string
@@ -166,6 +198,7 @@ export type Database = {
           results_updated?: boolean | null
           round_number?: number
           start_date?: string
+          status?: string | null
         }
         Relationships: []
       }
@@ -173,6 +206,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_autofilled: boolean | null
           round_id: string | null
           submitted_at: string
           user_id: string | null
@@ -180,6 +214,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_autofilled?: boolean | null
           round_id?: string | null
           submitted_at?: string
           user_id?: string | null
@@ -187,6 +222,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_autofilled?: boolean | null
           round_id?: string | null
           submitted_at?: string
           user_id?: string | null

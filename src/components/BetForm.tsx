@@ -7,6 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import GamesTable from './GamesTable';
 import { Game } from '@/hooks/useTotoRounds';
 import { useSubmitBet } from '@/hooks/useUserBets';
+import { z } from 'zod';
+
+// Zod schema for bet validation with UUID support
+export const BetSchema = z.object({
+  predictions: z.array(z.object({
+    gameId: z.string().uuid(), // UUID instead of number
+    predictions: z.array(z.enum(['1', 'X', '2'])).min(1).max(2),
+    isDouble: z.boolean()
+  })).length(16) // Exactly 16 games
+}).superRefine((val, ctx) => {
+  const doubles = val.predictions.filter(x => x.predictions.length === 2).length;
+  if (doubles !== 3) {
+    ctx.addIssue({ 
+      code: z.ZodIssueCode.custom, 
+      message: 'חייבים לבחור בדיוק 3 כפולים' 
+    });
+  }
+});
 
 interface BetFormProps {
   roundId: string;
@@ -79,7 +97,6 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     if (isReadOnly || !validation.canSubmit) return;
     
     try {
-      // Add console logs for debugging
       console.log('Starting submission process...');
       console.log('Current predictions:', predictions);
       console.log('Games count:', games.length);
@@ -89,37 +106,23 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       const predictionsList = Object.entries(predictions)
         .filter(([_, p]) => p.predictions.length > 0)
         .map(([gameId, p]) => ({
-          gameId,
+          gameId, // Already UUID string
           predictions: p.predictions,
           isDouble: p.isDouble
         }));
 
       console.log('Formatted predictions list:', predictionsList);
 
-      // Additional validation before submission
-      if (predictionsList.length !== 16) {
-        throw new Error(`יש למלא את כל 16 המשחקים. מולאו רק ${predictionsList.length} משחקים.`);
+      // Validate using Zod schema
+      const validationResult = BetSchema.safeParse({ predictions: predictionsList });
+      if (!validationResult.success) {
+        const errorMessage = validationResult.error.issues.map(issue => issue.message).join(', ');
+        throw new Error(errorMessage);
       }
 
-      const doublesCount = predictionsList.filter(p => p.isDouble).length;
-      if (doublesCount !== 3) {
-        throw new Error(`יש לבחור בדיוק 3 כפולים. נבחרו ${doublesCount} כפולים.`);
-      }
+      console.log('Schema validation passed, submitting...');
 
-      // Validate that all predictions contain valid values
-      for (const pred of predictionsList) {
-        if (!pred.predictions || pred.predictions.length === 0) {
-          throw new Error('כל משחק חייב לכלול לפחות תחזית אחת');
-        }
-        const hasValidPredictions = pred.predictions.every(p => ['1', 'X', '2'].includes(p));
-        if (!hasValidPredictions) {
-          throw new Error('תחזיות חייבות להיות 1, X או 2 בלבד');
-        }
-      }
-
-      console.log('All validations passed, submitting...');
-
-      // Now we just use submitBet for everything - it handles both create and update internally
+      // Submit using the validated data
       await submitBet.mutateAsync({
         roundId,
         predictions: predictionsList

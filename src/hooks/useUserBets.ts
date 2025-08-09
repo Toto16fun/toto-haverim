@@ -165,13 +165,33 @@ export const useSubmitBet = () => {
         betId = bet.id;
       }
       
-      // Create predictions
-      const predictionInserts = predictions.map(p => ({
-        bet_id: betId,
-        game_id: p.gameId,
-        predictions: p.predictions,
-        is_double: p.isDouble
-      }));
+      // Map UI format to DB format (expand doubles to individual rows)
+      const predictionInserts = [];
+      for (const p of predictions) {
+        if (p.isDouble && p.predictions.length === 2) {
+          // Create two separate rows for double predictions
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: [p.predictions[0]], // First pick
+            is_double: true
+          });
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: [p.predictions[1]], // Second pick
+            is_double: true
+          });
+        } else {
+          // Single prediction
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: p.predictions,
+            is_double: p.isDouble
+          });
+        }
+      }
       
       console.log('Inserting predictions...', predictionInserts.length);
       
@@ -254,13 +274,33 @@ export const useUpdateBet = () => {
       
       if (deleteError) throw deleteError;
       
-      // Then, insert new predictions
-      const predictionInserts = predictions.map(p => ({
-        bet_id: betId,
-        game_id: p.gameId,
-        predictions: p.predictions,
-        is_double: p.isDouble
-      }));
+      // Map UI format to DB format (expand doubles to individual rows) 
+      const predictionInserts = [];
+      for (const p of predictions) {
+        if (p.isDouble && p.predictions.length === 2) {
+          // Create two separate rows for double predictions
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: [p.predictions[0]], // First pick
+            is_double: true
+          });
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: [p.predictions[1]], // Second pick
+            is_double: true
+          });
+        } else {
+          // Single prediction
+          predictionInserts.push({
+            bet_id: betId,
+            game_id: p.gameId,
+            predictions: p.predictions,
+            is_double: p.isDouble
+          });
+        }
+      }
       
       const { error: insertError } = await supabase
         .from('bet_predictions')
