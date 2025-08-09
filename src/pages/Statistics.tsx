@@ -2,31 +2,38 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Trophy, Target, Award, Zap, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface PlayerStats {
-  username: string;
-  totalCorrectGuesses: number;
-  firstPlaceCount: number;
-  lastPlaceCount: number;
-  seasonRecord: number;
-  totalTotomat: number;
-}
+import { useUserStatistics } from '@/hooks/useUserStatistics';
 
 const Statistics = () => {
-  // Sample statistics data
-  const playerStats: PlayerStats[] = [
-    { username: 'דני', totalCorrectGuesses: 45, firstPlaceCount: 3, lastPlaceCount: 0, seasonRecord: 14, totalTotomat: 1 },
-    { username: 'יוסי', totalCorrectGuesses: 38, firstPlaceCount: 1, lastPlaceCount: 2, seasonRecord: 12, totalTotomat: 0 },
-    { username: 'מיכל', totalCorrectGuesses: 42, firstPlaceCount: 2, lastPlaceCount: 1, seasonRecord: 13, totalTotomat: 0 },
-    { username: 'רון', totalCorrectGuesses: 40, firstPlaceCount: 1, lastPlaceCount: 1, seasonRecord: 12, totalTotomat: 0 },
-    { username: 'אבי', totalCorrectGuesses: 35, firstPlaceCount: 0, lastPlaceCount: 3, seasonRecord: 11, totalTotomat: 0 },
-    { username: 'גיל', totalCorrectGuesses: 37, firstPlaceCount: 1, lastPlaceCount: 1, seasonRecord: 10, totalTotomat: 0 },
-  ];
+  const { data: playerStats, isLoading, error } = useUserStatistics();
 
-  const sortedByCorrectGuesses = [...playerStats].sort((a, b) => b.totalCorrectGuesses - a.totalCorrectGuesses);
-  const sortedByFirstPlace = [...playerStats].sort((a, b) => b.firstPlaceCount - a.firstPlaceCount);
-  const sortedByLastPlace = [...playerStats].sort((a, b) => b.lastPlaceCount - a.lastPlaceCount);
-  const sortedByRecord = [...playerStats].sort((a, b) => b.seasonRecord - a.seasonRecord);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">טוען סטטיסטיקות...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">שגיאה בטעינת הסטטיסטיקות</p>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = playerStats || [];
+  
+  const sortedByHits = [...stats].sort((a, b) => b.total_hits - a.total_hits);
+  const sortedByFirstPlace = [...stats].sort((a, b) => b.first_places - a.first_places);
+  const sortedByTimesPayer = [...stats].sort((a, b) => b.times_payer - a.times_payer);
+  const sortedByBestScore = [...stats].sort((a, b) => b.best_score - a.best_score);
 
   const getPositionColor = (index: number) => {
     switch (index) {
@@ -55,22 +62,25 @@ const Statistics = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Target className="h-5 w-5 mr-2 text-green-600" />
-                מובילי הניחושים הנכונים
+                מובילי הפגיעות הכוללות
               </CardTitle>
-              <CardDescription>סך כל הניחושים המוצלחים בעונה</CardDescription>
+              <CardDescription>סך כל הפגיעות בעונה</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {sortedByCorrectGuesses.map((player, index) => (
-                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                {sortedByHits.map((player, index) => (
+                  <div key={player.user_id} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                        <span className="font-medium">{player.username}</span>
+                        <span className="font-medium">{player.user_name}</span>
                       </div>
                       <span className="text-xl font-bold text-green-600">
-                        {player.totalCorrectGuesses}
+                        {player.total_hits}
                       </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {player.rounds_played} מחזורים • ממוצע: {(player.total_hits / player.rounds_played).toFixed(1)}
                     </div>
                   </div>
                 ))}
@@ -89,15 +99,18 @@ const Statistics = () => {
             <CardContent>
               <div className="space-y-3">
                 {sortedByFirstPlace.map((player, index) => (
-                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                  <div key={player.user_id} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                        <span className="font-medium">{player.username}</span>
+                        <span className="font-medium">{player.user_name}</span>
                       </div>
                       <span className="text-xl font-bold text-yellow-600">
-                        {player.firstPlaceCount}
+                        {player.first_places}
                       </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {player.rounds_played} מחזורים • {((player.first_places / player.rounds_played) * 100).toFixed(1)}% זכיות
                     </div>
                   </div>
                 ))}
@@ -111,22 +124,25 @@ const Statistics = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <TrendingDown className="h-5 w-5 mr-2 text-red-600" />
-                מובילי המקום האחרון
+                רשימת המשלמים
               </CardTitle>
-              <CardDescription>כמות פעמים במקום אחרון במחזורים</CardDescription>
+              <CardDescription>כמות פעמים שהמשתמש נדרש לשלם</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {sortedByLastPlace.map((player, index) => (
-                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                {sortedByTimesPayer.map((player, index) => (
+                  <div key={player.user_id} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                        <span className="font-medium">{player.username}</span>
+                        <span className="font-medium">{player.user_name}</span>
                       </div>
                       <span className="text-xl font-bold text-red-600">
-                        {player.lastPlaceCount}
+                        {player.times_payer} 💸
                       </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {player.rounds_played} מחזורים
                     </div>
                   </div>
                 ))}
@@ -140,20 +156,23 @@ const Statistics = () => {
                 <Award className="h-5 w-5 mr-2 text-purple-600" />
                 שיאים אישיים
               </CardTitle>
-              <CardDescription>הישג הניחושים הטוב ביותר במחזור בודד</CardDescription>
+              <CardDescription>הישג הפגיעות הטוב ביותר במחזור בודד</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {sortedByRecord.map((player, index) => (
-                  <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
+                {sortedByBestScore.map((player, index) => (
+                  <div key={player.user_id} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                        <span className="font-medium">{player.username}</span>
+                        <span className="font-medium">{player.user_name}</span>
                       </div>
                       <span className="text-xl font-bold text-purple-600">
-                        {player.seasonRecord}/16
+                        {player.best_score}/16
                       </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {player.rounds_played} מחזורים
                     </div>
                   </div>
                 ))}
@@ -161,35 +180,6 @@ const Statistics = () => {
             </CardContent>
           </Card>
         </div>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Zap className="h-5 w-5 mr-2 text-blue-600" />
-              טוטומטים (הזנה ידנית)
-            </CardTitle>
-            <CardDescription>כמות הטוטומטים שנעשו השנה</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {playerStats
-                .sort((a, b) => b.totalTotomat - a.totalTotomat)
-                .map((player, index) => (
-                <div key={player.username} className={`p-3 rounded-lg border ${getPositionColor(index)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="font-medium text-lg mr-2">#{index + 1}</span>
-                      <span className="font-medium">{player.username}</span>
-                    </div>
-                    <span className="text-xl font-bold text-blue-600">
-                      {player.totalTotomat}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
@@ -202,22 +192,24 @@ const Statistics = () => {
                 <thead>
                   <tr className="border-b">
                     <th className="text-right p-2">שם</th>
-                    <th className="text-center p-2">סך ניחושים</th>
+                    <th className="text-center p-2">סך פגיעות</th>
+                    <th className="text-center p-2">מחזורים</th>
+                    <th className="text-center p-2">ממוצע</th>
                     <th className="text-center p-2">מקום ראשון</th>
-                    <th className="text-center p-2">מקום אחרון</th>
+                    <th className="text-center p-2">פעמים שילם</th>
                     <th className="text-center p-2">שיא אישי</th>
-                    <th className="text-center p-2">טוטומטים</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {playerStats.map((player) => (
-                    <tr key={player.username} className="border-b hover:bg-gray-50">
-                      <td className="font-medium p-2">{player.username}</td>
-                      <td className="text-center p-2">{player.totalCorrectGuesses}</td>
-                      <td className="text-center p-2">{player.firstPlaceCount}</td>
-                      <td className="text-center p-2 text-red-600">{player.lastPlaceCount}</td>
-                      <td className="text-center p-2">{player.seasonRecord}/16</td>
-                      <td className="text-center p-2">{player.totalTotomat}</td>
+                  {stats.map((player) => (
+                    <tr key={player.user_id} className="border-b hover:bg-gray-50">
+                      <td className="font-medium p-2">{player.user_name}</td>
+                      <td className="text-center p-2">{player.total_hits}</td>
+                      <td className="text-center p-2">{player.rounds_played}</td>
+                      <td className="text-center p-2">{(player.total_hits / player.rounds_played).toFixed(1)}</td>
+                      <td className="text-center p-2 text-yellow-600">{player.first_places}</td>
+                      <td className="text-center p-2 text-red-600">{player.times_payer}</td>
+                      <td className="text-center p-2">{player.best_score}/16</td>
                     </tr>
                   ))}
                 </tbody>

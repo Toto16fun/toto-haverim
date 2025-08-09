@@ -4,44 +4,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-interface HistoricalBet {
-  id: number;
-  username: string;
-  roundNumber: number;
-  submissionDate: string;
-  correctGuesses: number;
-  totalGuesses: number;
-  position: number;
-  isPaid: boolean;
-}
+import { useAllRoundsHistory } from '@/hooks/useUserStatistics';
+import { Badge } from "@/components/ui/badge";
 
 const History = () => {
-  const [selectedRound, setSelectedRound] = useState<number | ''>('');
+  const [selectedRoundId, setSelectedRoundId] = useState<string>('');
+  const { data: roundsData, isLoading, error } = useAllRoundsHistory();
 
-  // Sample historical data
-  const historicalBets: HistoricalBet[] = [
-    { id: 1, username: 'דני', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 12, totalGuesses: 16, position: 1, isPaid: false },
-    { id: 2, username: 'יוסי', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 8, totalGuesses: 16, position: 6, isPaid: true },
-    { id: 3, username: 'מיכל', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 10, totalGuesses: 16, position: 3, isPaid: false },
-    { id: 4, username: 'רון', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 11, totalGuesses: 16, position: 2, isPaid: false },
-    { id: 5, username: 'אבי', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 9, totalGuesses: 16, position: 4, isPaid: false },
-    { id: 6, username: 'גיל', roundNumber: 1, submissionDate: '2024-01-15', correctGuesses: 9, totalGuesses: 16, position: 5, isPaid: false },
-  ];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">טוען היסטוריה...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const filteredBets = selectedRound 
-    ? historicalBets.filter(bet => bet.roundNumber === selectedRound)
-    : historicalBets;
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">שגיאה בטעינת ההיסטוריה</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Sort by correct guesses (descending)
-  const sortedBets = [...filteredBets].sort((a, b) => b.correctGuesses - a.correctGuesses);
+  const rounds = roundsData || [];
+  
+  // Get all scores from all rounds, filtered by selected round if any
+  const allScores = rounds
+    .filter(round => selectedRoundId === '' || round.id === selectedRoundId)
+    .flatMap(round => 
+      round.round_scores?.map(score => ({
+        ...score,
+        round_number: round.round_number,
+        round_date: round.start_date,
+        round_status: round.status
+      })) || []
+    )
+    .sort((a, b) => {
+      // Sort by round number desc, then by rank asc
+      if (a.round_number !== b.round_number) {
+        return b.round_number - a.round_number;
+      }
+      return (a.rank || 999) - (b.rank || 999);
+    });
 
-  const rounds = [...new Set(historicalBets.map(bet => bet.roundNumber))].sort((a, b) => b - a);
-
-  const getPositionColor = (position: number) => {
-    switch (position) {
+  const getPositionColor = (rank: number) => {
+    switch (rank) {
       case 1: return 'text-yellow-600 bg-yellow-50';
-      case 2: return 'text-gray-600 bg-gray-50';
+      case 2: return 'text-gray-600 bg-gray-50';  
       case 3: return 'text-orange-600 bg-orange-50';
       default: return 'text-gray-800 bg-gray-100';
     }
@@ -56,8 +71,8 @@ const History = () => {
         </Link>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">היסטוריית שליחות</h1>
-          <p className="text-gray-600">צפה בטורים של כל המחזורים ובתוצאות (מסודר לפי ניחושים נכונים)</p>
+          <h1 className="text-3xl font-bold text-green-800 mb-2">היסטוריית מחזורים</h1>
+          <p className="text-gray-600">צפה בתוצאות של כל המחזורים ובביצועי השחקנים</p>
         </div>
 
         <Card className="mb-6">
@@ -70,18 +85,24 @@ const History = () => {
           <CardContent>
             <div className="flex gap-2 flex-wrap">
               <Button
-                variant={selectedRound === '' ? 'default' : 'outline'}
-                onClick={() => setSelectedRound('')}
+                variant={selectedRoundId === '' ? 'default' : 'outline'}
+                onClick={() => setSelectedRoundId('')}
               >
                 כל המחזורים
               </Button>
               {rounds.map(round => (
                 <Button
-                  key={round}
-                  variant={selectedRound === round ? 'default' : 'outline'}
-                  onClick={() => setSelectedRound(round)}
+                  key={round.id}
+                  variant={selectedRoundId === round.id ? 'default' : 'outline'}
+                  onClick={() => setSelectedRoundId(round.id)}
                 >
-                  מחזור {round}
+                  מחזור {round.round_number}
+                  {round.status && (
+                    <Badge variant="outline" className="mr-2 text-xs">
+                      {round.status === 'finished' ? 'הסתיים' : 
+                       round.status === 'locked' ? 'נעול' : 'פעיל'}
+                    </Badge>
+                  )}
                 </Button>
               ))}
             </div>
@@ -89,41 +110,43 @@ const History = () => {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sortedBets.map((bet, index) => (
-            <Card key={bet.id} className="hover:shadow-lg transition-shadow">
+          {allScores.map((score) => (
+            <Card key={`${score.user_id}-${score.round_number}`} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{bet.username}</CardTitle>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(index + 1)}`}>
-                    מקום {index + 1}
+                  <CardTitle className="text-lg">{score.profiles?.name || 'משתמש לא ידוע'}</CardTitle>
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(score.rank || 999)}`}>
+                    מקום {score.rank || '-'}
                   </div>
                 </div>
-                <CardDescription>מחזור {bet.roundNumber} • {bet.submissionDate}</CardDescription>
+                <CardDescription>
+                  מחזור {score.round_number} • {new Date(score.round_date).toLocaleDateString('he-IL')}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">ניחושים נכונים:</span>
+                  <span className="text-sm text-gray-600">פגיעות:</span>
                   <span className="font-medium text-green-600">
-                    {bet.correctGuesses}/{bet.totalGuesses}
+                    {score.hits}/16
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">אחוז הצלחה:</span>
                   <span className="font-medium">
-                    {Math.round((bet.correctGuesses / bet.totalGuesses) * 100)}%
+                    {Math.round((score.hits / 16) * 100)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">סטטוס תשלום:</span>
                   <span className={`text-xs px-2 py-1 rounded ${
-                    bet.isPaid 
+                    score.is_payer 
                       ? 'bg-red-100 text-red-800' 
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    {bet.isPaid ? 'משלם בסיבוב הבא' : 'לא משלם'}
+                    {score.is_payer ? '💸 משלם' : 'לא משלם'}
                   </span>
                 </div>
-                {index === 0 && selectedRound !== '' && (
+                {score.rank === 1 && (
                   <div className="flex items-center text-yellow-600 text-sm">
                     <Trophy className="h-4 w-4 mr-1" />
                     זוכה המחזור!
@@ -134,10 +157,12 @@ const History = () => {
           ))}
         </div>
 
-        {sortedBets.length === 0 && (
+        {allScores.length === 0 && (
           <Card>
             <CardContent className="text-center py-8">
-              <p className="text-gray-500">לא נמצאו טורים עבור המחזור שנבחר</p>
+              <p className="text-gray-500">
+                {selectedRoundId ? 'לא נמצאו תוצאות עבור המחזור שנבחר' : 'אין נתוני היסטוריה זמינים'}
+              </p>
             </CardContent>
           </Card>
         )}
