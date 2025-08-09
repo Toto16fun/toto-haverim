@@ -230,7 +230,8 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       const roundResult = await createRound.mutateAsync({
         round_number: nextRoundNumber,
         start_date: new Date().toISOString().split('T')[0],
-        deadline: getNextSaturdayDeadline().toISOString()
+        deadline: getNextSaturdayDeadline().toISOString(),
+        status: 'draft'
       });
       
       setCurrentRoundId(roundResult.id);

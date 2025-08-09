@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -155,22 +155,39 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Users Card - Only visible for admin user */}
+          {/* Admin Cards - Only visible for admin user */}
           {isAdmin && (
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="text-center">
-                <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
-                <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
-                <CardDescription>הרשמה וניהול חברי הקבוצה</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/users">
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                    ניהול חברים
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="text-center">
+                  <Users className="h-12 w-12 text-orange-600 mx-auto mb-2" />
+                  <CardTitle className="text-xl">ניהול משתמשים</CardTitle>
+                  <CardDescription>הרשמה וניהול חברי הקבוצה</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link to="/users">
+                    <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                      ניהול חברים
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="text-center">
+                  <ImageIcon className="h-12 w-12 text-indigo-600 mx-auto mb-2" />
+                  <CardTitle className="text-xl">עריכת משחקים</CardTitle>
+                  <CardDescription>העלאת תמונת לוח זמנים ועריכת משחקים</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link to="/admin/fixture-image">
+                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                      עריכת משחקים
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </>
           )}
 
           {/* Statistics Card - Always accessible */}

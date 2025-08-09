@@ -6,3 +6,12 @@ verify_jwt = false
 
 [functions.auto-create-round]
 verify_jwt = false
+
+[functions.parse-fixture-image]
+verify_jwt = false
+
+[functions.schedule-create-draft]
+verify_jwt = false
+
+[functions.schedule-lock-and-autofill]
+verify_jwt = false
