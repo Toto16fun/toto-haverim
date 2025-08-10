@@ -85,6 +85,7 @@ export type Database = {
           kickoff_at: string | null
           kickoff_str: string | null
           league: string | null
+          result: string | null
           round_id: string | null
         }
         Insert: {
@@ -98,6 +99,7 @@ export type Database = {
           kickoff_at?: string | null
           kickoff_str?: string | null
           league?: string | null
+          result?: string | null
           round_id?: string | null
         }
         Update: {
@@ -111,6 +113,7 @@ export type Database = {
           kickoff_at?: string | null
           kickoff_str?: string | null
           league?: string | null
+          result?: string | null
           round_id?: string | null
         }
         Relationships: [
@@ -273,6 +276,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_round_scores_sql: {
+        Args: { p_round_id: string }
+        Returns: undefined
+      }
       normalize_team_name: {
         Args: { p_name: string }
         Returns: string
