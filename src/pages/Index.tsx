@@ -2,11 +2,13 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
+import { useCanEditResults } from "@/hooks/useUserRoles";
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
+  const { canEdit } = useCanEditResults();
 
   if (loading) {
     return (
@@ -188,6 +190,24 @@ const Index = () => {
                 </CardContent>
               </Card>
             </>
+          )}
+
+          {/* Admin Results Card - Only visible for users who can edit results */}
+          {canEdit && (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <Settings className="h-12 w-12 text-red-600 mx-auto mb-2" />
+                <CardTitle className="text-xl">עריכת תוצאות</CardTitle>
+                <CardDescription>הזנת תוצאות משחקים וחישוב ניקוד</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/admin/results">
+                  <Button className="w-full bg-red-600 hover:bg-red-700">
+                    עריכת תוצאות
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           )}
 
           {/* Statistics Card - Always accessible */}

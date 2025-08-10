@@ -14,6 +14,7 @@ import Users from "./pages/Users";
 import CurrentRound from "./pages/CurrentRound";
 import Auth from "./pages/Auth";
 import FixtureImageReview from "./pages/FixtureImageReview";
+import AdminResults from "./pages/AdminResults";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/users" element={<Users />} />
             <Route path="/admin/fixture-image" element={<FixtureImageReview />} />
+            <Route path="/admin/results" element={<AdminResults />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
