@@ -1,126 +1,146 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!, 
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, 
-      { auth: { persistSession: false } }
-    );
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const { roundId } = await req.json() as { roundId?: string };
+    const { roundId } = await req.json()
     
     if (!roundId) {
-      return new Response(JSON.stringify({ error: 'roundId required' }), { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('Round ID is required')
     }
 
-    console.log(`🧮 Computing scores for round: ${roundId}`);
+    console.log(`🧮 Computing scores for round: ${roundId}`)
 
     // ודא שכל המשחקים במחזור קיבלו result
-    const { data: missing } = await supabase
+    const { data: missing, error: missingError } = await supabase
       .from('games')
       .select('id')
       .eq('round_id', roundId)
-      .is('result', null);
+      .is('result', null)
 
-    if ((missing ?? []).length > 0) {
-      return new Response(JSON.stringify({ 
-        error: 'results missing', 
-        remaining: missing?.length 
-      }), { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (missingError) {
+      throw new Error(`Failed to check missing results: ${missingError.message}`)
     }
 
-    console.log(`🎯 All games have results, computing scores...`);
+    if ((missing ?? []).length > 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'results missing', 
+          remaining: missing?.length 
+        }), 
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     // לחשב hits → round_scores באמצעות הפונקציה החדשה
     const { error: computeError } = await supabase.rpc('compute_round_scores_sql', { 
       p_round_id: roundId 
-    });
-
+    })
+    
     if (computeError) {
-      console.error('❌ Failed to compute scores:', computeError);
-      throw computeError;
+      throw new Error(`Failed to compute scores: ${computeError.message}`)
     }
+
+    console.log(`✅ Scores computed using SQL function`)
 
     // לזהות מינימום hits (משלמים) ולעדכן flag
     const { data: scores, error: scoresError } = await supabase
       .from('round_scores')
-      .select('user_id,hits')
-      .eq('round_id', roundId);
+      .select('user_id, hits')
+      .eq('round_id', roundId)
 
-    if (scoresError) throw scoresError;
-    
-    if (!scores || scores.length === 0) {
-      return new Response(JSON.stringify({ error: 'no scores found' }), { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (scoresError) {
+      throw new Error(`Failed to fetch scores: ${scoresError.message}`)
     }
 
-    const maxHits = Math.max(...scores.map(s => s.hits));
-    const payers = scores.filter(s => s.hits === maxHits).map(s => s.user_id);
+    if (!scores || scores.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'no scores' }), 
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
-    console.log(`🏆 Max hits: ${maxHits}, Winners: ${payers.length} users`);
+    const maxHits = Math.max(...scores.map(s => s.hits))
+    const payers = scores.filter(s => s.hits === maxHits).map(s => s.user_id)
 
-    // איפוס כל הדגלים קודם
-    await supabase
-      .from('round_scores')
-      .update({ is_payer: false })
-      .eq('round_id', roundId);
-
-    // עדכון המשלמים
-    for (const uid of payers) {
-      await supabase
+    // עדכון דירוג
+    scores.sort((a, b) => b.hits - a.hits)
+    let currentRank = 1
+    for (let i = 0; i < scores.length; i++) {
+      if (i > 0 && scores[i].hits !== scores[i-1].hits) {
+        currentRank = i + 1
+      }
+      
+      const { error: rankError } = await supabase
         .from('round_scores')
-        .update({ is_payer: true })
+        .update({ 
+          rank: currentRank,
+          is_payer: scores[i].hits === maxHits
+        })
         .eq('round_id', roundId)
-        .eq('user_id', uid);
+        .eq('user_id', scores[i].user_id)
+
+      if (rankError) {
+        console.error(`❌ Failed to update rank for user ${scores[i].user_id}:`, rankError)
+      }
     }
 
     // עדכון סטטוס הסיבוב לסיום
     const { error: updateError } = await supabase
       .from('toto_rounds')
       .update({ status: 'finished' })
-      .eq('id', roundId);
+      .eq('id', roundId)
 
     if (updateError) {
-      console.error('❌ Failed to update round status:', updateError);
+      console.error('❌ Failed to update round status:', updateError)
     }
 
-    console.log(`✅ Scores computed successfully for round ${roundId}`);
+    console.log(`🏆 Winners with ${maxHits} hits: ${payers.length} users`)
+    console.log(`✅ Scores computed successfully for round ${roundId}`)
 
-    return new Response(JSON.stringify({ 
-      ok: true, 
-      roundId, 
-      payers: payers.length,
-      maxHits,
-      totalPlayers: scores.length
-    }), { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Scores computed for round ${roundId}`,
+        totalTickets: scores.length,
+        maxHits: maxHits,
+        winnersCount: payers.length
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
 
   } catch (error) {
-    console.error('❌ Error in computeRoundScores function:', error);
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('❌ Error in computeRoundScores function:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    )
   }
-});
+})

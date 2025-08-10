@@ -6,13 +6,12 @@ export function isHit(picks: PickSymbol[] | undefined, result: PickSymbol | unde
 }
 
 export function cellClass(hit: boolean | undefined): string {
-  if (hit === true) return 'bg-green-100 text-green-800 border-green-200';
-  if (hit === false) return 'bg-red-100 text-red-800 border-red-200';
-  return 'bg-muted text-muted-foreground border-muted';
+  if (hit === true) return 'bg-success/10 text-success border-success/20';
+  if (hit === false) return 'bg-destructive/10 text-destructive border-destructive/20';
+  return 'bg-muted/50 text-muted-foreground border-muted/20';
 }
 
-export function getHitColor(hit: boolean | undefined): string {
-  if (hit === true) return 'text-green-600';
-  if (hit === false) return 'text-red-600';
-  return 'text-muted-foreground';
+export function getHitStatus(predictions: string[], result: string | null): 'hit' | 'miss' | 'pending' {
+  if (!result) return 'pending';
+  return predictions.includes(result) ? 'hit' : 'miss';
 }
