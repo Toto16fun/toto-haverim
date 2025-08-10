@@ -47,9 +47,7 @@ const GameRow = ({
       return date.toLocaleDateString('he-IL', {
         weekday: 'short',
         day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: '2-digit'
       });
     } catch {
       return dateString;

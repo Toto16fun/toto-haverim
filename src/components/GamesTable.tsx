@@ -56,17 +56,6 @@ const GamesTable = ({
     }
   };
 
-  const formatGameTime = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('he-IL', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return '';
-    }
-  };
 
   // If it's read-only, show simplified table without betting options
   if (isReadOnly) {
@@ -82,7 +71,7 @@ const GamesTable = ({
                 <TableRow>
                   <TableHead className="text-center">קבוצות</TableHead>
                   <TableHead className="text-center">ליגה</TableHead>
-                  <TableHead className="text-center">תאריך ושעה</TableHead>
+                   <TableHead className="text-center">תאריך</TableHead>
                   <TableHead className="text-center">#</TableHead>
                 </TableRow>
               </TableHeader>
@@ -99,14 +88,11 @@ const GamesTable = ({
                         </Badge>
                       ) : '-'}
                     </TableCell>
-                    <TableCell className="text-center text-sm">
-                      <div>
-                        {game.game_date ? formatGameDate(game.game_date) : '-'}
-                      </div>
-                      <div>
-                        {game.game_date ? formatGameTime(game.game_date) : '-'}
-                      </div>
-                    </TableCell>
+                     <TableCell className="text-center text-sm">
+                       <div>
+                         {game.game_date ? formatGameDate(game.game_date) : '-'}
+                       </div>
+                     </TableCell>
                     <TableCell className="text-center font-medium">
                       {game.game_number}
                     </TableCell>
@@ -135,7 +121,7 @@ const GamesTable = ({
                 <TableHead className="text-center">2</TableHead>
                 <TableHead className="text-center">X</TableHead>
                 <TableHead className="text-center">1</TableHead>
-                <TableHead className="text-center">תאריך ושעה</TableHead>
+                <TableHead className="text-center">תאריך</TableHead>
                 <TableHead className="text-center">ליגה</TableHead>
                 <TableHead className="text-center">קבוצות</TableHead>
                 <TableHead className="text-center">#</TableHead>
@@ -200,14 +186,11 @@ const GamesTable = ({
                         1
                       </Button>
                     </TableCell>
-                    <TableCell className="text-center text-sm">
-                      <div>
-                        {game.game_date ? formatGameDate(game.game_date) : '-'}
-                      </div>
-                      <div>
-                        {game.game_date ? formatGameTime(game.game_date) : '-'}
-                      </div>
-                    </TableCell>
+                     <TableCell className="text-center text-sm">
+                       <div>
+                         {game.game_date ? formatGameDate(game.game_date) : '-'}
+                       </div>
+                     </TableCell>
                     <TableCell className="text-center">
                       {game.league ? (
                         <Badge variant="outline" className="text-xs">
