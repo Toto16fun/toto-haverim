@@ -57,12 +57,7 @@ export const useAllRoundsHistory = () => {
       // Get all scores
       const { data: scores, error: scoresError } = await supabase
         .from('round_scores')
-        .select(`
-          *,
-          profiles (
-            name
-          )
-        `);
+        .select('*');
       
       if (scoresError) throw scoresError;
       
