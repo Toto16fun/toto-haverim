@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Trophy } from 'lucide-react';
+import { ArrowRight, Calendar, Trophy, Grid3X3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAllRoundsHistory } from '@/hooks/useUserStatistics';
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import HistoryMatrix from '@/components/history/HistoryMatrix';
 
 const History = () => {
   const [selectedRoundId, setSelectedRoundId] = useState<string>('');
@@ -109,63 +111,90 @@ const History = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {allScores.map((score) => (
-            <Card key={`${score.user_id}-${score.round_number}`} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{score.profiles?.name || 'משתמש לא ידוע'}</CardTitle>
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(score.rank || 999)}`}>
-                    מקום {score.rank || '-'}
-                  </div>
-                </div>
-                <CardDescription>
-                  מחזור {score.round_number} • {new Date(score.round_date).toLocaleDateString('he-IL')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">פגיעות:</span>
-                  <span className="font-medium text-green-600">
-                    {score.hits}/16
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">אחוז הצלחה:</span>
-                  <span className="font-medium">
-                    {Math.round((score.hits / 16) * 100)}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">סטטוס תשלום:</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    score.is_payer 
-                      ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {score.is_payer ? '💸 משלם' : 'לא משלם'}
-                  </span>
-                </div>
-                {score.rank === 1 && (
-                  <div className="flex items-center text-yellow-600 text-sm">
-                    <Trophy className="h-4 w-4 mr-1" />
-                    זוכה המחזור!
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {allScores.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-500">
-                {selectedRoundId ? 'לא נמצאו תוצאות עבור המחזור שנבחר' : 'אין נתוני היסטוריה זמינים'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <Tabs defaultValue="cards" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="cards" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              תצוגת כרטיסים
+            </TabsTrigger>
+            <TabsTrigger value="matrix" className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              מטריצת תוצאות
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="cards" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {allScores.map((score) => (
+                <Card key={`${score.user_id}-${score.round_number}`} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{score.profiles?.name || 'משתמש לא ידוע'}</CardTitle>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(score.rank || 999)}`}>
+                        מקום {score.rank || '-'}
+                      </div>
+                    </div>
+                    <CardDescription>
+                      מחזור {score.round_number} • {new Date(score.round_date).toLocaleDateString('he-IL')}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">פגיעות:</span>
+                      <span className="font-medium text-green-600">
+                        {score.hits}/16
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">אחוז הצלחה:</span>
+                      <span className="font-medium">
+                        {Math.round((score.hits / 16) * 100)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">סטטוס תשלום:</span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        score.is_payer 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {score.is_payer ? '💸 משלם' : 'לא משלם'}
+                      </span>
+                    </div>
+                    {score.rank === 1 && (
+                      <div className="flex items-center text-yellow-600 text-sm">
+                        <Trophy className="h-4 w-4 mr-1" />
+                        זוכה המחזור!
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {allScores.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-500">
+                    {selectedRoundId ? 'לא נמצאו תוצאות עבור המחזור שנבחר' : 'אין נתוני היסטוריה זמינים'}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="matrix" className="mt-6">
+            {selectedRoundId ? (
+              <HistoryMatrix roundId={selectedRoundId} />
+            ) : (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-gray-500">יש לבחור מחזור ספציפי כדי לצפות במטריצת התוצאות</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -1,173 +1,126 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+      Deno.env.get('SUPABASE_URL')!, 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, 
+      { auth: { persistSession: false } }
+    );
 
-    const { roundId } = await req.json()
+    const { roundId } = await req.json() as { roundId?: string };
     
     if (!roundId) {
-      throw new Error('Round ID is required')
+      return new Response(JSON.stringify({ error: 'roundId required' }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    console.log(`🧮 Computing scores for round: ${roundId}`)
+    console.log(`🧮 Computing scores for round: ${roundId}`);
 
-    // 1. קבלת כל המשחקים והתוצאות הסופיות
-    const { data: games, error: gamesError } = await supabase
+    // ודא שכל המשחקים במחזור קיבלו result
+    const { data: missing } = await supabase
       .from('games')
-      .select('id, result')
+      .select('id')
       .eq('round_id', roundId)
-      .not('result', 'is', null)
+      .is('result', null);
 
-    if (gamesError) {
-      throw new Error(`Failed to fetch games: ${gamesError.message}`)
+    if ((missing ?? []).length > 0) {
+      return new Response(JSON.stringify({ 
+        error: 'results missing', 
+        remaining: missing?.length 
+      }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    if (!games || games.length === 0) {
-      throw new Error('No games with results found for this round')
+    console.log(`🎯 All games have results, computing scores...`);
+
+    // לחשב hits → round_scores באמצעות הפונקציה החדשה
+    const { error: computeError } = await supabase.rpc('compute_round_scores_sql', { 
+      p_round_id: roundId 
+    });
+
+    if (computeError) {
+      console.error('❌ Failed to compute scores:', computeError);
+      throw computeError;
     }
 
-    console.log(`🎯 Found ${games.length} games with results`)
+    // לזהות מינימום hits (משלמים) ולעדכן flag
+    const { data: scores, error: scoresError } = await supabase
+      .from('round_scores')
+      .select('user_id,hits')
+      .eq('round_id', roundId);
 
-    // 2. קבלת כל הטפסים בסיבוב
-    const { data: tickets, error: ticketsError } = await supabase
-      .from('user_bets')
-      .select('id, user_id')
-      .eq('round_id', roundId)
-
-    if (ticketsError) {
-      throw new Error(`Failed to fetch tickets: ${ticketsError.message}`)
-    }
-
-    if (!tickets || tickets.length === 0) {
-      throw new Error('No tickets found for this round')
-    }
-
-    console.log(`🎫 Found ${tickets.length} tickets to score`)
-
-    // 3. חישוב ניקוד לכל טופס
-    const userScores = []
-
-    for (const ticket of tickets) {
-      let hits = 0
-
-      // קבלת כל הניחושים של הטופס
-      const { data: predictions, error: predictionsError } = await supabase
-        .from('predictions')
-        .select('match_id, pick')
-        .eq('ticket_id', ticket.id)
-
-      if (predictionsError) {
-        console.error(`❌ Failed to fetch predictions for ticket ${ticket.id}:`, predictionsError)
-        continue
-      }
-
-      // בדיקת כל משחק
-      for (const game of games) {
-        const gamePredictions = predictions?.filter(p => p.match_id === game.id) || []
-        
-        // בדיקה אם יש ניחוש נכון
-        const hasCorrectPrediction = gamePredictions.some(p => p.pick === game.result)
-        
-        if (hasCorrectPrediction) {
-          hits++
-        }
-      }
-
-      userScores.push({
-        round_id: roundId,
-        user_id: ticket.user_id,
-        hits: hits
-      })
-
-      console.log(`👤 User ${ticket.user_id}: ${hits} hits`)
-    }
-
-    // 4. מיון לפי ניקוד ומתן דירוג
-    userScores.sort((a, b) => b.hits - a.hits)
+    if (scoresError) throw scoresError;
     
-    let currentRank = 1
-    for (let i = 0; i < userScores.length; i++) {
-      if (i > 0 && userScores[i].hits !== userScores[i-1].hits) {
-        currentRank = i + 1
-      }
-      userScores[i].rank = currentRank
+    if (!scores || scores.length === 0) {
+      return new Response(JSON.stringify({ error: 'no scores found' }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // 5. קביעת משלמים (המקום הראשון בלבד)
-    const maxHits = userScores[0]?.hits || 0
-    userScores.forEach(score => {
-      score.is_payer = score.hits === maxHits
-    })
+    const maxHits = Math.max(...scores.map(s => s.hits));
+    const payers = scores.filter(s => s.hits === maxHits).map(s => s.user_id);
 
-    console.log(`🏆 Winners with ${maxHits} hits: ${userScores.filter(s => s.is_payer).length} users`)
+    console.log(`🏆 Max hits: ${maxHits}, Winners: ${payers.length} users`);
 
-    // 6. מחיקת ניקודים קודמים ועדכון חדשים
-    const { error: deleteError } = await supabase
+    // איפוס כל הדגלים קודם
+    await supabase
       .from('round_scores')
-      .delete()
-      .eq('round_id', roundId)
+      .update({ is_payer: false })
+      .eq('round_id', roundId);
 
-    if (deleteError) {
-      console.error('❌ Failed to delete old scores:', deleteError)
+    // עדכון המשלמים
+    for (const uid of payers) {
+      await supabase
+        .from('round_scores')
+        .update({ is_payer: true })
+        .eq('round_id', roundId)
+        .eq('user_id', uid);
     }
 
-    const { error: insertError } = await supabase
-      .from('round_scores')
-      .insert(userScores)
-
-    if (insertError) {
-      throw new Error(`Failed to insert scores: ${insertError.message}`)
-    }
-
-    // 7. עדכון סטטוס הסיבוב לסיום
+    // עדכון סטטוס הסיבוב לסיום
     const { error: updateError } = await supabase
       .from('toto_rounds')
       .update({ status: 'finished' })
-      .eq('id', roundId)
+      .eq('id', roundId);
 
     if (updateError) {
-      console.error('❌ Failed to update round status:', updateError)
+      console.error('❌ Failed to update round status:', updateError);
     }
 
-    console.log(`✅ Scores computed successfully for round ${roundId}`)
+    console.log(`✅ Scores computed successfully for round ${roundId}`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Scores computed for round ${roundId}`,
-        totalTickets: tickets.length,
-        maxHits: maxHits,
-        winnersCount: userScores.filter(s => s.is_payer).length
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      roundId, 
+      payers: payers.length,
+      maxHits,
+      totalPlayers: scores.length
+    }), { 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
 
   } catch (error) {
-    console.error('❌ Error in computeRoundScores function:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    )
+    console.error('❌ Error in computeRoundScores function:', error);
+    return new Response(JSON.stringify({ error: String(error) }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-})
+});
