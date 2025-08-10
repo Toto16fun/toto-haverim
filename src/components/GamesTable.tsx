@@ -68,35 +68,27 @@ const GamesTable = ({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-center">קבוצות</TableHead>
-                  <TableHead className="text-center">ליגה</TableHead>
+                 <TableRow>
+                   <TableHead className="text-center">קבוצות</TableHead>
                    <TableHead className="text-center">תאריך</TableHead>
-                  <TableHead className="text-center">#</TableHead>
-                </TableRow>
+                   <TableHead className="text-center">#</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
                 {games.map(game => (
-                  <TableRow key={game.id}>
-                    <TableCell className="text-center font-medium">
-                      <div>{game.home_team} - {game.away_team}</div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {game.league ? (
-                        <Badge variant="outline" className="text-xs">
-                          {game.league}
-                        </Badge>
-                      ) : '-'}
-                    </TableCell>
+                   <TableRow key={game.id}>
+                     <TableCell className="text-center font-medium">
+                       <div>{game.home_team} - {game.away_team}</div>
+                     </TableCell>
                      <TableCell className="text-center text-sm">
                        <div>
                          {game.game_date ? formatGameDate(game.game_date) : '-'}
                        </div>
                      </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
-                  </TableRow>
+                     <TableCell className="text-center font-medium">
+                       {game.game_number}
+                     </TableCell>
+                   </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -116,16 +108,15 @@ const GamesTable = ({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="text-center">כפול</TableHead>
-                <TableHead className="text-center">2</TableHead>
-                <TableHead className="text-center">X</TableHead>
-                <TableHead className="text-center">1</TableHead>
-                <TableHead className="text-center">תאריך</TableHead>
-                <TableHead className="text-center">ליגה</TableHead>
-                <TableHead className="text-center">קבוצות</TableHead>
-                <TableHead className="text-center">#</TableHead>
-              </TableRow>
+               <TableRow>
+                 <TableHead className="text-center">כפול</TableHead>
+                 <TableHead className="text-center">2</TableHead>
+                 <TableHead className="text-center">X</TableHead>
+                 <TableHead className="text-center">1</TableHead>
+                 <TableHead className="text-center">תאריך</TableHead>
+                 <TableHead className="text-center">קבוצות</TableHead>
+                 <TableHead className="text-center">#</TableHead>
+               </TableRow>
             </TableHeader>
             <TableBody>
               {games.map(game => {
@@ -191,19 +182,12 @@ const GamesTable = ({
                          {game.game_date ? formatGameDate(game.game_date) : '-'}
                        </div>
                      </TableCell>
-                    <TableCell className="text-center">
-                      {game.league ? (
-                        <Badge variant="outline" className="text-xs">
-                          {game.league}
-                        </Badge>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      <div>{game.home_team} - {game.away_team}</div>
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {game.game_number}
-                    </TableCell>
+                     <TableCell className="text-center font-medium">
+                       <div>{game.home_team} - {game.away_team}</div>
+                     </TableCell>
+                     <TableCell className="text-center font-medium">
+                       {game.game_number}
+                     </TableCell>
                   </TableRow>
                 );
               })}
