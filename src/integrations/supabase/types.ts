@@ -82,6 +82,8 @@ export type Database = {
           game_number: number
           home_team: string
           id: string
+          kickoff_at: string | null
+          kickoff_str: string | null
           league: string | null
           round_id: string | null
         }
@@ -93,6 +95,8 @@ export type Database = {
           game_number: number
           home_team: string
           id?: string
+          kickoff_at?: string | null
+          kickoff_str?: string | null
           league?: string | null
           round_id?: string | null
         }
@@ -104,6 +108,8 @@ export type Database = {
           game_number?: number
           home_team?: string
           id?: string
+          kickoff_at?: string | null
+          kickoff_str?: string | null
           league?: string | null
           round_id?: string | null
         }
