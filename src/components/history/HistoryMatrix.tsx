@@ -24,7 +24,7 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
             <th className="p-2 text-left font-medium">משחק</th>
             {tickets.map(t => (
               <th key={t.id} className="p-2 text-center font-medium min-w-20">
-                {t.user_id.slice(0, 8)}...
+                {t.userName}
               </th>
             ))}
           </tr>
