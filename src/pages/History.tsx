@@ -129,7 +129,9 @@ const History = () => {
                 <Card key={`${score.user_id}-${score.round_number}`} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{score.profiles?.name || 'משתמש לא ידוע'}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {score.profiles?.name || `משתמש ${score.user_id.slice(0, 8)}...`}
+                      </CardTitle>
                       <div className={`px-2 py-1 rounded-full text-xs font-medium ${getPositionColor(score.rank || 999)}`}>
                         מקום {score.rank || '-'}
                       </div>

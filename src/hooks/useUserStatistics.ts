@@ -61,20 +61,33 @@ export const useAllRoundsHistory = () => {
       
       if (scoresError) throw scoresError;
       
-      // Get profiles for missing names
+      // Get profiles for missing names - handle case where no profiles exist
       const userIds = scores?.map(s => s.user_id).filter(Boolean) || [];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .in('id', userIds);
+      let profiles = [];
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', userIds);
+        
+        if (profilesError) {
+          console.warn('Warning: Could not fetch profiles:', profilesError);
+        }
+        profiles = profilesData || [];
+      }
       
       // Combine data
       const roundsWithScores = rounds.map(round => ({
         ...round,
-        round_scores: scores?.filter(score => score.round_id === round.id).map(score => ({
-          ...score,
-          profiles: profiles?.find(p => p.id === score.user_id) || null
-        })) || []
+        round_scores: scores?.filter(score => score.round_id === round.id).map(score => {
+          const userProfile = profiles?.find(p => p.id === score.user_id);
+          return {
+            ...score,
+            profiles: userProfile ? { 
+              name: userProfile.name || `משתמש ${score.user_id.slice(0, 8)}...` 
+            } : null
+          };
+        }) || []
       }));
       
       return roundsWithScores;
