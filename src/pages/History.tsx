@@ -7,11 +7,20 @@ import { Link } from 'react-router-dom';
 import { useAllRoundsHistory } from '@/hooks/useUserStatistics';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import HistoryMatrix from '@/components/history/HistoryMatrix';
 import HistoryMatrix from '@/components/history/HistoryMatrix';
 
 const History = () => {
   const [selectedRoundId, setSelectedRoundId] = useState<string>('');
   const { data: roundsData, isLoading, error } = useAllRoundsHistory();
+  
+  console.log('🔍 History page rendered, data state:', { 
+    hasData: !!roundsData, 
+    dataLength: roundsData?.length, 
+    isLoading, 
+    hasError: !!error,
+    error: error?.message 
+  });
 
   if (isLoading) {
     return (
@@ -187,7 +196,10 @@ const History = () => {
           
           <TabsContent value="matrix" className="mt-6">
             {selectedRoundId ? (
-              <HistoryMatrix roundId={selectedRoundId} />
+              <div>
+                <p className="text-sm text-gray-600 mb-4">מטריצת תוצאות עבור מחזור {rounds.find(r => r.id === selectedRoundId)?.round_number}</p>
+                <HistoryMatrix roundId={selectedRoundId} />
+              </div>
             ) : (
               <Card>
                 <CardContent className="text-center py-8">
