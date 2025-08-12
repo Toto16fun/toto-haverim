@@ -5,39 +5,53 @@ export function useRoundData(roundId: string) {
   return useQuery({
     queryKey: ['round-data', roundId],
     queryFn: async () => {
-      const [{ data: games }, { data: tickets }, { data: preds }, { data: profiles }] = await Promise.all([
-        supabase
-          .from('games')
-          .select('id, home_team, away_team, result, game_number')
-          .eq('round_id', roundId)
-          .order('game_number'),
-        supabase
-          .from('user_bets')
-          .select('id, user_id')
-          .eq('round_id', roundId),
-        supabase
-          .from('bet_predictions')
-          .select('bet_id, game_id, predictions, is_double'),
-        supabase
-          .from('profiles')
-          .select('id, name')
-      ]);
-      
-      // מיפוי של user_id לשם
-      const userNames = new Map<string, string>();
-      profiles?.forEach(p => userNames.set(p.id, p.name));
-      
-      // הוספת השמות לכרטיסים
-      const ticketsWithNames = (tickets || []).map(ticket => ({
-        ...ticket,
-        userName: userNames.get(ticket.user_id) || `משתמש ${ticket.user_id.slice(0, 8)}...`
-      }));
-      
-      return { 
-        games: games || [], 
-        tickets: ticketsWithNames, 
-        preds: preds || [] 
-      };
+      try {
+        console.log('🔍 Fetching round data for round:', roundId);
+        
+        const [{ data: games }, { data: tickets }, { data: preds }, { data: profiles }] = await Promise.all([
+          supabase
+            .from('games')
+            .select('id, home_team, away_team, result, game_number')
+            .eq('round_id', roundId)
+            .order('game_number'),
+          supabase
+            .from('user_bets')
+            .select('id, user_id')
+            .eq('round_id', roundId),
+          supabase
+            .from('bet_predictions')
+            .select('bet_id, game_id, predictions, is_double'),
+          supabase
+            .from('profiles')
+            .select('id, name')
+        ]);
+        
+        console.log('✅ Round data fetched:', {
+          games: games?.length || 0,
+          tickets: tickets?.length || 0, 
+          preds: preds?.length || 0,
+          profiles: profiles?.length || 0
+        });
+        
+        // מיפוי של user_id לשם
+        const userNames = new Map<string, string>();
+        profiles?.forEach(p => userNames.set(p.id, p.name));
+        
+        // הוספת השמות לכרטיסים
+        const ticketsWithNames = (tickets || []).map(ticket => ({
+          ...ticket,
+          userName: userNames.get(ticket.user_id) || `משתמש ${ticket.user_id.slice(0, 8)}...`
+        }));
+        
+        return { 
+          games: games || [], 
+          tickets: ticketsWithNames, 
+          preds: preds || [] 
+        };
+      } catch (error) {
+        console.error('❌ Error in useRoundData:', error);
+        throw error;
+      }
     },
     enabled: !!roundId
   });

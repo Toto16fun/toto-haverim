@@ -45,52 +45,74 @@ export const useAllRoundsHistory = () => {
   return useQuery({
     queryKey: ['all-rounds-history'],
     queryFn: async () => {
-      // Get rounds
-      const { data: rounds, error: roundsError } = await supabase
-        .from('toto_rounds')
-        .select('*')
-        .order('round_number', { ascending: false });
-      
-      if (roundsError) throw roundsError;
-      if (!rounds) return [];
-      
-      // Get all scores
-      const { data: scores, error: scoresError } = await supabase
-        .from('round_scores')
-        .select('*');
-      
-      if (scoresError) throw scoresError;
-      
-      // Get profiles for missing names - handle case where no profiles exist
-      const userIds = scores?.map(s => s.user_id).filter(Boolean) || [];
-      let profiles = [];
-      if (userIds.length > 0) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .in('id', userIds);
+      try {
+        console.log('🔍 Fetching rounds history...');
         
-        if (profilesError) {
-          console.warn('Warning: Could not fetch profiles:', profilesError);
+        // Get rounds
+        const { data: rounds, error: roundsError } = await supabase
+          .from('toto_rounds')
+          .select('*')
+          .order('round_number', { ascending: false });
+        
+        if (roundsError) {
+          console.error('❌ Error fetching rounds:', roundsError);
+          throw roundsError;
         }
-        profiles = profilesData || [];
+        if (!rounds) {
+          console.log('⚠️ No rounds found');
+          return [];
+        }
+        
+        console.log('✅ Fetched rounds:', rounds.length);
+        
+        // Get all scores
+        const { data: scores, error: scoresError } = await supabase
+          .from('round_scores')
+          .select('*');
+        
+        if (scoresError) {
+          console.error('❌ Error fetching scores:', scoresError);
+          throw scoresError;
+        }
+        
+        console.log('✅ Fetched scores:', scores?.length || 0);
+        
+        // Get profiles for missing names - handle case where no profiles exist
+        const userIds = scores?.map(s => s.user_id).filter(Boolean) || [];
+        let profiles = [];
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', userIds);
+          
+          if (profilesError) {
+            console.warn('⚠️ Warning: Could not fetch profiles:', profilesError);
+          }
+          profiles = profilesData || [];
+          console.log('✅ Fetched profiles:', profiles.length);
+        }
+        
+        // Combine data
+        const roundsWithScores = rounds.map(round => ({
+          ...round,
+          round_scores: scores?.filter(score => score.round_id === round.id).map(score => {
+            const userProfile = profiles?.find(p => p.id === score.user_id);
+            return {
+              ...score,
+              profiles: userProfile ? { 
+                name: userProfile.name || `משתמש ${score.user_id.slice(0, 8)}...` 
+              } : null
+            };
+          }) || []
+        }));
+        
+        console.log('✅ Combined data successfully:', roundsWithScores.length, 'rounds');
+        return roundsWithScores;
+      } catch (error) {
+        console.error('❌ Error in useAllRoundsHistory:', error);
+        throw error;
       }
-      
-      // Combine data
-      const roundsWithScores = rounds.map(round => ({
-        ...round,
-        round_scores: scores?.filter(score => score.round_id === round.id).map(score => {
-          const userProfile = profiles?.find(p => p.id === score.user_id);
-          return {
-            ...score,
-            profiles: userProfile ? { 
-              name: userProfile.name || `משתמש ${score.user_id.slice(0, 8)}...` 
-            } : null
-          };
-        }) || []
-      }));
-      
-      return roundsWithScores;
     }
   });
 };
