@@ -6,9 +6,9 @@ export function isHit(picks: PickSymbol[] | undefined, result: PickSymbol | unde
 }
 
 export function cellClass(hit: boolean | undefined): string {
-  if (hit === true) return 'bg-success/10 text-success border-success/20';
-  if (hit === false) return 'bg-destructive/10 text-destructive border-destructive/20';
-  return 'bg-muted/50 text-muted-foreground border-muted/20';
+  if (hit === true) return 'bg-green-100 text-green-800 border-green-200';
+  if (hit === false) return 'bg-red-100 text-red-800 border-red-200';
+  return 'bg-gray-100 text-gray-600 border-gray-200';
 }
 
 export function getHitStatus(predictions: string[], result: string | null): 'hit' | 'miss' | 'pending' {
