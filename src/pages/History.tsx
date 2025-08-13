@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HistoryMatrix from '@/components/history/HistoryMatrix';
 
 const History = () => {
+  console.log('🔥 [HISTORY COMPONENT] History component is mounting...', new Date().toISOString());
   const [selectedRoundId, setSelectedRoundId] = useState<string>('');
   const { data: roundsData, isLoading, error } = useAllRoundsHistory();
   
