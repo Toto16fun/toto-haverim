@@ -29,10 +29,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get initial session and handle refresh token errors
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error && error.message.includes('refresh_token_not_found')) {
+        // Clear invalid session and redirect to auth
+        supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Auth error:', error);
+      // Clear any invalid session on error
+      supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
       setLoading(false);
     });
 
