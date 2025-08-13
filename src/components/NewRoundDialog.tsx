@@ -66,12 +66,11 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
             const row = jsonData[i] as any[];
             console.log(`Processing row ${i}:`, row);
             
-            if (row && row.length >= 3) {
-              const dateValue = row[0];
-              const leagueValue = row[1];
-              const teamsValue = row[2];
+            if (row && row.length >= 2) {
+              const leagueValue = row[0];
+              const teamsValue = row[1];
               
-              console.log('Date:', dateValue, 'League:', leagueValue, 'Teams:', teamsValue);
+              console.log('League:', leagueValue, 'Teams:', teamsValue);
               
               if (teamsValue && typeof teamsValue === 'string') {
                 // Try different separators for teams
@@ -91,12 +90,11 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                   
                   if (homeTeam && awayTeam) {
                     console.log(`Adding game: ${homeTeam} vs ${awayTeam}`);
-                    games.push({
-                      gameDate: dateValue ? String(dateValue).trim() : null,
-                      league: leagueValue ? String(leagueValue).trim() : null,
-                      homeTeam: homeTeam,
-                      awayTeam: awayTeam
-                    });
+                  games.push({
+                    league: leagueValue ? String(leagueValue).trim() : null,
+                    homeTeam: homeTeam,
+                    awayTeam: awayTeam
+                  });
                   }
                 } else {
                   console.log('Could not parse teams from:', teamsValue);
@@ -335,9 +333,8 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
               </p>
               <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
                 <strong>מבנה קובץ האקסל:</strong><br/>
-                עמודה A: תאריך ושעה<br/>
-                עמודה B: ליגה<br/>
-                עמודה C: קבוצות (קבוצת בית - קבוצת חוץ)<br/>
+                עמודה A: ליגה<br/>
+                עמודה B: קבוצות (קבוצת בית - קבוצת חוץ)<br/>
                 עמודות נוספות: סימונים (1, X, 2)<br/>
                 <br/>
                 <strong>דוגמאות לפורמט הקבוצות:</strong><br/>

@@ -55,27 +55,11 @@ serve(async (req) => {
       
       try {
         gamesData = excelData.slice(0, 16).map((game, index) => {
-          // Parse game date if provided
-          let gameDate = new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
-          if (game.gameDate) {
-            try {
-              // Try to parse the provided date
-              const parsedDate = new Date(game.gameDate)
-              if (!isNaN(parsedDate.getTime())) {
-                gameDate = parsedDate.toISOString()
-              }
-            } catch (e) {
-              console.log('Failed to parse date:', game.gameDate, 'using default')
-            }
-          }
-          
           // The first team in Excel (right to left) is home team, second is away team
           return {
             homeTeam: { name: game.homeTeam }, // First team is home team
             awayTeam: { name: game.awayTeam }, // Second team is away team
-            utcDate: gameDate,
-            league: game.league || null,
-            gameTime: game.gameDate || null
+            league: game.league || null
           }
         })
         
@@ -182,8 +166,7 @@ serve(async (req) => {
                       // Keep the correct order: homeTeam is first, awayTeam is second
                       gamesData = validGames.slice(0, 16).map((game, index) => ({
                         homeTeam: { name: game.homeTeam.trim() }, // First team (home)
-                        awayTeam: { name: game.awayTeam.trim() }, // Second team (away)
-                        utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+                        awayTeam: { name: game.awayTeam.trim() } // Second team (away)
                       }))
                       
                       dataSource = 'Image Analysis'
@@ -234,8 +217,7 @@ serve(async (req) => {
       console.log('Creating empty placeholder games for manual input')
       gamesData = Array.from({ length: 16 }, (_, index) => ({
         homeTeam: { name: `קבוצת בית ${index + 1}` },
-        awayTeam: { name: `קבוצת חוץ ${index + 1}` },
-        utcDate: new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toISOString()
+        awayTeam: { name: `קבוצת חוץ ${index + 1}` }
       }))
       dataSource = 'Empty Placeholders'
       requiresManualInput = true
@@ -253,7 +235,6 @@ serve(async (req) => {
       game_number: index + 1,
       home_team: match.homeTeam.name, // Correct: first team is home
       away_team: match.awayTeam.name,  // Correct: second team is away
-      game_date: match.utcDate,
       league: match.league || null
     }))
 
