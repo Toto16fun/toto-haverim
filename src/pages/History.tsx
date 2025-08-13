@@ -14,13 +14,17 @@ const History = () => {
   const [selectedRoundId, setSelectedRoundId] = useState<string>('');
   const { data: roundsData, isLoading, error } = useAllRoundsHistory();
   
-  console.log('🔍 History page rendered, data state:', { 
+  console.log('🔍 [HISTORY PAGE] History page rendered');
+  console.log('🔍 [HISTORY PAGE] Current URL:', window.location.href);
+  console.log('🔍 [HISTORY PAGE] Query state:', { 
     hasData: !!roundsData, 
     dataLength: roundsData?.length, 
     isLoading, 
     hasError: !!error,
-    error: error?.message 
+    error: error?.message,
+    errorDetails: error 
   });
+  console.log('🔍 [HISTORY PAGE] Rounds data sample:', roundsData?.slice(0, 2));
 
   if (isLoading) {
     return (
@@ -34,10 +38,13 @@ const History = () => {
   }
 
   if (error) {
+    console.error('🔍 [HISTORY PAGE] Error rendering error state:', error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">שגיאה בטעינת ההיסטוריה</p>
+          <p className="text-red-600 mb-2">שגיאה בטעינת ההיסטוריה</p>
+          <p className="text-sm text-gray-600">שגיאה: {error?.message || 'שגיאה לא ידועה'}</p>
+          <p className="text-xs text-gray-500 mt-2">בדוק את הקונסול לפרטים נוספים</p>
         </div>
       </div>
     );

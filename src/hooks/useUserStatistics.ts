@@ -46,51 +46,83 @@ export const useAllRoundsHistory = () => {
     queryKey: ['all-rounds-history'],
     queryFn: async () => {
       try {
-        console.log('🔍 Fetching rounds history...');
+        console.log('🔍 [HISTORY DEBUG] Starting to fetch rounds history...');
+        console.log('🔍 [HISTORY DEBUG] Supabase client exists:', !!supabase);
+        console.log('🔍 [HISTORY DEBUG] Current URL:', window.location.href);
         
         // Get rounds
+        console.log('🔍 [HISTORY DEBUG] About to fetch rounds from toto_rounds table...');
         const { data: rounds, error: roundsError } = await supabase
           .from('toto_rounds')
           .select('*')
           .order('round_number', { ascending: false });
         
+        console.log('🔍 [HISTORY DEBUG] Rounds query result:', { 
+          success: !roundsError, 
+          error: roundsError, 
+          dataExists: !!rounds, 
+          dataLength: rounds?.length 
+        });
+        
         if (roundsError) {
-          console.error('❌ Error fetching rounds:', roundsError);
+          console.error('❌ [HISTORY DEBUG] Error fetching rounds:', roundsError);
+          console.error('❌ [HISTORY DEBUG] Error details:', JSON.stringify(roundsError, null, 2));
           throw roundsError;
         }
         if (!rounds) {
-          console.log('⚠️ No rounds found');
+          console.log('⚠️ [HISTORY DEBUG] No rounds found - data is null');
           return [];
         }
         
-        console.log('✅ Fetched rounds:', rounds.length);
+        console.log('✅ [HISTORY DEBUG] Fetched rounds successfully:', rounds.length);
         
         // Get all scores
+        console.log('🔍 [HISTORY DEBUG] About to fetch scores from round_scores table...');
         const { data: scores, error: scoresError } = await supabase
           .from('round_scores')
           .select('*');
         
+        console.log('🔍 [HISTORY DEBUG] Scores query result:', { 
+          success: !scoresError, 
+          error: scoresError, 
+          dataExists: !!scores, 
+          dataLength: scores?.length 
+        });
+        
         if (scoresError) {
-          console.error('❌ Error fetching scores:', scoresError);
+          console.error('❌ [HISTORY DEBUG] Error fetching scores:', scoresError);
+          console.error('❌ [HISTORY DEBUG] Error details:', JSON.stringify(scoresError, null, 2));
           throw scoresError;
         }
         
-        console.log('✅ Fetched scores:', scores?.length || 0);
+        console.log('✅ [HISTORY DEBUG] Fetched scores successfully:', scores?.length || 0);
         
         // Get profiles for missing names - handle case where no profiles exist
         const userIds = scores?.map(s => s.user_id).filter(Boolean) || [];
+        console.log('🔍 [HISTORY DEBUG] User IDs found in scores:', userIds.length);
+        
         let profiles = [];
         if (userIds.length > 0) {
+          console.log('🔍 [HISTORY DEBUG] About to fetch profiles...');
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, name')
             .in('id', userIds);
           
+          console.log('🔍 [HISTORY DEBUG] Profiles query result:', { 
+            success: !profilesError, 
+            error: profilesError, 
+            dataExists: !!profilesData, 
+            dataLength: profilesData?.length 
+          });
+          
           if (profilesError) {
-            console.warn('⚠️ Warning: Could not fetch profiles:', profilesError);
+            console.warn('⚠️ [HISTORY DEBUG] Warning: Could not fetch profiles:', profilesError);
           }
           profiles = profilesData || [];
-          console.log('✅ Fetched profiles:', profiles.length);
+          console.log('✅ [HISTORY DEBUG] Fetched profiles successfully:', profiles.length);
+        } else {
+          console.log('⚠️ [HISTORY DEBUG] No user IDs to fetch profiles for');
         }
         
         // Combine data
@@ -107,13 +139,24 @@ export const useAllRoundsHistory = () => {
           }) || []
         }));
         
-        console.log('✅ Combined data successfully:', roundsWithScores.length, 'rounds');
+        console.log('✅ [HISTORY DEBUG] Combined data successfully:', roundsWithScores.length, 'rounds');
+        console.log('🔍 [HISTORY DEBUG] Final data structure:', roundsWithScores.map(r => ({
+          id: r.id,
+          round_number: r.round_number,
+          status: r.status,
+          scores_count: r.round_scores?.length || 0
+        })));
+        
         return roundsWithScores;
       } catch (error) {
-        console.error('❌ Error in useAllRoundsHistory:', error);
+        console.error('❌ [HISTORY DEBUG] Error in useAllRoundsHistory:', error);
+        console.error('❌ [HISTORY DEBUG] Error stack:', error instanceof Error ? error.stack : 'No stack');
         throw error;
       }
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
