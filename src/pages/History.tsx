@@ -5,15 +5,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Calendar, Trophy, Grid3X3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAllRoundsHistory } from '@/hooks/useUserStatistics';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HistoryMatrix from '@/components/history/HistoryMatrix';
 
 const History = () => {
   console.log('🔥 [HISTORY COMPONENT] History component is mounting...', new Date().toISOString());
+  
+  const { user, loading: authLoading } = useAuth();
   const [selectedRoundId, setSelectedRoundId] = useState<string>('');
   const { data: roundsData, isLoading, error } = useAllRoundsHistory();
   
+  console.log('🔍 [HISTORY PAGE] Auth state:', { user: !!user, authLoading });
   console.log('🔍 [HISTORY PAGE] History page rendered');
   console.log('🔍 [HISTORY PAGE] Current URL:', window.location.href);
   console.log('🔍 [HISTORY PAGE] Query state:', { 
@@ -25,6 +29,32 @@ const History = () => {
     errorDetails: error 
   });
   console.log('🔍 [HISTORY PAGE] Rounds data sample:', roundsData?.slice(0, 2));
+
+  // Check if authentication is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">בודק אימות...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user needs to login (only if auth is required)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">נדרש כניסה למערכת</p>
+          <Link to="/auth" className="text-blue-600 hover:text-blue-800">
+            לחץ כאן להתחברות
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
