@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { useAllRoundsHistory } from '@/hooks/useUserStatistics';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import HistoryMatrix from '@/components/history/HistoryMatrix';
 import HistoryMatrix from '@/components/history/HistoryMatrix';
 
 const History = () => {
