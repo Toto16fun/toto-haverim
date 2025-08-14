@@ -30,31 +30,7 @@ const History = () => {
   });
   console.log('🔍 [HISTORY PAGE] Rounds data sample:', roundsData?.slice(0, 2));
 
-  // Check if authentication is loading
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">בודק אימות...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if user needs to login (only if auth is required)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">נדרש כניסה למערכת</p>
-          <Link to="/auth" className="text-blue-600 hover:text-blue-800">
-            לחץ כאן להתחברות
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Note: History page is public - no auth required
 
   if (isLoading) {
     return (
