@@ -126,21 +126,34 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* History Card - Always accessible */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          {/* History Card - Only active for authenticated users */}
+          <Card className={`transition-shadow cursor-pointer ${user ? 'hover:shadow-lg' : 'opacity-60'}`}>
             <CardHeader className="text-center">
-              <History className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+              <div className="relative">
+                <History className="h-12 w-12 text-blue-600 mx-auto mb-2" />
+                {!user && <Lock className="h-4 w-4 text-gray-400 absolute -top-1 -right-1" />}
+              </div>
               <CardTitle className="text-xl">היסטוריית שליחות</CardTitle>
               <CardDescription>
-                צפה בטורים של כל המחזורים
+                {user ? "צפה בטורים של כל המחזורים" : "נדרשת התחברות לצפייה בהיסטוריה"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/history">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  צפה בהיסטוריה
+              {user ? (
+                <Link to="/history">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    צפה בהיסטוריה
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full bg-gray-400 cursor-not-allowed" 
+                  disabled
+                  onClick={handleRestrictedAction}
+                >
+                  נדרשת התחברות
                 </Button>
-              </Link>
+              )}
             </CardContent>
           </Card>
 
