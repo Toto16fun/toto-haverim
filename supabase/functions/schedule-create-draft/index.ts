@@ -14,13 +14,46 @@ const sb = createClient(
 
 function upcomingSaturday13IL() {
   const now = new Date();
-  // Calculate next Saturday at 13:00 Israel time (10:00 UTC during standard time)
+  
+  // Calculate next Saturday
   const d = new Date(now);
   const day = d.getUTCDay(); // 0=Sunday, 6=Saturday
   const daysToSat = (6 - day + 7) % 7 || 7; // Days until next Saturday
   d.setUTCDate(d.getUTCDate() + daysToSat);
-  d.setUTCHours(10, 0, 0, 0); // 13:00 IL ≈ 10:00 UTC (standard time)
+  
+  // Set to 13:00 Israel time
+  // Israel is UTC+2 in winter (standard time) and UTC+3 in summer (daylight saving)
+  // We need to check if the target date is in DST
+  const targetDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const isIsraelDST = isDateInIsraelDST(targetDate);
+  
+  if (isIsraelDST) {
+    // Summer time: UTC+3, so 13:00 IL = 10:00 UTC
+    d.setUTCHours(10, 0, 0, 0);
+  } else {
+    // Winter time: UTC+2, so 13:00 IL = 11:00 UTC
+    d.setUTCHours(11, 0, 0, 0);
+  }
+  
   return d.toISOString();
+}
+
+function isDateInIsraelDST(date: Date): boolean {
+  const year = date.getFullYear();
+  
+  // Israel DST typically starts on the last Friday in March
+  // and ends on the last Sunday in October
+  const lastFridayMarch = getLastWeekdayOfMonth(year, 2, 5); // March (2), Friday (5)
+  const lastSundayOctober = getLastWeekdayOfMonth(year, 9, 0); // October (9), Sunday (0)
+  
+  return date >= lastFridayMarch && date < lastSundayOctober;
+}
+
+function getLastWeekdayOfMonth(year: number, month: number, weekday: number): Date {
+  const lastDay = new Date(year, month + 1, 0); // Last day of the month
+  const lastWeekday = lastDay.getDay();
+  const daysBack = (lastWeekday - weekday + 7) % 7;
+  return new Date(year, month, lastDay.getDate() - daysBack);
 }
 
 serve(async (req) => {
