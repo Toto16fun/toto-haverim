@@ -82,7 +82,7 @@ const CurrentRound = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-2 sm:p-4">
       <div className="max-w-full mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Button 
@@ -160,30 +160,31 @@ const CurrentRound = () => {
                       const userName = getUserName(bet.user_id);
                       
                       return (
-                        <div key={bet.id} className="border rounded-lg p-4 bg-white">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
+                        <div key={bet.id} className="border rounded-lg p-2 sm:p-4 bg-white">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                               <div className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-gray-500" />
-                                <span className="font-medium">
+                                <span className="font-medium text-sm sm:text-base">
                                   {bet.user_id === user.id ? 'הטור שלי' : userName}
                                 </span>
                               </div>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-xs sm:text-sm text-gray-500">
                                 {new Date(bet.submitted_at).toLocaleString('he-IL')}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={doubleCount === 3 ? "default" : "destructive"}>
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                              <Badge variant={doubleCount === 3 ? "default" : "destructive"} className="text-xs">
                                 כפולים: {doubleCount}/3
                               </Badge>
-                              <Badge variant={gameCount === 16 ? "default" : "destructive"}>
+                              <Badge variant={gameCount === 16 ? "default" : "destructive"} className="text-xs">
                                 משחקים: {gameCount}/16
                               </Badge>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setExpandedBetId(isExpanded ? null : bet.id)}
+                                className="text-xs sm:text-sm"
                               >
                                 {isExpanded ? 'הסתר' : 'הצג'} תחזיות
                               </Button>

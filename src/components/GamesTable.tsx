@@ -64,33 +64,35 @@ const GamesTable = ({
         <CardHeader>
           <CardTitle className="text-center">{title}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                 <TableRow>
-                   <TableHead className="text-center">קבוצות</TableHead>
-                   <TableHead className="text-center">תאריך</TableHead>
-                   <TableHead className="text-center">#</TableHead>
+      <CardContent className="p-2 sm:p-6">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+               <TableRow>
+                 <TableHead className="text-center text-xs sm:text-sm">#</TableHead>
+                 <TableHead className="text-center text-xs sm:text-sm">קבוצות</TableHead>
+                 <TableHead className="text-center text-xs sm:text-sm">תאריך</TableHead>
+               </TableRow>
+            </TableHeader>
+            <TableBody>
+              {games.map(game => (
+                 <TableRow key={game.id}>
+                   <TableCell className="text-center font-medium text-xs sm:text-sm p-1 sm:p-4">
+                     {game.game_number}
+                   </TableCell>
+                   <TableCell className="text-center font-medium text-xs sm:text-sm p-1 sm:p-4">
+                     <div className="break-words">
+                       {game.home_team} - {game.away_team}
+                     </div>
+                   </TableCell>
+                   <TableCell className="text-center text-xs sm:text-sm p-1 sm:p-4">
+                     <div>
+                       {game.game_date ? formatGameDate(game.game_date) : '-'}
+                     </div>
+                   </TableCell>
                  </TableRow>
-              </TableHeader>
-              <TableBody>
-                {games.map(game => (
-                   <TableRow key={game.id}>
-                     <TableCell className="text-center font-medium">
-                       <div>{game.home_team} - {game.away_team}</div>
-                     </TableCell>
-                     <TableCell className="text-center text-sm">
-                       <div>
-                         {game.game_date ? formatGameDate(game.game_date) : '-'}
-                       </div>
-                     </TableCell>
-                     <TableCell className="text-center font-medium">
-                       {game.game_number}
-                     </TableCell>
-                   </TableRow>
-                ))}
-              </TableBody>
+              ))}
+            </TableBody>
             </Table>
           </div>
         </CardContent>
@@ -104,18 +106,18 @@ const GamesTable = ({
       <CardHeader>
         <CardTitle className="text-center">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-1 sm:p-6">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="text-xs sm:text-sm">
             <TableHeader>
                <TableRow>
-                 <TableHead className="text-center">כפול</TableHead>
-                 <TableHead className="text-center">2</TableHead>
-                 <TableHead className="text-center">X</TableHead>
-                 <TableHead className="text-center">1</TableHead>
-                 <TableHead className="text-center">תאריך</TableHead>
-                 <TableHead className="text-center">קבוצות</TableHead>
-                 <TableHead className="text-center">#</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">#</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4 min-w-[120px] sm:min-w-0">קבוצות</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">תאריך</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">1</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">X</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">2</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">כפול</TableHead>
                </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,50 +127,26 @@ const GamesTable = ({
                 
                 return (
                   <TableRow key={game.id}>
-                    <TableCell className="text-center">
-                      {isDouble && (
-                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs">
-                          כפול
-                        </Badge>
-                      )}
+                    <TableCell className="text-center font-medium text-xs p-1 sm:p-4">
+                      {game.game_number}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant={gamePredictions.includes('2') ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleOptionClick(game.id, '2')}
-                        disabled={isReadOnly}
-                        className={`w-8 h-8 ${
-                          gamePredictions.includes('2') 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : ''
-                        }`}
-                      >
-                        2
-                      </Button>
+                    <TableCell className="text-center font-medium text-xs p-1 sm:p-4 min-w-[120px] sm:min-w-0">
+                      <div className="break-words leading-tight">
+                        {game.home_team} - {game.away_team}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant={gamePredictions.includes('X') ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleOptionClick(game.id, 'X')}
-                        disabled={isReadOnly}
-                        className={`w-8 h-8 ${
-                          gamePredictions.includes('X') 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : ''
-                        }`}
-                      >
-                        X
-                      </Button>
+                    <TableCell className="text-center text-xs p-1 sm:p-4">
+                      <div>
+                        {game.game_date ? formatGameDate(game.game_date) : '-'}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center p-1 sm:p-4">
                       <Button
                         variant={gamePredictions.includes('1') ? "default" : "outline"}
                         size="sm"
                         onClick={() => handleOptionClick(game.id, '1')}
                         disabled={isReadOnly}
-                        className={`w-8 h-8 ${
+                        className={`w-6 h-6 sm:w-8 sm:h-8 text-xs ${
                           gamePredictions.includes('1') 
                             ? 'bg-green-600 hover:bg-green-700' 
                             : ''
@@ -177,17 +155,43 @@ const GamesTable = ({
                         1
                       </Button>
                     </TableCell>
-                     <TableCell className="text-center text-sm">
-                       <div>
-                         {game.game_date ? formatGameDate(game.game_date) : '-'}
-                       </div>
-                     </TableCell>
-                     <TableCell className="text-center font-medium">
-                       <div>{game.home_team} - {game.away_team}</div>
-                     </TableCell>
-                     <TableCell className="text-center font-medium">
-                       {game.game_number}
-                     </TableCell>
+                    <TableCell className="text-center p-1 sm:p-4">
+                      <Button
+                        variant={gamePredictions.includes('X') ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleOptionClick(game.id, 'X')}
+                        disabled={isReadOnly}
+                        className={`w-6 h-6 sm:w-8 sm:h-8 text-xs ${
+                          gamePredictions.includes('X') 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : ''
+                        }`}
+                      >
+                        X
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center p-1 sm:p-4">
+                      <Button
+                        variant={gamePredictions.includes('2') ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleOptionClick(game.id, '2')}
+                        disabled={isReadOnly}
+                        className={`w-6 h-6 sm:w-8 sm:h-8 text-xs ${
+                          gamePredictions.includes('2') 
+                            ? 'bg-green-600 hover:bg-green-700' 
+                            : ''
+                        }`}
+                      >
+                        2
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center p-1 sm:p-4">
+                      {isDouble && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs px-1">
+                          כפול
+                        </Badge>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
