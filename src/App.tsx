@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import FixtureImageReview from "./pages/FixtureImageReview";
 import AdminResults from "./pages/AdminResults";
 import Privacy from "./pages/Privacy";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => {
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/users" element={<Users />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/admin/fixture-image" element={<FixtureImageReview />} />
             <Route path="/admin/results" element={<AdminResults />} />
             <Route path="*" element={<NotFound />} />
