@@ -91,7 +91,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-md mx-auto pt-20">
         <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
           <ArrowRight className="h-4 w-4 mr-2 rotate-180" />

@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Privacy = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="container mx-auto max-w-4xl">
         <Card className="shadow-lg">
           <CardHeader className="text-center">

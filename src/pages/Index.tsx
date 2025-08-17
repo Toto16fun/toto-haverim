@@ -28,7 +28,7 @@ const Index = () => {
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 pt-safe-area-inset-top sm:pt-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="text-center flex-1">

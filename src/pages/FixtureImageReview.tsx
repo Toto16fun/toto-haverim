@@ -95,7 +95,7 @@ export default function FixtureImageReview() {
 
   if (!roundId) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8" style={{ paddingTop: 'max(env(safe-area-inset-top), 2rem)' }}>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -116,7 +116,7 @@ export default function FixtureImageReview() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6" style={{ paddingTop: 'max(env(safe-area-inset-top), 2rem)' }}>
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">עריכת משחקים</h1>
         <p className="text-muted-foreground">
