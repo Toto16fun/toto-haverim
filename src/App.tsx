@@ -17,6 +17,7 @@ import FixtureImageReview from "./pages/FixtureImageReview";
 import AdminResults from "./pages/AdminResults";
 import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/support" element={<Support />} />
             <Route path="/admin/fixture-image" element={<FixtureImageReview />} />
             <Route path="/admin/results" element={<AdminResults />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
