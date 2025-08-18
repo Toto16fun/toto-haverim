@@ -81,8 +81,8 @@ serve(async (req) => {
       )
     }
 
-    const maxHits = Math.max(...scores.map(s => s.hits))
-    const payers = scores.filter(s => s.hits === maxHits).map(s => s.user_id)
+    const minHits = Math.min(...scores.map(s => s.hits))
+    const payers = scores.filter(s => s.hits === minHits).map(s => s.user_id)
 
     // עדכון דירוג
     scores.sort((a, b) => b.hits - a.hits)
@@ -96,7 +96,7 @@ serve(async (req) => {
         .from('round_scores')
         .update({ 
           rank: currentRank,
-          is_payer: scores[i].hits === maxHits
+          is_payer: scores[i].hits === minHits
         })
         .eq('round_id', roundId)
         .eq('user_id', scores[i].user_id)
@@ -116,7 +116,7 @@ serve(async (req) => {
       console.error('❌ Failed to update round status:', updateError)
     }
 
-    console.log(`🏆 Winners with ${maxHits} hits: ${payers.length} users`)
+    console.log(`💸 Payers with ${minHits} hits: ${payers.length} users`)
     console.log(`✅ Scores computed successfully for round ${roundId}`)
 
     return new Response(
@@ -124,8 +124,8 @@ serve(async (req) => {
         success: true,
         message: `Scores computed for round ${roundId}`,
         totalTickets: scores.length,
-        maxHits: maxHits,
-        winnersCount: payers.length
+        minHits: minHits,
+        payersCount: payers.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
