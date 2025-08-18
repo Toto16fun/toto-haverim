@@ -1,44 +1,62 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowRight, Users as UsersIcon, UserPlus } from 'lucide-react';
+import { ArrowRight, Users as UsersIcon, Loader2, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+
+interface Profile {
+  id: string;
+  name: string;
+  created_at: string;
+}
 
 const Users = () => {
-  const [username, setUsername] = useState('');
-  const [users, setUsers] = useState<string[]>([
-    'תומר', 'דניאל', 'עילאי', 'אורי'
-  ]);
-  const { toast } = useToast();
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddUser = () => {
-    if (username.trim() && !users.includes(username.trim())) {
-      setUsers([...users, username.trim()]);
-      setUsername('');
-      toast({
-        title: "המשתמש נוסף בהצלחה!",
-        description: `${username.trim()} נוסף לקבוצת הטוטו`,
-      });
-    } else if (users.includes(username.trim())) {
-      toast({
-        title: "שגיאה",
-        description: "המשתמש כבר קיים בקבוצה",
-        variant: "destructive",
-      });
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, name, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+
+      setUsers(profiles || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRemoveUser = (userToRemove: string) => {
-    setUsers(users.filter(user => user !== userToRemove));
-    toast({
-      title: "המשתמש הוסר",
-      description: `${userToRemove} הוסר מהקבוצה`,
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('he-IL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-green-600" />
+          <p className="text-gray-600">טוען משתמשים...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
@@ -49,63 +67,43 @@ const Users = () => {
         </Link>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">ניהול חברי הקבוצה</h1>
-          <p className="text-gray-600">הוסף או הסר חברים מקבוצת הטוטו</p>
+          <h1 className="text-3xl font-bold text-green-800 mb-2">חברי הקבוצה</h1>
+          <p className="text-gray-600">רשימת כל המשתמשים הרשומים בטוטו</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UserPlus className="h-5 w-5 mr-2" />
-                הוסף חבר חדש
-              </CardTitle>
-              <CardDescription>הכנס שם של חבר חדש לקבוצה</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="username">שם המשתמש</Label>
-                <Input
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="הכנס שם משתמש..."
-                  className="text-right"
-                />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UsersIcon className="h-5 w-5 mr-2" />
+              משתמשים רשומים ({users.length})
+            </CardTitle>
+            <CardDescription>כל המשתמשים שנרשמו למערכת הטוטו</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                אין משתמשים רשומים במערכת
               </div>
-              <Button onClick={handleAddUser} className="w-full">
-                הוסף לקבוצה
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UsersIcon className="h-5 w-5 mr-2" />
-                חברי הקבוצה ({users.length})
-              </CardTitle>
-              <CardDescription>רשימת כל חברי קבוצת הטוטו</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {users.map((user, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium">{user}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveUser(user)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      הסר
-                    </Button>
+            ) : (
+              <div className="space-y-3">
+                {users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-lg">{user.name}</span>
+                      <div className="flex items-center text-sm text-gray-500 mt-1">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        נרשם ב: {formatDate(user.created_at)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 font-mono">
+                      ID: {user.id.slice(0, 8)}...
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
