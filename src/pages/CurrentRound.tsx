@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, User, Plus } from 'lucide-react';
+import { ArrowRight, User, Plus, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useUserBets } from '@/hooks/useUserBets';
@@ -81,6 +82,67 @@ const CurrentRound = () => {
     return predictions;
   };
 
+  // Export to Excel function
+  const exportToExcel = () => {
+    if (!userBets || !games || !userProfiles || !currentRound) return;
+
+    // Create headers
+    const headers = ['משתמש', 'זמן הגשה'];
+    const sortedGames = [...games].sort((a, b) => a.game_number - b.game_number);
+    
+    // Add game headers
+    sortedGames.forEach(game => {
+      headers.push(`משחק ${game.game_number}: ${game.home_team} נ' ${game.away_team}`);
+    });
+    
+    headers.push('כפולים', 'סה"כ משחקים');
+
+    // Create data rows
+    const rows = userBets.map(bet => {
+      const userName = getUserName(bet.user_id);
+      const submittedAt = new Date(bet.submitted_at).toLocaleString('he-IL');
+      
+      const row = [userName, submittedAt];
+      
+      // Add predictions for each game
+      sortedGames.forEach(game => {
+        const prediction = bet.bet_predictions?.find(p => p.game_id === game.id);
+        if (prediction) {
+          const predictionText = prediction.predictions?.join(', ') || '';
+          const doubleText = prediction.is_double ? ' (כפול)' : '';
+          row.push(predictionText + doubleText);
+        } else {
+          row.push('');
+        }
+      });
+      
+      // Add summary data
+      const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
+      const gameCount = bet.bet_predictions?.length || 0;
+      row.push(doubleCount.toString(), gameCount.toString());
+      
+      return row;
+    });
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    
+    // Set column widths
+    const colWidths = headers.map((header, index) => {
+      if (index < 2) return { wch: 15 }; // User name and time columns
+      if (index >= headers.length - 2) return { wch: 10 }; // Summary columns
+      return { wch: 25 }; // Game columns
+    });
+    ws['!cols'] = colWidths;
+
+    // Create workbook and export
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `מחזור ${currentRound.round_number}`);
+    
+    const fileName = `מחזור_${currentRound.round_number}_${new Date().toLocaleDateString('he-IL').replace(/\./g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-2 sm:p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}>
       <div className="max-w-full mx-auto">
@@ -146,9 +208,22 @@ const CurrentRound = () => {
             {/* Submitted Bets */}
             <Card>
               <CardHeader>
-                <CardTitle>
-                  טורים שהוגשו ({userBets?.length || 0})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>
+                    טורים שהוגשו ({userBets?.length || 0})
+                  </CardTitle>
+                  {userBets && userBets.length > 0 && (
+                    <Button
+                      onClick={exportToExcel}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      ייצא לאקסל
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {userBets && userBets.length > 0 ? (
