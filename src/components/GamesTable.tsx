@@ -111,9 +111,9 @@ const GamesTable = ({
           <Table className="text-xs sm:text-sm">
             <TableHeader>
                <TableRow>
-                 <TableHead className="text-center text-xs p-1 sm:p-4">1</TableHead>
-                 <TableHead className="text-center text-xs p-1 sm:p-4">X</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">2</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">X</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">1</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">כפול</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">תאריך</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4 min-w-[120px] sm:min-w-0">קבוצות</TableHead>
@@ -129,17 +129,17 @@ const GamesTable = ({
                    <TableRow key={game.id}>
                      <TableCell className="text-center p-1 sm:p-4">
                        <Button
-                         variant={gamePredictions.includes('1') ? "default" : "outline"}
+                         variant={gamePredictions.includes('2') ? "default" : "outline"}
                          size="sm"
-                         onClick={() => handleOptionClick(game.id, '1')}
+                         onClick={() => handleOptionClick(game.id, '2')}
                          disabled={isReadOnly}
                          className={`w-6 h-6 sm:w-8 sm:h-8 text-xs ${
-                           gamePredictions.includes('1') 
+                           gamePredictions.includes('2') 
                              ? 'bg-green-600 hover:bg-green-700' 
                              : ''
                          }`}
                        >
-                         1
+                         2
                        </Button>
                      </TableCell>
                      <TableCell className="text-center p-1 sm:p-4">
@@ -159,17 +159,17 @@ const GamesTable = ({
                      </TableCell>
                      <TableCell className="text-center p-1 sm:p-4">
                        <Button
-                         variant={gamePredictions.includes('2') ? "default" : "outline"}
+                         variant={gamePredictions.includes('1') ? "default" : "outline"}
                          size="sm"
-                         onClick={() => handleOptionClick(game.id, '2')}
+                         onClick={() => handleOptionClick(game.id, '1')}
                          disabled={isReadOnly}
                          className={`w-6 h-6 sm:w-8 sm:h-8 text-xs ${
-                           gamePredictions.includes('2') 
+                           gamePredictions.includes('1') 
                              ? 'bg-green-600 hover:bg-green-700' 
                              : ''
                          }`}
                        >
-                         2
+                         1
                        </Button>
                      </TableCell>
                      <TableCell className="text-center p-1 sm:p-4">
