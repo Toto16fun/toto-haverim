@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useMyBetForRound } from '@/hooks/useUserBets';
 import BetForm from '@/components/BetForm';
+import { formatIsraelDateTime } from '@/lib/utils';
 
 const SubmitBet = () => {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ const SubmitBet = () => {
                 מחזור {currentRound.round_number}
               </h2>
               <p className="text-gray-600">
-                סגירה: {new Date(currentRound.deadline).toLocaleString('he-IL')}
+                סגירה: {formatIsraelDateTime(currentRound.deadline)}
               </p>
               {isDeadlinePassed && (
                 <p className="text-red-600 font-semibold mt-2">

@@ -12,6 +12,7 @@ import { useUserBets } from '@/hooks/useUserBets';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
 import GamesTable from '@/components/GamesTable';
 import NewRoundDialog from '@/components/NewRoundDialog';
+import { formatIsraelDateTime } from '@/lib/utils';
 
 const CurrentRound = () => {
   const navigate = useNavigate();
@@ -191,7 +192,7 @@ const CurrentRound = () => {
                   </Badge>
                 </div>
                 <p className="text-center text-gray-600">
-                  {isDeadlinePassed ? "נעול מאז:" : "סגירה:"} {new Date(currentRound.deadline).toLocaleString('he-IL')}
+                  {isDeadlinePassed ? "נעול מאז:" : "סגירה:"} {formatIsraelDateTime(currentRound.deadline)}
                 </p>
               </CardHeader>
             </Card>

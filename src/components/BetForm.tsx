@@ -8,6 +8,7 @@ import GamesTable from './GamesTable';
 import { Game } from '@/hooks/useTotoRounds';
 import { useSubmitBet } from '@/hooks/useUserBets';
 import { z } from 'zod';
+import { formatIsraelDateTime } from '@/lib/utils';
 
 // Zod schema for bet validation with UUID support
 export const BetSchema = z.object({
@@ -148,7 +149,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       return {
         status: "מחזור נעול",
         color: "bg-red-100 text-red-800",
-        message: `הדדליין עבר: ${new Date(deadline).toLocaleString('he-IL')}`
+        message: `הדדליין עבר: ${formatIsraelDateTime(deadline)}`
       };
     }
 
@@ -156,14 +157,14 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       return {
         status: "טור הוגש - עריכה אפשרית",
         color: "bg-green-100 text-green-800",
-        message: `עריכה אפשרית עד: ${new Date(deadline).toLocaleString('he-IL')}`
+        message: `עריכה אפשרית עד: ${formatIsraelDateTime(deadline)}`
       };
     }
 
     return {
       status: "טור טיוטה",
       color: "bg-yellow-100 text-yellow-800",
-      message: `הגשה עד: ${new Date(deadline).toLocaleString('he-IL')}`
+      message: `הגשה עד: ${formatIsraelDateTime(deadline)}`
     };
   };
 
