@@ -217,12 +217,34 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       // Calculate next Saturday at 13:00 Israel time as deadline
       const nextRoundNumber = getNextRoundNumber();
       const getNextSaturdayDeadline = () => {
+        // Compute next Saturday at 13:00 Israel time, returned as a UTC timestamp
+        const isDateInIsraelDST = (date: Date): boolean => {
+          const year = date.getFullYear();
+          // Israel DST: last Friday in March to last Sunday in October
+          const getLastWeekdayOfMonth = (y: number, m: number, weekday: number): Date => {
+            const lastDay = new Date(y, m + 1, 0);
+            const lastWeekday = lastDay.getDay();
+            const daysBack = (lastWeekday - weekday + 7) % 7;
+            return new Date(y, m, lastDay.getDate() - daysBack);
+          };
+          const lastFridayMarch = getLastWeekdayOfMonth(year, 2, 5); // March (2), Friday (5)
+          const lastSundayOctober = getLastWeekdayOfMonth(year, 9, 0); // October (9), Sunday (0)
+          return date >= lastFridayMarch && date < lastSundayOctober;
+        };
+
         const now = new Date();
-        const daysUntilSaturday = (6 - now.getDay()) % 7 || 7; // 0=Sunday, 6=Saturday
-        const nextSaturday = new Date(now);
-        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
-        nextSaturday.setHours(10, 0, 0, 0); // 13:00 Israel time = 10:00 UTC (winter time)
-        return nextSaturday;
+        const d = new Date(now);
+        // Calculate next Saturday (UTC)
+        const day = d.getUTCDay(); // 0=Sunday, 6=Saturday
+        const daysToSat = (6 - day + 7) % 7 || 7;
+        d.setUTCDate(d.getUTCDate() + daysToSat);
+
+        // Decide UTC hour for 13:00 Israel time depending on DST
+        const targetLocalDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const dst = isDateInIsraelDST(targetLocalDate);
+        // Summer (UTC+3): 13:00 IL = 10:00 UTC; Winter (UTC+2): 13:00 IL = 11:00 UTC
+        d.setUTCHours(dst ? 10 : 11, 0, 0, 0);
+        return d;
       };
 
       const roundResult = await createRound.mutateAsync({
