@@ -7,11 +7,12 @@ import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useMyBetForRound } from '@/hooks/useUserBets';
 import BetForm from '@/components/BetForm';
 import { formatIsraelDateTime } from '@/lib/utils';
+import { useEffect } from 'react';
 
 const SubmitBet = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: currentRound, isLoading: roundLoading } = useCurrentRound();
+  const { data: currentRound, isLoading: roundLoading, refetch: refetchRound } = useCurrentRound();
   const { data: games, isLoading: gamesLoading } = useGamesInRound(currentRound?.id);
   const { data: myBet } = useMyBetForRound(currentRound?.id);
   
@@ -33,6 +34,11 @@ const SubmitBet = () => {
       </div>
     );
   }
+
+  // Ensure fresh round data on mount
+  useEffect(() => {
+    refetchRound();
+  }, [refetchRound]);
 
   if (roundLoading || gamesLoading) {
     return (

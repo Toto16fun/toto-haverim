@@ -10,12 +10,12 @@ export function cn(...inputs: ClassValue[]) {
 export function formatIsraelDateTime(input: string | Date) {
   const date = typeof input === 'string' ? new Date(input) : input;
   const tz = 'Asia/Jerusalem';
+  const day = new Intl.DateTimeFormat('he-IL', {
+    day: 'numeric', month: 'numeric', year: 'numeric', timeZone: tz,
+  }).format(date);
   const time = new Intl.DateTimeFormat('he-IL', {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
     timeZone: tz,
   }).format(date);
-  const day = new Intl.DateTimeFormat('he-IL', {
-    day: 'numeric', month: 'numeric', year: 'numeric', timeZone: tz,
-  }).format(date);
-  return `${time} ,${day}`;
+  return `${day}, ${time}`;
 }
