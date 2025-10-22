@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, AlertTriangle, Save, Home } from 'lucide-react';
+import ImageUploadForGames from '@/components/ImageUploadForGames';
 
 export default function FixtureImageReview() {
   const [searchParams] = useSearchParams();
@@ -120,9 +121,23 @@ export default function FixtureImageReview() {
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">עריכת משחקים</h1>
         <p className="text-muted-foreground">
-          ערוך את שמות הקבוצות במחזור הנוכחי
+          העלה תמונה/אקסל של המשחקים או ערוך את שמות הקבוצות במחזור הנוכחי
         </p>
       </div>
+
+      {/* Image/Excel Upload Component */}
+      {roundId && currentRound?.status !== 'finished' && (
+        <ImageUploadForGames 
+          roundId={roundId} 
+          onSuccess={() => {
+            refetch();
+            toast({
+              title: "המשחקים עודכנו בהצלחה",
+              description: "רשימת המשחקים התעדכנה",
+            });
+          }}
+        />
+      )}
 
       {games && games.length > 0 ? (
         <Card>

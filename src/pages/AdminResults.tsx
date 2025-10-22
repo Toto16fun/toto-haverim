@@ -4,13 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { useCanEditResults } from '@/hooks/useUserRoles';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { updateAllGameResults, computeRoundScores } from '@/lib/adminActions';
 import { useToast } from '@/hooks/use-toast';
-import ImageUploadForGames from '@/components/ImageUploadForGames';
 
 export default function AdminResults() {
   const navigate = useNavigate();
@@ -129,24 +127,10 @@ export default function AdminResults() {
           </Card>
         )}
 
-        {currentRound && games && (
-          <Tabs defaultValue="edit-results" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="edit-results">עריכת תוצאות</TabsTrigger>
-              <TabsTrigger value="update-games">עדכון משחקים</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="edit-results">
-              {games.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-gray-600">אין משחקים במחזור זה. השתמש בלשונית "עדכון משחקים" להוסיף משחקים.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  <div className="grid gap-4 mb-6">
-                    {games.map((game, index) => {
+        {currentRound && games && games.length > 0 && (
+          <>
+            <div className="grid gap-4 mb-6">
+              {games.map((game, index) => {
                 const currentResult = results[game.id] || game.result;
                 const hasExistingResult = !!game.result;
                 
@@ -194,71 +178,31 @@ export default function AdminResults() {
                     </CardContent>
                   </Card>
                 );
-                    })}
-                  </div>
+              })}
+            </div>
 
-                  {hasChanges && (
-                    <div className="sticky bottom-4">
-                      <Card className="border-green-200 bg-green-50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-green-800">
-                              יש {Object.keys(results).length} שינויים לא שמורים
-                            </p>
-                            <Button 
-                              onClick={handleSave} 
-                              disabled={saving}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <Save className="h-4 w-4 mr-2" />
-                              {saving ? 'שומר...' : 'שמור ועדכן ניקוד'}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+            {hasChanges && (
+              <div className="sticky bottom-4">
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-green-800">
+                        יש {Object.keys(results).length} שינויים לא שמורים
+                      </p>
+                      <Button 
+                        onClick={handleSave} 
+                        disabled={saving}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {saving ? 'שומר...' : 'שמור ועדכן ניקוד'}
+                      </Button>
                     </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="update-games">
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>עדכון רשימת משחקים</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 mb-4">
-                      העלה תמונה או קובץ אקסל כדי לעדכן את רשימת המשחקים של המחזור הנוכחי.
-                      {currentRound.status === 'active' && (
-                        <span className="block mt-2 text-orange-600 font-medium">
-                          שים לב: המחזור כבר פעיל. עדכון המשחקים עלול להשפיע על הימורים קיימים.
-                        </span>
-                      )}
-                      {currentRound.status === 'finished' && (
-                        <span className="block mt-2 text-red-600 font-medium">
-                          המחזור סגור. לא ניתן לעדכן משחקים במחזור סגור.
-                        </span>
-                      )}
-                    </p>
-                    {currentRound.status !== 'finished' && (
-                      <ImageUploadForGames 
-                        roundId={currentRound.id} 
-                        onSuccess={() => {
-                          refetch();
-                          toast({
-                            title: "המשחקים עודכנו בהצלחה",
-                            description: "רשימת המשחקים עודכנה",
-                          });
-                        }}
-                      />
-                    )}
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </>
         )}
       </div>
     </div>
