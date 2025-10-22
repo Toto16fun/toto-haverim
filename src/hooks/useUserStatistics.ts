@@ -217,8 +217,51 @@ export const useUserStatistics = () => {
         
         return acc;
       }, {} as Record<string, UserStat>);
+
+      // Logical merge for season statistics only: merge "דן גלזר" into "לאון"
+      const MERGE_TARGET = 'לאון';
+      const MERGE_SOURCES = new Set(['דן גלזר', 'דן גלזר ']);
+
+      const statsArray = Object.values(userStats);
+
+      const targetIndex = statsArray.findIndex(s => (s.user_name || '').trim() === MERGE_TARGET);
+      const sourceIndexes = statsArray
+        .map((s, i) => ({ s, i }))
+        .filter(({ s }) => MERGE_SOURCES.has((s.user_name || '').trim()))
+        .map(({ i }) => i);
+
+      if (sourceIndexes.length > 0) {
+        // Ensure a target exists; if not, promote the first source to target name
+        let targetStat: UserStat | null = targetIndex >= 0 ? statsArray[targetIndex] : null;
+        if (!targetStat) {
+          const firstSourceIdx = sourceIndexes[0];
+          targetStat = { ...statsArray[firstSourceIdx], user_name: MERGE_TARGET };
+          statsArray[firstSourceIdx] = targetStat;
+        }
+
+        // Merge all sources into target
+        for (const idx of sourceIndexes) {
+          const src = statsArray[idx];
+          if (!src || src === targetStat) continue;
+          targetStat.total_hits += src.total_hits;
+          targetStat.rounds_played += src.rounds_played;
+          targetStat.first_places += src.first_places;
+          targetStat.times_payer += src.times_payer;
+          targetStat.best_score = Math.max(targetStat.best_score, src.best_score);
+        }
+
+        // Remove source entries from the array (from highest index to lowest)
+        sourceIndexes
+          .filter(idx => statsArray[idx] !== targetStat)
+          .sort((a, b) => b - a)
+          .forEach(idx => statsArray.splice(idx, 1));
+
+        // Make sure target has the right display name
+        const finalTargetIdx = statsArray.findIndex(s => (s.user_name || '').trim() === MERGE_TARGET);
+        if (finalTargetIdx >= 0) statsArray[finalTargetIdx].user_name = MERGE_TARGET;
+      }
       
-      return Object.values(userStats);
+      return statsArray;
     }
   });
 };
