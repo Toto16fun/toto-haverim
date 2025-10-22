@@ -82,6 +82,7 @@ export type Database = {
           game_number: number
           home_team: string
           id: string
+          is_cancelled: boolean
           kickoff_at: string | null
           kickoff_str: string | null
           league: string | null
@@ -96,6 +97,7 @@ export type Database = {
           game_number: number
           home_team: string
           id?: string
+          is_cancelled?: boolean
           kickoff_at?: string | null
           kickoff_str?: string | null
           league?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           game_number?: number
           home_team?: string
           id?: string
+          is_cancelled?: boolean
           kickoff_at?: string | null
           kickoff_str?: string | null
           league?: string | null
@@ -280,14 +283,8 @@ export type Database = {
         Args: { p_round_id: string }
         Returns: undefined
       }
-      normalize_team_name: {
-        Args: { p_name: string }
-        Returns: string
-      }
-      validate_fixtures_json: {
-        Args: { p_json: Json }
-        Returns: boolean
-      }
+      normalize_team_name: { Args: { p_name: string }; Returns: string }
+      validate_fixtures_json: { Args: { p_json: Json }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
