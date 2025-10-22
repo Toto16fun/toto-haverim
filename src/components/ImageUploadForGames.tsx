@@ -1,11 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useFetchGames } from '@/hooks/useFetchGames';
-import { Upload, Image, FileSpreadsheet } from 'lucide-react';
+import { Upload, Image, FileSpreadsheet, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface ImageUploadForGamesProps {
@@ -18,6 +18,8 @@ const ImageUploadForGames = ({ roundId, onSuccess }: ImageUploadForGamesProps) =
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [fileType, setFileType] = useState<'image' | 'excel' | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const fetchGames = useFetchGames();
 
@@ -77,33 +79,62 @@ const ImageUploadForGames = ({ roundId, onSuccess }: ImageUploadForGamesProps) =
     });
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const isImage = file.type.startsWith('image/');
-      const isExcel = file.type.includes('sheet') || 
-                     file.name.endsWith('.xlsx') || 
-                     file.name.endsWith('.xls');
+  const handleFileSelect = (file: File) => {
+    const isImage = file.type.startsWith('image/');
+    const isExcel = file.type.includes('sheet') || 
+                   file.name.endsWith('.xlsx') || 
+                   file.name.endsWith('.xls');
 
-      if (isImage || isExcel) {
-        setSelectedFile(file);
-        setFileType(isImage ? 'image' : 'excel');
-        
-        if (isImage) {
-          const url = URL.createObjectURL(file);
-          setPreviewUrl(url);
-        } else {
-          setPreviewUrl('');
-        }
+    if (isImage || isExcel) {
+      setSelectedFile(file);
+      setFileType(isImage ? 'image' : 'excel');
+      
+      if (isImage) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
       } else {
-        toast({
-          title: "קובץ לא תקין",
-          description: "אנא בחר קובץ תמונה או אקסל בלבד",
-          variant: "destructive"
-        });
+        setPreviewUrl('');
       }
+    } else {
+      toast({
+        title: "קובץ לא תקין",
+        description: "אנא בחר קובץ תמונה או אקסל בלבד",
+        variant: "destructive"
+      });
     }
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  }, []);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          handleFileSelect(file);
+        }
+      }
+    }
+  }, []);
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -183,36 +214,84 @@ const ImageUploadForGames = ({ roundId, onSuccess }: ImageUploadForGamesProps) =
           העלה צילום מסך או קובץ אקסל
         </CardTitle>
         <p className="text-sm text-gray-600">
-          העלה צילום מסך של רשימת המשחקים או קובץ אקסל והמערכת תחלץ אותם אוטומטית
+          גרור קובץ, הדבק תמונה עם Ctrl+V או לחץ לבחירת קובץ
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Input
-            type="file"
-            accept="image/*,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-            onChange={handleFileSelect}
-            className="cursor-pointer"
-          />
-          {previewUrl && fileType === 'image' && (
-            <div className="mt-4">
-              <img 
-                src={previewUrl} 
-                alt="תצוגה מקדימה" 
-                className="max-w-full h-auto rounded-md border"
-                style={{ maxHeight: '200px' }}
-              />
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            isDragOver 
+              ? 'border-green-500 bg-green-50' 
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onPaste={handlePaste}
+          tabIndex={0}
+          style={{ outline: 'none' }}
+        >
+          {selectedFile ? (
+            <div className="space-y-4">
+              {fileType === 'image' && previewUrl ? (
+                <img 
+                  src={previewUrl} 
+                  alt="תצוגה מקדימה" 
+                  className="max-w-full h-auto rounded-md mx-auto"
+                  style={{ maxHeight: '200px' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                  <span className="text-sm font-medium">{selectedFile.name}</span>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPreviewUrl('');
+                  setFileType(null);
+                }}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                הסר קובץ
+              </Button>
             </div>
-          )}
-          {selectedFile && fileType === 'excel' && (
-            <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium">{selectedFile.name}</span>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-center gap-4">
+                <Image className="h-10 w-10 text-blue-400" />
+                <FileSpreadsheet className="h-10 w-10 text-green-400" />
               </div>
+              <div>
+                <p className="text-base font-medium">גרור קובץ לכאן</p>
+                <p className="text-sm text-gray-500">או הדבק תמונה עם Ctrl+V</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                בחר קובץ
+              </Button>
             </div>
           )}
         </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFileSelect(file);
+          }}
+          className="hidden"
+        />
         
         <Button
           onClick={handleUploadAndAnalyze}
