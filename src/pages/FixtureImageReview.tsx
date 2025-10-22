@@ -165,9 +165,9 @@ export default function FixtureImageReview() {
                   </div>
                   <div className="col-span-5">
                     <Input
-                      value={getGameValue(game.id, 'home_team', game.home_team)}
-                      onChange={(e) => updateGame(game.id, 'home_team', e.target.value)}
-                      placeholder="קבוצת בית"
+                      value={getGameValue(game.id, 'away_team', game.away_team)}
+                      onChange={(e) => updateGame(game.id, 'away_team', e.target.value)}
+                      placeholder="קבוצת חוץ"
                       className="text-sm"
                     />
                   </div>
@@ -176,9 +176,9 @@ export default function FixtureImageReview() {
                   </div>
                   <div className="col-span-5">
                     <Input
-                      value={getGameValue(game.id, 'away_team', game.away_team)}
-                      onChange={(e) => updateGame(game.id, 'away_team', e.target.value)}
-                      placeholder="קבוצת חוץ"
+                      value={getGameValue(game.id, 'home_team', game.home_team)}
+                      onChange={(e) => updateGame(game.id, 'home_team', e.target.value)}
+                      placeholder="קבוצת בית"
                       className="text-sm"
                     />
                   </div>
