@@ -12,15 +12,17 @@ export const useUserRoles = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      // בינתיים נשתמש בבדיקה פשוטה על בסיס האימייל
-      // לאחר שה-migration יאושר, נוכל לעבור לטבלת user_roles
-      const roles: AppRole[] = [];
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
       
-      if (user.email === 'tomercohen1995@gmail.com') {
-        roles.push('admin');
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        return [];
       }
       
-      return roles;
+      return (data?.map(r => r.role) || []) as AppRole[];
     },
     enabled: !!user
   });
