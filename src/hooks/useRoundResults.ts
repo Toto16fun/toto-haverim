@@ -8,19 +8,25 @@ export function useRoundData(roundId: string) {
       try {
         console.log('🔍 Fetching round data for round:', roundId);
         
-        const [{ data: games }, { data: tickets }, { data: preds }, { data: profiles }] = await Promise.all([
+        // First get tickets for this round
+        const { data: tickets } = await supabase
+          .from('user_bets')
+          .select('id, user_id')
+          .eq('round_id', roundId);
+        
+        const betIds = tickets?.map(t => t.id) || [];
+        
+        // Now fetch only predictions for these bets
+        const [{ data: games }, { data: preds }, { data: profiles }] = await Promise.all([
           supabase
             .from('games')
             .select('id, home_team, away_team, result, game_number')
             .eq('round_id', roundId)
             .order('game_number'),
           supabase
-            .from('user_bets')
-            .select('id, user_id')
-            .eq('round_id', roundId),
-          supabase
             .from('bet_predictions')
-            .select('bet_id, game_id, predictions, is_double'),
+            .select('bet_id, game_id, predictions, is_double')
+            .in('bet_id', betIds.length > 0 ? betIds : ['00000000-0000-0000-0000-000000000000']),
           supabase
             .from('profiles')
             .select('id, name')
