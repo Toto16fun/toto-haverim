@@ -10,8 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
 import { useUserBets } from '@/hooks/useUserBets';
 import { useUserProfiles } from '@/hooks/useUserProfiles';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import GamesTable from '@/components/GamesTable';
 import NewRoundDialog from '@/components/NewRoundDialog';
+import UpdateDeadlineDialog from '@/components/UpdateDeadlineDialog';
 import { formatIsraelDateTime } from '@/lib/utils';
 
 const CurrentRound = () => {
@@ -21,11 +23,12 @@ const CurrentRound = () => {
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: userBets } = useUserBets(currentRound?.id);
   const { data: userProfiles } = useUserProfiles();
+  const { data: userRoles } = useUserRoles();
   const [showNewRoundDialog, setShowNewRoundDialog] = useState(false);
   const [expandedBetId, setExpandedBetId] = useState<string | null>(null);
 
-  // Basic admin check
-  const isAdmin = user?.email === 'tomercohen1995@gmail.com';
+  // Check if user is admin
+  const isAdmin = userRoles?.includes('admin');
 
   // Helper function to get user name by ID
   const getUserName = (userId: string) => {
@@ -160,13 +163,21 @@ const CurrentRound = () => {
           <h1 className="text-3xl font-bold text-green-800">מחזור נוכחי</h1>
           
           {isAdmin && (
-            <Button
-              onClick={() => setShowNewRoundDialog(true)}
-              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 mr-auto"
-            >
-              <Plus className="h-4 w-4" />
-              פתיחת מחזור חדש
-            </Button>
+            <div className="flex gap-2 mr-auto">
+              <Button
+                onClick={() => setShowNewRoundDialog(true)}
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
+              >
+                <Plus className="h-4 w-4" />
+                פתיחת מחזור חדש
+              </Button>
+              {currentRound && (
+                <UpdateDeadlineDialog
+                  roundId={currentRound.id}
+                  currentDeadline={currentRound.deadline}
+                />
+              )}
+            </div>
           )}
         </div>
 

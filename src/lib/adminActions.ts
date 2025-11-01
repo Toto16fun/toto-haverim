@@ -23,3 +23,12 @@ export async function updateAllGameResults(roundId: string, results: Record<stri
     await updateGameResult(gameId, result);
   }
 }
+
+export async function updateRoundDeadline(roundId: string, deadline: string) {
+  const { error } = await supabase
+    .from('toto_rounds')
+    .update({ deadline })
+    .eq('id', roundId);
+    
+  if (error) throw error;
+}
