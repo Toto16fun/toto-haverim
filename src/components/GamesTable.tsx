@@ -14,6 +14,7 @@ interface GamesTableProps {
   isReadOnly?: boolean;
   title?: string;
   showResults?: boolean; // Show hit/miss indicators
+  showSummary?: boolean; // Show summary row at bottom
 }
 
 const GamesTable = ({ 
@@ -22,7 +23,8 @@ const GamesTable = ({
   onPredictionChange, 
   isReadOnly = false,
   title = "משחקי המחזור",
-  showResults = false
+  showResults = false,
+  showSummary = false
 }: GamesTableProps) => {
   const options = ['1', 'X', '2'];
   const displayOptions = ['1', 'X', '2']; // For betting view
@@ -251,7 +253,34 @@ const GamesTable = ({
                      </TableCell>
                    </TableRow>
                  );
-              })}
+               })}
+               {showSummary && (
+                 <TableRow className="border-t-2 bg-muted/30 font-semibold">
+                   <TableCell colSpan={4} className="text-center p-2 sm:p-4"></TableCell>
+                   <TableCell className="text-center p-2 sm:p-4">
+                     <div className="flex flex-col items-center gap-1">
+                       <span className="text-xs text-gray-600">ניחושים נכונים</span>
+                       <Badge variant="default" className="bg-green-600 text-sm">
+                         {(() => {
+                           let correctCount = 0;
+                           let finishedGamesCount = 0;
+                           games.forEach(game => {
+                             if (game.result) {
+                               finishedGamesCount++;
+                               const gamePreds = predictions[game.id]?.predictions || [];
+                               if (gamePreds.includes(game.result)) {
+                                 correctCount++;
+                               }
+                             }
+                           });
+                           return `${correctCount}/${finishedGamesCount}`;
+                         })()}
+                       </Badge>
+                     </div>
+                   </TableCell>
+                   <TableCell colSpan={2} className="text-center p-2 sm:p-4"></TableCell>
+                 </TableRow>
+               )}
             </TableBody>
           </Table>
         </div>

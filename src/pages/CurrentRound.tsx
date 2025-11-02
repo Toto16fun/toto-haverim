@@ -246,13 +246,17 @@ const CurrentRound = () => {
                       const isExpanded = expandedBetId === bet.id;
                       const userName = getUserName(bet.user_id);
                       
-                      // Calculate correct predictions
+                      // Calculate correct predictions and finished games
                       let correctCount = 0;
+                      let finishedGamesCount = 0;
                       if (bet.bet_predictions && games) {
                         bet.bet_predictions.forEach(pred => {
                           const game = games.find(g => g.id === pred.game_id);
-                          if (game?.result && pred.predictions?.includes(game.result)) {
-                            correctCount++;
+                          if (game?.result) {
+                            finishedGamesCount++;
+                            if (pred.predictions?.includes(game.result)) {
+                              correctCount++;
+                            }
                           }
                         });
                       }
@@ -272,9 +276,9 @@ const CurrentRound = () => {
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                              {games && games.some(g => g.result) && (
+                              {finishedGamesCount > 0 && (
                                 <Badge variant="default" className="text-xs bg-green-600">
-                                  נכונים: {correctCount}/{gameCount}
+                                  נכונים: {correctCount}/{finishedGamesCount}
                                 </Badge>
                               )}
                               <Badge variant={doubleCount === 3 ? "default" : "destructive"} className="text-xs">
@@ -301,6 +305,7 @@ const CurrentRound = () => {
                                 predictions={getBetPredictionsForDisplay(bet)}
                                 isReadOnly={false}
                                 showResults={true}
+                                showSummary={true}
                                 title={`תחזיות ${bet.user_id === user.id ? 'שלי' : `של ${userName}`}`}
                               />
                             </div>
