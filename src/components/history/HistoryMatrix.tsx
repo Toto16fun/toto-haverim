@@ -17,11 +17,11 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
   }
 
   return (
-    <div className="overflow-auto border rounded-xl">
+    <div className="overflow-x-auto border rounded-xl">
       <table className="w-full text-[10px] sm:text-sm">
-        <thead>
+        <thead className="sticky top-0 z-30">
           <tr className="bg-muted/50">
-            <th className="p-1 sm:p-2 text-left font-medium text-[10px] sm:text-sm sticky right-0 bg-muted/50 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">משחק</th>
+            <th className="p-1 sm:p-2 text-left font-medium text-[10px] sm:text-sm sticky right-0 bg-muted/50 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.15)]">משחק</th>
             {tickets.map(t => (
               <th key={t.id} className="p-1 sm:p-2 text-center font-medium min-w-12 sm:min-w-20 text-[10px] sm:text-sm">
                 <div className="truncate max-w-[60px] sm:max-w-none">
@@ -34,7 +34,7 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
         <tbody>
           {games.map((g, idx) => (
             <tr key={g.id} className="border-t hover:bg-muted/20">
-              <td className="p-1 sm:p-2 whitespace-nowrap sticky right-0 bg-background z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+              <td className="p-1 sm:p-2 whitespace-nowrap sticky right-0 bg-background z-20 shadow-[2px_0_4px_rgba(0,0,0,0.15)]">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-medium text-[10px] sm:text-sm">
                     {idx + 1}. {g.home_team} vs {g.away_team}
@@ -62,7 +62,7 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
           ))}
           {/* Total hits row */}
           <tr className="border-t-2 bg-muted/30 font-semibold">
-            <td className="p-1 sm:p-2 text-left text-[10px] sm:text-sm sticky right-0 bg-muted/30 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+            <td className="p-1 sm:p-2 text-left text-[10px] sm:text-sm sticky right-0 bg-muted/30 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.15)]">
               ניחושים נכונים
             </td>
             {tickets.map(t => {
