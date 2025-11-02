@@ -284,6 +284,7 @@ const CurrentRound = () => {
                                 games={games}
                                 predictions={getBetPredictionsForDisplay(bet)}
                                 isReadOnly={false}
+                                showResults={true}
                                 title={`תחזיות ${bet.user_id === user.id ? 'שלי' : `של ${userName}`}`}
                               />
                             </div>
