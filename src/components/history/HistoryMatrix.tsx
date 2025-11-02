@@ -18,13 +18,15 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
 
   return (
     <div className="overflow-auto border rounded-xl">
-      <table className="w-full text-sm">
+      <table className="w-full text-[10px] sm:text-sm">
         <thead>
           <tr className="bg-muted/50">
-            <th className="p-2 text-left font-medium">משחק</th>
+            <th className="p-1 sm:p-2 text-left font-medium text-[10px] sm:text-sm sticky right-0 bg-muted/50 z-10">משחק</th>
             {tickets.map(t => (
-              <th key={t.id} className="p-2 text-center font-medium min-w-20">
-                {t.userName}
+              <th key={t.id} className="p-1 sm:p-2 text-center font-medium min-w-12 sm:min-w-20 text-[10px] sm:text-sm">
+                <div className="truncate max-w-[60px] sm:max-w-none">
+                  {t.userName}
+                </div>
               </th>
             ))}
           </tr>
@@ -32,13 +34,13 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
         <tbody>
           {games.map((g, idx) => (
             <tr key={g.id} className="border-t hover:bg-muted/20">
-              <td className="p-2 whitespace-nowrap">
-                <div className="flex flex-col">
-                  <span className="font-medium">
+              <td className="p-1 sm:p-2 whitespace-nowrap sticky right-0 bg-background z-10">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-[10px] sm:text-sm">
                     {idx + 1}. {g.home_team} vs {g.away_team}
                   </span>
                   {g.result && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[9px] sm:text-xs text-muted-foreground">
                       תוצאה: {g.result}
                     </span>
                   )}
@@ -49,8 +51,8 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
                 const hit = isHit(picks as ('1' | 'X' | '2')[] | undefined, g.result as ('1' | 'X' | '2') | undefined);
                 
                 return (
-                  <td key={t.id} className="p-2 text-center">
-                    <span className={`inline-flex items-center justify-center min-w-10 px-2 py-1 rounded border text-xs font-medium ${cellClass(hit)}`}>
+                  <td key={t.id} className="p-1 sm:p-2 text-center">
+                    <span className={`inline-flex items-center justify-center min-w-8 sm:min-w-10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border text-[10px] sm:text-xs font-medium ${cellClass(hit)}`}>
                       {picks?.join(' / ') ?? '—'}
                     </span>
                   </td>
@@ -60,7 +62,7 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
           ))}
           {/* Total hits row */}
           <tr className="border-t-2 bg-muted/30 font-semibold">
-            <td className="p-2 text-left">
+            <td className="p-1 sm:p-2 text-left text-[10px] sm:text-sm sticky right-0 bg-muted/30 z-10">
               ניחושים נכונים
             </td>
             {tickets.map(t => {
@@ -73,8 +75,8 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
               });
               
               return (
-                <td key={t.id} className="p-2 text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-bold">
+                <td key={t.id} className="p-1 sm:p-2 text-center">
+                  <span className="inline-flex items-center justify-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-green-100 text-green-800 text-[10px] sm:text-sm font-bold">
                     {hitCount}
                   </span>
                 </td>
