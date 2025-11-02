@@ -138,6 +138,11 @@ const GamesTable = ({
                    return showResults && gameResult === option;
                  };
                  
+                 // Helper to check if a specific option was selected but wrong
+                 const isOptionWrong = (option: string) => {
+                   return showResults && gameResult && gamePredictions.includes(option) && gameResult !== option;
+                 };
+                 
                   return (
                     <TableRow key={game.id}>
                       <TableCell className="text-center p-1 sm:p-4">
@@ -151,6 +156,8 @@ const GamesTable = ({
                               gamePredictions.includes('2') 
                                 ? isOptionCorrect('2')
                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                  : isOptionWrong('2')
+                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
                                   : 'bg-blue-600 hover:bg-blue-700'
                                 : ''
                             }`}
@@ -173,6 +180,8 @@ const GamesTable = ({
                               gamePredictions.includes('X') 
                                 ? isOptionCorrect('X')
                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                  : isOptionWrong('X')
+                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
                                   : 'bg-blue-600 hover:bg-blue-700'
                                 : ''
                             }`}
@@ -195,6 +204,8 @@ const GamesTable = ({
                               gamePredictions.includes('1') 
                                 ? isOptionCorrect('1')
                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                  : isOptionWrong('1')
+                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
                                   : 'bg-blue-600 hover:bg-blue-700'
                                 : ''
                             }`}
