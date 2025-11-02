@@ -21,7 +21,6 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
       <table className="w-full text-[10px] sm:text-sm">
         <thead className="sticky top-0 z-30">
           <tr className="bg-muted/50">
-            <th className="p-1 sm:p-2 text-right font-medium text-[10px] sm:text-sm sticky right-0 bg-muted/50 z-30 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">משחק</th>
             {tickets.map(t => (
               <th key={t.id} className="p-1 sm:p-2 text-center font-medium min-w-12 sm:min-w-20 text-[10px] sm:text-sm">
                 <div className="truncate max-w-[60px] sm:max-w-none">
@@ -29,23 +28,12 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
                 </div>
               </th>
             ))}
+            <th className="p-1 sm:p-2 text-right font-medium text-[10px] sm:text-sm sticky right-0 bg-muted/50 z-30 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">משחק</th>
           </tr>
         </thead>
         <tbody>
           {games.map((g, idx) => (
             <tr key={g.id} className="border-t hover:bg-muted/20">
-              <td className="p-1 sm:p-2 whitespace-nowrap text-right sticky right-0 bg-background z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">
-                <div className="flex flex-col gap-0.5" dir="rtl">
-                  <span className="font-medium text-[10px] sm:text-sm">
-                    {idx + 1}. {g.home_team} vs {g.away_team}
-                  </span>
-                  {g.result && (
-                    <span className="text-[9px] sm:text-xs text-muted-foreground">
-                      תוצאה: {g.result}
-                    </span>
-                  )}
-                </div>
-              </td>
               {tickets.map(t => {
                 const picks = picksMap.get(t.id)?.get(g.id);
                 const hit = isHit(picks as ('1' | 'X' | '2')[] | undefined, g.result as ('1' | 'X' | '2') | undefined);
@@ -58,13 +46,22 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
                   </td>
                 );
               })}
+              <td className="p-1 sm:p-2 whitespace-nowrap text-right sticky right-0 bg-background z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">
+                <div className="flex flex-col gap-0.5" dir="rtl">
+                  <span className="font-medium text-[10px] sm:text-sm">
+                    {idx + 1}. {g.home_team} vs {g.away_team}
+                  </span>
+                  {g.result && (
+                    <span className="text-[9px] sm:text-xs text-muted-foreground">
+                      תוצאה: {g.result}
+                    </span>
+                  )}
+                </div>
+              </td>
             </tr>
           ))}
           {/* Total hits row */}
           <tr className="border-t-2 bg-muted/30 font-semibold">
-            <td className="p-1 sm:p-2 text-right text-[10px] sm:text-sm sticky right-0 bg-muted/30 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">
-              ניחושים נכונים
-            </td>
             {tickets.map(t => {
               // Count hits for this ticket
               let hitCount = 0;
@@ -82,6 +79,9 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
                 </td>
               );
             })}
+            <td className="p-1 sm:p-2 text-right text-[10px] sm:text-sm sticky right-0 bg-muted/30 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.15)]">
+              ניחושים נכונים
+            </td>
           </tr>
         </tbody>
       </table>
