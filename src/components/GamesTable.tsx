@@ -119,7 +119,7 @@ const GamesTable = ({
                  <TableHead className="text-center text-xs p-1 sm:p-4">X</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">1</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">כפול</TableHead>
-                 <TableHead className="text-center text-xs p-1 sm:p-4">תאריך</TableHead>
+                 <TableHead className="text-center text-xs p-1 sm:p-4">תוצאה נכונה</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4 min-w-[120px] sm:min-w-0">קבוצות</TableHead>
                  <TableHead className="text-center text-xs p-1 sm:p-4">#</TableHead>
                </TableRow>
@@ -217,18 +217,24 @@ const GamesTable = ({
                           )}
                         </div>
                       </TableCell>
-                     <TableCell className="text-center p-1 sm:p-4">
-                       {isDouble && (
-                         <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs px-1">
-                           כפול
-                         </Badge>
-                       )}
-                     </TableCell>
-                     <TableCell className="text-center text-xs p-1 sm:p-4">
-                       <div>
-                         {game.game_date ? formatGameDate(game.game_date) : '-'}
-                       </div>
-                     </TableCell>
+                      <TableCell className="text-center p-1 sm:p-4">
+                        {isDouble && (
+                          <Badge variant="outline" className="text-orange-600 border-orange-600 text-xs px-1">
+                            כפול
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center text-xs p-1 sm:p-4">
+                        <div className="font-semibold">
+                          {gameResult ? (
+                            <Badge variant="secondary" className="text-sm">
+                              {gameResult}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </div>
+                      </TableCell>
                      <TableCell className="text-center font-medium text-xs p-1 sm:p-4 min-w-[120px] sm:min-w-0">
                        <div className="break-words leading-tight">
                          {game.home_team} - {game.away_team}
