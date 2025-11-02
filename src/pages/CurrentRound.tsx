@@ -240,11 +240,22 @@ const CurrentRound = () => {
               <CardContent>
                 {userBets && userBets.length > 0 ? (
                   <div className="space-y-4">
-                    {userBets.map(bet => {
+                     {userBets.map(bet => {
                       const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
                       const gameCount = bet.bet_predictions?.length || 0;
                       const isExpanded = expandedBetId === bet.id;
                       const userName = getUserName(bet.user_id);
+                      
+                      // Calculate correct predictions
+                      let correctCount = 0;
+                      if (bet.bet_predictions && games) {
+                        bet.bet_predictions.forEach(pred => {
+                          const game = games.find(g => g.id === pred.game_id);
+                          if (game?.result && pred.predictions?.includes(game.result)) {
+                            correctCount++;
+                          }
+                        });
+                      }
                       
                       return (
                         <div key={bet.id} className="border rounded-lg p-2 sm:p-4 bg-white">
@@ -261,6 +272,11 @@ const CurrentRound = () => {
                               </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                              {games && games.some(g => g.result) && (
+                                <Badge variant="default" className="text-xs bg-green-600">
+                                  נכונים: {correctCount}/{gameCount}
+                                </Badge>
+                              )}
                               <Badge variant={doubleCount === 3 ? "default" : "destructive"} className="text-xs">
                                 כפולים: {doubleCount}/3
                               </Badge>

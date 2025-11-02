@@ -58,6 +58,29 @@ export default function HistoryMatrix({ roundId }: { roundId: string }) {
               })}
             </tr>
           ))}
+          {/* Total hits row */}
+          <tr className="border-t-2 bg-muted/30 font-semibold">
+            <td className="p-2 text-left">
+              ניחושים נכונים
+            </td>
+            {tickets.map(t => {
+              // Count hits for this ticket
+              let hitCount = 0;
+              games.forEach(g => {
+                const picks = picksMap.get(t.id)?.get(g.id);
+                const hit = isHit(picks as ('1' | 'X' | '2')[] | undefined, g.result as ('1' | 'X' | '2') | undefined);
+                if (hit === true) hitCount++;
+              });
+              
+              return (
+                <td key={t.id} className="p-2 text-center">
+                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-bold">
+                    {hitCount}
+                  </span>
+                </td>
+              );
+            })}
+          </tr>
         </tbody>
       </table>
     </div>
