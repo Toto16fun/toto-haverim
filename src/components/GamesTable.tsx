@@ -73,7 +73,7 @@ const GamesTable = ({
           <Table>
             <TableHeader>
                <TableRow>
-                 <TableHead className="text-center text-xs sm:text-sm">תאריך</TableHead>
+                 <TableHead className="text-center text-xs sm:text-sm">תוצאה נכונה</TableHead>
                  <TableHead className="text-center text-xs sm:text-sm">קבוצות</TableHead>
                  <TableHead className="text-center text-xs sm:text-sm">#</TableHead>
                </TableRow>
@@ -82,8 +82,14 @@ const GamesTable = ({
                {games.map(game => (
                   <TableRow key={game.id}>
                     <TableCell className="text-center text-xs sm:text-sm p-1 sm:p-4">
-                      <div>
-                        {game.game_date ? formatGameDate(game.game_date) : '-'}
+                      <div className="font-semibold">
+                        {game.result ? (
+                          <Badge variant="secondary" className="text-sm">
+                            {game.result}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-medium text-xs sm:text-sm p-1 sm:p-4">
