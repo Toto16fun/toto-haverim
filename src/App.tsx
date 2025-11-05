@@ -19,6 +19,7 @@ import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
 import LeagueManagement from "./pages/LeagueManagement";
 import LeagueAdmin from "./pages/LeagueAdmin";
+import JoinLeague from "./pages/JoinLeague";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => {
             <Route path="/admin/results" element={<AdminResults />} />
             <Route path="/admin/leagues" element={<LeagueManagement />} />
             <Route path="/league/admin" element={<LeagueAdmin />} />
+            <Route path="/league/join" element={<JoinLeague />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

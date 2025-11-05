@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
@@ -209,6 +209,24 @@ const Index = () => {
                 </CardContent>
               </Card>
             </>
+          )}
+
+          {/* Join League Card - Only visible for users without a league */}
+          {user && !userLeague && (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <UserPlus className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
+                <CardTitle className="text-xl">הצטרף לליגה</CardTitle>
+                <CardDescription>הזן קוד הצטרפות כדי להצטרף לליגה</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/league/join">
+                  <Button className="w-full bg-yellow-600 hover:bg-yellow-700">
+                    הצטרף לליגה
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           )}
 
           {/* League Admin Card - Only visible for league admins */}

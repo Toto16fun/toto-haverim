@@ -172,3 +172,55 @@ export const useIsLeagueAdmin = (userId?: string, leagueId?: string) => {
     enabled: !!userId && !!leagueId
   });
 };
+
+export const useJoinLeague = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ userId, joinCode }: { userId: string; joinCode: string }) => {
+      // Find the league by join code
+      const { data: league, error: leagueError } = await supabase
+        .from('leagues')
+        .select('id')
+        .eq('join_code', joinCode)
+        .maybeSingle();
+      
+      if (leagueError) throw leagueError;
+      if (!league) throw new Error('קוד הצטרפות לא תקין');
+      
+      // Check how many members are already in the league
+      const { data: members, error: membersError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('league_id', league.id);
+      
+      if (membersError) throw membersError;
+      
+      const isFirstMember = !members || members.length === 0;
+      
+      // Update user's profile with the new league
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ league_id: league.id })
+        .eq('id', userId);
+      
+      if (updateError) throw updateError;
+      
+      // If this is the first member, make them a league admin
+      if (isFirstMember) {
+        const { error: adminError } = await supabase
+          .from('league_admins')
+          .insert({ league_id: league.id, user_id: userId });
+        
+        if (adminError) throw adminError;
+      }
+      
+      return { league, isFirstMember };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['user-league', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['league-members'] });
+      queryClient.invalidateQueries({ queryKey: ['is-league-admin', variables.userId] });
+    }
+  });
+};
