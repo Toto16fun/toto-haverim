@@ -136,23 +136,84 @@ export type Database = {
           },
         ]
       }
-      profiles: {
+      league_admins: {
         Row: {
           created_at: string
           id: string
+          league_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_admins_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leagues: {
+        Row: {
+          created_at: string
+          id: string
+          join_code: string
           name: string
         }
         Insert: {
           created_at?: string
-          id: string
+          id?: string
+          join_code: string
           name: string
         }
         Update: {
           created_at?: string
           id?: string
+          join_code?: string
           name?: string
         }
         Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          league_id?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       round_scores: {
         Row: {
@@ -304,11 +365,16 @@ export type Database = {
         Args: { p_round_id: string }
         Returns: undefined
       }
+      get_user_league_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_league_admin: {
+        Args: { _league_id: string; _user_id: string }
         Returns: boolean
       }
       normalize_team_name: { Args: { p_name: string }; Returns: string }
