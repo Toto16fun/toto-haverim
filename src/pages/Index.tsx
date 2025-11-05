@@ -2,13 +2,17 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
-import { useCanEditResults } from "@/hooks/useUserRoles";
+import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
+import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
   const { canEdit } = useCanEditResults();
+  const { data: roles } = useUserRoles();
+  const { data: userLeague } = useUserLeague(user?.id);
+  const { data: isLeagueAdmin } = useIsLeagueAdmin(user?.id, userLeague?.id);
 
   if (loading) {
     return (
@@ -25,7 +29,7 @@ const Index = () => {
     // Do nothing - button is disabled
   };
 
-  const isAdmin = user?.email === 'tomercohen1995@gmail.com';
+  const isSuperAdmin = roles?.includes('admin');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 pt-safe-area-inset-top sm:pt-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
@@ -157,8 +161,8 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Admin Cards - Only visible for admin user */}
-          {isAdmin && (
+          {/* Super Admin Cards - Only visible for super admin */}
+          {isSuperAdmin && (
             <>
               <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader className="text-center">
@@ -189,7 +193,40 @@ const Index = () => {
                   </Link>
                 </CardContent>
               </Card>
+
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="text-center">
+                  <Shield className="h-12 w-12 text-pink-600 mx-auto mb-2" />
+                  <CardTitle className="text-xl">ניהול ליגות</CardTitle>
+                  <CardDescription>יצירה וניהול ליגות במערכת</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link to="/admin/leagues">
+                    <Button className="w-full bg-pink-600 hover:bg-pink-700">
+                      ניהול ליגות
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </>
+          )}
+
+          {/* League Admin Card - Only visible for league admins */}
+          {isLeagueAdmin && (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center">
+                <Shield className="h-12 w-12 text-teal-600 mx-auto mb-2" />
+                <CardTitle className="text-xl">ניהול ליגה</CardTitle>
+                <CardDescription>ניהול המשתמשים והגדרות הליגה שלך</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/league/admin">
+                  <Button className="w-full bg-teal-600 hover:bg-teal-700">
+                    ניהול הליגה
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           )}
 
           {/* Admin Results Card - Only visible for users who can edit results */}

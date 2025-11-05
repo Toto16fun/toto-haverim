@@ -17,6 +17,8 @@ import FixtureImageReview from "./pages/FixtureImageReview";
 import AdminResults from "./pages/AdminResults";
 import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
+import LeagueManagement from "./pages/LeagueManagement";
+import LeagueAdmin from "./pages/LeagueAdmin";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,8 @@ const App = () => {
             <Route path="/support" element={<Support />} />
             <Route path="/admin/fixture-image" element={<FixtureImageReview />} />
             <Route path="/admin/results" element={<AdminResults />} />
+            <Route path="/admin/leagues" element={<LeagueManagement />} />
+            <Route path="/league/admin" element={<LeagueAdmin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

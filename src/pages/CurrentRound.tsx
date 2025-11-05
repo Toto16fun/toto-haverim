@@ -174,6 +174,7 @@ const CurrentRound = () => {
               {currentRound && (
                 <UpdateDeadlineDialog
                   roundId={currentRound.id}
+                  roundNumber={currentRound.round_number}
                   currentDeadline={currentRound.deadline}
                 />
               )}

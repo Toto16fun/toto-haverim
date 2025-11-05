@@ -10,10 +10,11 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface UpdateDeadlineDialogProps {
   roundId: string;
+  roundNumber: number;
   currentDeadline: string;
 }
 
-export default function UpdateDeadlineDialog({ roundId, currentDeadline }: UpdateDeadlineDialogProps) {
+export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDeadline }: UpdateDeadlineDialogProps) {
   const [open, setOpen] = useState(false);
   const [newDeadline, setNewDeadline] = useState('');
   const [isLoading, setIsLoading] = useState(false);
