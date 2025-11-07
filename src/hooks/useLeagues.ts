@@ -178,44 +178,19 @@ export const useJoinLeague = () => {
   
   return useMutation({
     mutationFn: async ({ userId, joinCode }: { userId: string; joinCode: string }) => {
-      // Find the league by join code
-      const { data: league, error: leagueError } = await supabase
-        .from('leagues')
-        .select('id')
-        .eq('join_code', joinCode)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('join_league_with_code', {
+        p_user_id: userId,
+        p_join_code: joinCode.toUpperCase()
+      });
       
-      if (leagueError) throw leagueError;
-      if (!league) throw new Error('קוד הצטרפות לא תקין');
+      if (error) throw error;
       
-      // Check how many members are already in the league
-      const { data: members, error: membersError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('league_id', league.id);
+      const result = data as { league_id: string; is_first_member: boolean };
       
-      if (membersError) throw membersError;
-      
-      const isFirstMember = !members || members.length === 0;
-      
-      // Update user's profile with the new league
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ league_id: league.id })
-        .eq('id', userId);
-      
-      if (updateError) throw updateError;
-      
-      // If this is the first member, make them a league admin
-      if (isFirstMember) {
-        const { error: adminError } = await supabase
-          .from('league_admins')
-          .insert({ league_id: league.id, user_id: userId });
-        
-        if (adminError) throw adminError;
-      }
-      
-      return { league, isFirstMember };
+      return {
+        league: { id: result.league_id },
+        isFirstMember: result.is_first_member
+      };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-league', variables.userId] });

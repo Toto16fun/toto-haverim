@@ -377,6 +377,10 @@ export type Database = {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean
       }
+      join_league_with_code: {
+        Args: { p_join_code: string; p_user_id: string }
+        Returns: Json
+      }
       normalize_team_name: { Args: { p_name: string }; Returns: string }
       validate_fixtures_json: { Args: { p_json: Json }; Returns: boolean }
     }
