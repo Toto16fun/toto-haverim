@@ -8,12 +8,22 @@ import { ArrowRight, Mail, Lock, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -90,6 +100,40 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      toast({
+        title: "שגיאה",
+        description: "יש להזין כתובת אימייל",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResetting(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+
+    if (error) {
+      toast({
+        title: "שגיאה",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "נשלח מייל!",
+        description: "בדוק את תיבת הדואר שלך לקישור איפוס הסיסמה",
+      });
+      setShowResetDialog(false);
+      setResetEmail('');
+    }
+
+    setIsResetting(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-md mx-auto pt-20">
@@ -155,6 +199,16 @@ const Auth = () => {
                 >
                   {isLoading ? "מתחבר..." : "התחבר"}
                 </Button>
+                
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetDialog(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    שכחתי סיסמה
+                  </button>
+                </div>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4 mt-4">
@@ -215,6 +269,40 @@ const Auth = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>איפוס סיסמה</DialogTitle>
+            <DialogDescription>
+              הזן את כתובת האימייל שלך ונשלח לך קישור לאיפוס הסיסמה
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">כתובת אימייל</Label>
+              <div className="relative">
+                <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="הכנס את כתובת האימייל שלך"
+                  className="pr-10 text-right"
+                />
+              </div>
+            </div>
+            <Button 
+              onClick={handleResetPassword} 
+              className="w-full" 
+              disabled={isResetting}
+            >
+              {isResetting ? "שולח..." : "שלח קישור לאיפוס"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
