@@ -1,8 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Users as UsersIcon, Loader2, Calendar } from 'lucide-react';
+import { ArrowRight, Users as UsersIcon, Loader2, Calendar, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserRoles } from '@/hooks/useUserRoles';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Profile {
   id: string;
@@ -13,6 +26,12 @@ interface Profile {
 const Users = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { data: roles } = useUserRoles();
+  const { toast } = useToast();
+  
+  const isAdmin = roles?.includes('admin');
 
   useEffect(() => {
     fetchUsers();
@@ -45,6 +64,37 @@ const Users = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setDeleting(true);
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "המשתמש נמחק",
+        description: `${userToDelete.name} הוסר מהמערכת`,
+      });
+
+      setUsers(users.filter(u => u.id !== userToDelete.id));
+      setUserToDelete(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את המשתמש",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -95,8 +145,19 @@ const Users = () => {
                         נרשם ב: {formatDate(user.created_at)}
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400 font-mono">
-                      ID: {user.id.slice(0, 8)}...
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-gray-400 font-mono">
+                        ID: {user.id.slice(0, 8)}...
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setUserToDelete(user)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -105,6 +166,27 @@ const Users = () => {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+            <AlertDialogDescription>
+              פעולה זו תמחק את המשתמש {userToDelete?.name} לצמיתות. לא ניתן לבטל פעולה זו.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'מוחק...' : 'מחק'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
