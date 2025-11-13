@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
 import { useCanEditResults } from '@/hooks/useUserRoles';
-import { useCurrentRound, useGamesInRound } from '@/hooks/useTotoRounds';
+import { useTotoRounds, useGamesInRound } from '@/hooks/useTotoRounds';
 import { updateAllGameResults, computeRoundScores } from '@/lib/adminActions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,11 +14,14 @@ export default function AdminResults() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { canEdit, isLoading: rolesLoading } = useCanEditResults();
-  const { data: currentRound, isLoading: roundLoading } = useCurrentRound();
-  const { data: games, isLoading: gamesLoading, refetch } = useGamesInRound(currentRound?.id);
+  const { data: allRounds, isLoading: roundLoading } = useTotoRounds();
+  const [selectedRoundId, setSelectedRoundId] = useState<string>('');
+  const { data: games, isLoading: gamesLoading, refetch } = useGamesInRound(selectedRoundId || allRounds?.[0]?.id);
   
   const [results, setResults] = useState<Record<string, '1' | 'X' | '2'>>({});
   const [saving, setSaving] = useState(false);
+
+  const currentRound = allRounds?.find(r => r.id === (selectedRoundId || allRounds?.[0]?.id));
 
   if (rolesLoading || roundLoading) {
     return (
@@ -94,10 +97,27 @@ export default function AdminResults() {
             <ArrowLeft className="h-4 w-4" />
             חזור
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">עריכת תוצאות משחקים</h1>
-            {currentRound && (
-              <p className="text-gray-600">מחזור {currentRound.round_number}</p>
+            {allRounds && allRounds.length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-gray-600">בחר מחזור:</span>
+                <Select 
+                  value={selectedRoundId || allRounds[0]?.id} 
+                  onValueChange={setSelectedRoundId}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allRounds.map(round => (
+                      <SelectItem key={round.id} value={round.id}>
+                        מחזור {round.round_number} ({round.status === 'active' ? 'פעיל' : round.status === 'locked' ? 'נעול' : 'טיוטה'})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
         </div>
