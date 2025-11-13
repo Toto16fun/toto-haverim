@@ -105,6 +105,48 @@ serve(async (req) => {
       );
     }
 
+    // Check if the last locked/active round has all results filled
+    const { data: lastCompletedRound, error: lastCompletedError } = await sb
+      .from('toto_rounds')
+      .select('id, round_number')
+      .in('status', ['active', 'locked'])
+      .order('round_number', { ascending: false })
+      .limit(1);
+    
+    if (lastCompletedError) {
+      console.error('Error checking last round:', lastCompletedError);
+      throw lastCompletedError;
+    }
+
+    if (lastCompletedRound && lastCompletedRound.length > 0) {
+      const roundId = lastCompletedRound[0].id;
+      
+      // Check if all games in this round have results
+      const { data: games, error: gamesError } = await sb
+        .from('games')
+        .select('id, result, is_cancelled')
+        .eq('round_id', roundId);
+      
+      if (gamesError) {
+        console.error('Error checking games:', gamesError);
+        throw gamesError;
+      }
+
+      const gamesWithoutResults = games?.filter(g => !g.is_cancelled && !g.result) || [];
+      
+      if (gamesWithoutResults.length > 0) {
+        console.log(`Round ${lastCompletedRound[0].round_number} still has ${gamesWithoutResults.length} games without results, skipping draft creation`);
+        return new Response(
+          JSON.stringify({ 
+            skipped: 'previous round incomplete', 
+            round_number: lastCompletedRound[0].round_number,
+            games_without_results: gamesWithoutResults.length 
+          }), 
+          { headers: { ...corsHeaders, 'content-type': 'application/json' } }
+        );
+      }
+    }
+
     const deadline = upcomingSaturday13IL();
     
     // Get the next round number
