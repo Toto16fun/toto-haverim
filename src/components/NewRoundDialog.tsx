@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateRound, useTotoRounds } from '@/hooks/useTotoRounds';
 import { useFetchGames } from '@/hooks/useFetchGames';
-import { Upload, Image, X, Check, FileSpreadsheet } from 'lucide-react';
+import { Upload, Image, X, Check, FileSpreadsheet, FileJson } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 
@@ -20,7 +20,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [currentRoundId, setCurrentRoundId] = useState<string>('');
   const [step, setStep] = useState<'upload' | 'confirm'>('upload');
-  const [fileType, setFileType] = useState<'image' | 'excel' | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'excel' | 'json' | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -119,6 +119,38 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     });
   };
 
+  const parseJsonFile = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const jsonData = JSON.parse(content);
+          
+          console.log('JSON data parsed:', jsonData);
+          
+          if (Array.isArray(jsonData)) {
+            // Format: [{"index":1,"home":"...", "away":"..."}, ...]
+            const games = jsonData.slice(0, 16).map(game => ({
+              home: game.home,
+              away: game.away,
+              league: game.league || null
+            }));
+            console.log('Final games array from JSON:', games);
+            resolve(games);
+          } else {
+            reject(new Error('פורמט JSON לא תקין - צריך להיות מערך'));
+          }
+        } catch (error) {
+          console.error('Error parsing JSON:', error);
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+      reader.readAsText(file);
+    });
+  };
+
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -135,10 +167,11 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                    file.name.endsWith('.xls') ||
                    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
                    file.type === 'application/vnd.ms-excel';
+    const isJson = file.name.endsWith('.json') || file.type === 'application/json';
 
-    if (isImage || isExcel) {
+    if (isImage || isExcel || isJson) {
       setSelectedFile(file);
-      setFileType(isImage ? 'image' : 'excel');
+      setFileType(isImage ? 'image' : isJson ? 'json' : 'excel');
       
       if (isImage) {
         const url = URL.createObjectURL(file);
@@ -149,7 +182,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     } else {
       toast({
         title: "קובץ לא תקין",
-        description: "אנא בחר קובץ תמונה או אקסל בלבד",
+        description: "אנא בחר קובץ תמונה, אקסל או JSON בלבד",
         variant: "destructive"
       });
     }
@@ -257,7 +290,28 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
       setCurrentRoundId(roundResult.id);
       
       try {
-        if (fileType === 'excel') {
+        if (fileType === 'json') {
+          // Parse JSON file
+          console.log('Starting JSON parsing...');
+          const games = await parseJsonFile(selectedFile);
+          console.log('JSON parsing complete, games found:', games.length);
+          
+          if (games.length === 0) {
+            toast({
+              title: "לא נמצאו משחקים",
+              description: "וודא שקובץ ה-JSON מכיל מערך של משחקים בפורמט הנכון",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          // Call fetch-games with parsed JSON data
+          await fetchGames.mutateAsync({ 
+            roundId: roundResult.id, 
+            jsonData: games 
+          });
+          
+        } else if (fileType === 'excel') {
           // Parse Excel file
           console.log('Starting Excel parsing...');
           const games = await parseExcelFile(selectedFile);
@@ -348,19 +402,17 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileSpreadsheet className="h-5 w-5" />
-                העלה קובץ אקסל או תמונה של המשחקים
+                העלה קובץ JSON, אקסל או תמונה של המשחקים
               </CardTitle>
               <p className="text-sm text-gray-600">
-                גרור קובץ אקסל (*.xlsx) או תמונה, הדבק מהלוח או לחץ לבחירת קובץ
+                גרור קובץ JSON (*.json), אקסל (*.xlsx) או תמונה, הדבק מהלוח או לחץ לבחירת קובץ
               </p>
               <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
-                <strong>מבנה קובץ האקסל:</strong><br/>
-                עמודה A: ליגה<br/>
-                עמודה B: קבוצות (קבוצת בית - קבוצת חוץ)<br/>
-                עמודות נוספות: סימונים (1, X, 2)<br/>
-                <br/>
-                <strong>דוגמאות לפורמט הקבוצות:</strong><br/>
-                "ברצלונה - ריאל מדריד" או "ברצלונה VS ריאל מדריד"
+                <strong>מבנה קובץ JSON (מומלץ):</strong><br/>
+                {`[{"index":1,"home":"קבוצת בית","away":"קבוצת חוץ"}, ...]`}
+                <br/><br/>
+                <strong>מבנה קובץ אקסל:</strong><br/>
+                עמודה A: ליגה | עמודה B: קבוצות (קבוצת בית - קבוצת חוץ)
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -388,7 +440,11 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                       />
                     ) : (
                       <div className="flex items-center justify-center space-x-2">
-                        <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                        {fileType === 'json' ? (
+                          <FileJson className="h-8 w-8 text-orange-600" />
+                        ) : (
+                          <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                        )}
                         <span className="text-lg font-medium">{selectedFile.name}</span>
                       </div>
                     )}
@@ -409,11 +465,12 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex justify-center space-x-4">
+                      <FileJson className="h-12 w-12 text-orange-400" />
                       <FileSpreadsheet className="h-12 w-12 text-green-400" />
                       <Image className="h-12 w-12 text-blue-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-medium">גרור קובץ אקסל או תמונה לכאן</p>
+                      <p className="text-lg font-medium">גרור קובץ JSON, אקסל או תמונה לכאן</p>
                       <p className="text-sm text-gray-500">או הדבק תמונה עם Ctrl+V</p>
                     </div>
                     <Button
@@ -431,7 +488,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                accept="image/*,.json,.xlsx,.xls,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileSelect(file);

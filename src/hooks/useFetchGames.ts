@@ -8,15 +8,16 @@ export const useFetchGames = () => {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ roundId, imageData, excelData }: { 
+    mutationFn: async ({ roundId, imageData, excelData, jsonData }: { 
       roundId: string; 
       imageData?: string; 
-      excelData?: any[] 
+      excelData?: any[];
+      jsonData?: any[];
     }) => {
       console.log('Calling fetch-games function for round:', roundId);
       
       const { data, error } = await supabase.functions.invoke('fetch-games', {
-        body: { roundId, imageData, excelData }
+        body: { roundId, imageData, excelData, jsonData }
       });
       
       if (error) {
@@ -42,6 +43,7 @@ export const useFetchGames = () => {
       } else {
         const source = data.source === 'Image Analysis' ? 'מניתוח תמונה' : 
                        data.source === 'Excel File' ? 'מקובץ אקסל' :
+                       data.source === 'JSON File' ? 'מקובץ JSON' :
                        data.source === 'ChatGPT AI' ? 'מ-ChatGPT' : 'ידנית';
         
         toast({
