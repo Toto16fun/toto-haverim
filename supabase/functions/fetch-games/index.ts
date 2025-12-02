@@ -19,7 +19,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { roundId, imageData, excelData } = await req.json()
+    const { roundId, imageData, excelData, jsonData } = await req.json()
     
     if (!roundId) {
       return new Response(
@@ -49,8 +49,27 @@ serve(async (req) => {
     let dataSource = 'Manual Input Required'
     let requiresManualInput = false
 
-    // Process Excel data first (highest priority)
-    if (excelData && Array.isArray(excelData) && excelData.length > 0) {
+    // Process JSON data first (highest priority)
+    if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
+      console.log('Processing JSON data with', jsonData.length, 'games')
+      
+      try {
+        gamesData = jsonData.slice(0, 16).map((game, index) => ({
+          homeTeam: { name: game.home },
+          awayTeam: { name: game.away },
+          league: game.league || null
+        }))
+        
+        dataSource = 'JSON File'
+        console.log('Successfully processed JSON data with', gamesData.length, 'games')
+        
+      } catch (error) {
+        console.error('Error processing JSON data:', error)
+        requiresManualInput = true
+      }
+    }
+    // Process Excel data (second priority)
+    else if (excelData && Array.isArray(excelData) && excelData.length > 0) {
       console.log('Processing Excel data with', excelData.length, 'games')
       
       try {
