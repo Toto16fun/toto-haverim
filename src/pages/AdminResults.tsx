@@ -4,11 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, CheckCircle, Trash2 } from 'lucide-react';
 import { useCanEditResults } from '@/hooks/useUserRoles';
 import { useTotoRounds, useGamesInRound } from '@/hooks/useTotoRounds';
 import { updateAllGameResults, computeRoundScores } from '@/lib/adminActions';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminResults() {
   const navigate = useNavigate();
@@ -20,8 +32,43 @@ export default function AdminResults() {
   
   const [results, setResults] = useState<Record<string, '1' | 'X' | '2'>>({});
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const currentRound = allRounds?.find(r => r.id === (selectedRoundId || allRounds?.[0]?.id));
+
+  const handleDeleteRound = async () => {
+    if (!currentRound?.id) return;
+    
+    setDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('delete-round', {
+        body: { roundId: currentRound.id },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "המחזור נמחק בהצלחה",
+        description: `מחזור ${currentRound.round_number} וכל הנתונים שלו נמחקו`,
+      });
+
+      // Reset selection and refetch
+      setSelectedRoundId('');
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "שגיאה במחיקת המחזור",
+        description: error.message || "אנא נסה שוב",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (rolesLoading || roundLoading) {
     return (
@@ -117,6 +164,33 @@ export default function AdminResults() {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={deleting}>
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      מחק מחזור
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>האם למחוק את מחזור {currentRound?.round_number}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        פעולה זו תמחק את המחזור לצמיתות, כולל כל ההימורים, הניחושים והתוצאות.
+                        לא ניתן לבטל פעולה זו.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>ביטול</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDeleteRound}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleting ? 'מוחק...' : 'מחק לצמיתות'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </div>
