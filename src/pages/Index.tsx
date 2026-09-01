@@ -1,10 +1,55 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List, Clock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
 import { useCurrentRound, useGamesInRound } from "@/hooks/useTotoRounds";
 import { useRoundScores } from "@/hooks/useRoundScores";
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  total: number;
+}
+
+const useCountdown = (targetDate?: string | null) => {
+  const calculateTimeLeft = (): TimeLeft => {
+    if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+    const difference = new Date(targetDate).getTime() - new Date().getTime();
+    if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+      total: difference,
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
+
+  useEffect(() => {
+    if (!targetDate) return;
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return timeLeft;
+};
+
+const CountdownUnit = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex flex-col items-center">
+    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
+      <span className="text-xl md:text-2xl font-bold text-foreground tabular-nums">{String(value).padStart(2, '0')}</span>
+    </div>
+    <span className="text-[10px] text-muted-foreground mt-1.5">{label}</span>
+  </div>
+);
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
@@ -15,10 +60,12 @@ const Index = () => {
   const { data: currentRound, isLoading: currentRoundLoading } = useCurrentRound();
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: roundScores } = useRoundScores(currentRound?.id);
+  const timeLeft = useCountdown(currentRound?.deadline);
 
   const finishedGames = games?.filter(g => g.result).length || 0;
   const totalGames = games?.length || 0;
   const topScorer = roundScores?.[0];
+  const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   if (loading) {
     return (
@@ -34,7 +81,7 @@ const Index = () => {
   const isSuperAdmin = roles?.includes('admin');
 
   const disabledCardClass = "opacity-60 cursor-not-allowed";
-  const baseCardClass = "rounded-[2rem] bg-slate-900/50 border border-white/5 p-5 transition-colors hover:bg-slate-800/50";
+  const baseCardClass = "rounded-[2rem] bg-card/60 border border-border p-5 transition-all hover:bg-card hover:shadow-lg hover:shadow-black/5";
   const squareCardClass = `${baseCardClass} flex flex-col justify-between aspect-square`;
   const horizontalCardClass = `${baseCardClass} flex items-center justify-between`;
 
@@ -80,80 +127,81 @@ const Index = () => {
           {/* Primary Feature: Current Round */}
           <Link
             to={user ? "/current-round" : "#"}
-            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-blue-700 to-slate-900 p-6 shadow-2xl shadow-blue-900/30 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
+            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-card border border-border p-6 transition-all ${user ? 'cursor-pointer hover:bg-card/80 hover:shadow-xl hover:shadow-black/10' : 'opacity-80 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60"></div>
             <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
-                    <Activity className="h-5 w-5 text-blue-100" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">מחזור נוכחי</span>
+                  <span className="text-muted-foreground text-xs font-bold tracking-widest uppercase">מחזור נוכחי</span>
                 </div>
                 {user ? (
-                  <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-200 border border-sky-400/20">
-                    <span className="h-2 w-2 bg-sky-400 rounded-full animate-pulse"></span>
+                  <span className="bg-primary/10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-primary border border-primary/20">
+                    <span className="h-2 w-2 bg-primary rounded-full animate-pulse"></span>
                     תוצאות בלייב
                   </span>
                 ) : (
-                  <Lock className="h-5 w-5 text-white/60" />
+                  <Lock className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
 
               <div className="mt-4">
                 {currentRoundLoading ? (
                   <div className="space-y-3">
-                    <div className="h-12 w-40 bg-white/10 rounded-xl animate-pulse"></div>
-                    <div className="h-4 w-32 bg-white/10 rounded-lg animate-pulse"></div>
+                    <div className="h-12 w-40 bg-muted rounded-xl animate-pulse"></div>
+                    <div className="h-4 w-32 bg-muted rounded-lg animate-pulse"></div>
                   </div>
                 ) : currentRound ? (
                   <>
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-white text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
+                      <h2 className="text-foreground text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
                     </div>
-                    <p className="text-blue-100/70 text-sm font-medium mt-2">
-                      {new Date(currentRound.deadline) > new Date() ? "המחזור פתוח להגשות" : "המחזור נעול — תוצאות מתעדכנות"}
+                    <p className="text-muted-foreground text-sm font-medium mt-2">
+                      {isDeadlineActive ? "המחזור פתוח להגשות" : "המחזור נעול — תוצאות מתעדכנות"}
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2 className="text-white text-3xl font-extrabold tracking-tight leading-tight">אין מחזור פעיל</h2>
-                    <p className="text-blue-100/70 text-sm font-medium mt-2">עדיין לא נפתח מחזור חדש</p>
+                    <h2 className="text-foreground text-3xl font-extrabold tracking-tight leading-tight">אין מחזור פעיל</h2>
+                    <p className="text-muted-foreground text-sm font-medium mt-2">עדיין לא נפתח מחזור חדש</p>
                   </>
                 )}
               </div>
 
               {currentRoundLoading ? (
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
-                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-muted rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-muted rounded-2xl p-3 h-16 animate-pulse"></div>
                 </div>
               ) : currentRound && (
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                    <div className="flex items-center gap-1.5 text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
                       <List className="h-3 w-3" />
                       משחקי המחזור
                     </div>
-                    <p className="text-white text-xl font-bold">{totalGames}<span className="text-white/40 text-sm font-medium">/16</span></p>
+                    <p className="text-foreground text-xl font-bold">{totalGames}<span className="text-muted-foreground text-sm font-medium">/16</span></p>
                   </div>
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                    <div className="flex items-center gap-1.5 text-sky-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
                       <Target className="h-3 w-3" />
                       תוצאות בלייב
                     </div>
-                    <p className="text-white text-xl font-bold">{finishedGames}<span className="text-white/40 text-sm font-medium">/{totalGames || 16}</span></p>
+                    <p className="text-foreground text-xl font-bold">{finishedGames}<span className="text-muted-foreground text-sm font-medium">/{totalGames || 16}</span></p>
                   </div>
                   {topScorer && (
-                    <div className="col-span-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-emerald-200/70 text-[10px] font-semibold uppercase tracking-wider">
+                    <div className="col-span-2 bg-secondary/50 border border-border rounded-2xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
                         <Trophy className="h-3 w-3" />
                         מוביל כרגע
                       </div>
                       <div className="text-right">
-                        <p className="text-white text-sm font-bold leading-none">{topScorer.user_name}</p>
-                        <p className="text-emerald-300 text-xs font-medium">{topScorer.hits} פגיעות</p>
+                        <p className="text-foreground text-sm font-bold leading-none">{topScorer.user_name}</p>
+                        <p className="text-primary text-xs font-medium">{topScorer.hits} פגיעות</p>
                       </div>
                     </div>
                   )}
@@ -162,57 +210,77 @@ const Index = () => {
             </div>
             {!user && (
               <div className="absolute top-4 left-4 z-20">
-                <Lock className="h-5 w-5 text-white/70" />
+                <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
-            <div className="absolute -left-4 -bottom-4 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Submit Bet */}
           <Link
             to={user ? "/submit-bet" : "#"}
-            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-900 p-6 shadow-2xl shadow-blue-900/20 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
+            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-card border border-border p-6 transition-all ${user ? 'cursor-pointer hover:bg-card/80 hover:shadow-xl hover:shadow-black/10' : 'opacity-80 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
+            <div className="absolute inset-0 bg-gradient-to-bl from-primary/10 via-transparent to-transparent opacity-60"></div>
             <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
-                    <Plus className="h-5 w-5 text-blue-100" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Plus className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">טוטו בנטו</span>
+                  <span className="text-muted-foreground text-xs font-bold tracking-widest uppercase">טוטו בנטו</span>
                 </div>
-                <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-blue-100 border border-white/10">
+                <span className="bg-primary/10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">
                   {user ? "פתוח" : "נדרשת התחברות"}
                 </span>
               </div>
 
               <div className="mt-4">
-                <h2 className="text-white text-4xl font-black tracking-tight leading-tight">הגשת טור<br/>חדש</h2>
-                <p className="text-blue-100/70 text-sm font-medium mt-2 max-w-[16rem]">
-                  16 משחקים, 3 כפולים, עלות טור 24 ₪. מי שמסיים אחרון משלם בסיבוב הבא.
+                <h2 className="text-foreground text-4xl font-black tracking-tight leading-tight">הגשת טור<br/>חדש</h2>
+                <p className="text-muted-foreground text-sm font-medium mt-2">
+                  לחץ כאן כדי למלא את הטור שלך למחזור הנוכחי.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">משחקים</p>
-                  <p className="text-white text-xl font-bold">16</p>
-                </div>
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">כפולים</p>
-                  <p className="text-white text-xl font-bold">3</p>
-                </div>
+              <div className="mt-4">
+                {currentRoundLoading ? (
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="bg-muted rounded-xl w-12 h-12 md:w-14 md:h-14 animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : currentRound && isDeadlineActive ? (
+                  <div className="space-y-3">
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="h-3 w-3" />
+                      זמן נותר לסגירה
+                    </p>
+                    <div className="flex gap-2">
+                      <CountdownUnit value={timeLeft.days} label="ימים" />
+                      <span className="text-2xl font-bold self-start mt-3 text-muted-foreground/30">:</span>
+                      <CountdownUnit value={timeLeft.hours} label="שעות" />
+                      <span className="text-2xl font-bold self-start mt-3 text-muted-foreground/30">:</span>
+                      <CountdownUnit value={timeLeft.minutes} label="דקות" />
+                      <span className="text-2xl font-bold self-start mt-3 text-muted-foreground/30">:</span>
+                      <CountdownUnit value={timeLeft.seconds} label="שניות" />
+                    </div>
+                  </div>
+                ) : currentRound ? (
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-4">
+                    <p className="text-foreground/80 text-sm font-medium">המחזור נעול — לא ניתן להגיש טורים</p>
+                  </div>
+                ) : (
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-4">
+                    <p className="text-foreground/80 text-sm font-medium">אין מחזור פעיל כרגע</p>
+                  </div>
+                )}
               </div>
             </div>
             {!user && (
               <div className="absolute top-4 left-4 z-20">
-                <Lock className="h-5 w-5 text-white/70" />
+                <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
-            <div className="absolute -right-4 -bottom-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute -left-4 -top-4 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Stats */}
