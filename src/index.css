@@ -99,6 +99,37 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Heebo', 'Barlow', sans-serif;
+    font-family: 'Assistant', 'Heebo', 'Barlow', sans-serif;
   }
+}
+
+/* Elite dark bento theme — scoped to pages that opt in */
+.theme-elite-dark {
+  --background: 222 29% 7%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 11%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 222 32% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 222 32% 17%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 222 32% 17%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 222 32% 17%;
+  --input: 222 32% 17%;
+  --ring: 217 91% 60%;
 }
