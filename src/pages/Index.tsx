@@ -1,10 +1,55 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List, Clock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
 import { useCurrentRound, useGamesInRound } from "@/hooks/useTotoRounds";
 import { useRoundScores } from "@/hooks/useRoundScores";
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  total: number;
+}
+
+const useCountdown = (targetDate?: string | null) => {
+  const calculateTimeLeft = (): TimeLeft => {
+    if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+    const difference = new Date(targetDate).getTime() - new Date().getTime();
+    if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+    return {
+      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((difference / 1000 / 60) % 60),
+      seconds: Math.floor((difference / 1000) % 60),
+      total: difference,
+    };
+  };
+
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft);
+
+  useEffect(() => {
+    if (!targetDate) return;
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return timeLeft;
+};
+
+const CountdownUnit = ({ value, label }: { value: number; label: string }) => (
+  <div className="flex flex-col items-center">
+    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl w-12 h-12 md:w-14 md:h-14 flex items-center justify-center">
+      <span className="text-xl md:text-2xl font-bold text-foreground tabular-nums">{String(value).padStart(2, '0')}</span>
+    </div>
+    <span className="text-[10px] text-muted-foreground mt-1.5">{label}</span>
+  </div>
+);
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
