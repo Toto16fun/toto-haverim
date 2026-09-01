@@ -1,0 +1,36 @@
+name: Toto round scheduler
+
+on:
+  schedule:
+    - cron: '0 15 * * 3'
+    - cron: '0 11 * * 6'
+  workflow_dispatch:
+
+jobs:
+  create-draft-round:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 15 * * 3'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger schedule-create-draft
+        env:
+          SUPABASE_FUNCTION_URL: https://gplltbkfconqjcyfsnel.supabase.co/functions/v1/schedule-create-draft
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -fsS -X POST "$SUPABASE_FUNCTION_URL" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+
+  lock-and-autofill:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 11 * * 6'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger schedule-lock-and-autofill
+        env:
+          SUPABASE_FUNCTION_URL: https://gplltbkfconqjcyfsnel.supabase.co/functions/v1/schedule-lock-and-autofill
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -fsS -X POST "$SUPABASE_FUNCTION_URL" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
