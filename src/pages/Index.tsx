@@ -162,20 +162,37 @@ const Index = () => {
           {/* Submit Bet */}
           <Link
             to={user ? "/submit-bet" : "#"}
-            className={`col-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-900 p-5 shadow-xl shadow-blue-900/20 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
+            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-900 p-6 shadow-2xl shadow-blue-900/20 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
-            <div className="relative z-10 flex items-center justify-between h-full min-h-[90px]">
-              <div>
-                <span className="text-blue-100/60 text-xs font-semibold tracking-widest uppercase">טוטו בנטו</span>
-                <h2 className="text-white text-2xl font-extrabold mt-1 tracking-tight">הגשת טור חדש</h2>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white">
-                  {user ? "הצטרף למשחק" : "נדרשת התחברות"}
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <Plus className="h-5 w-5 text-blue-100" />
+                  </div>
+                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">טוטו בנטו</span>
+                </div>
+                <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-blue-100 border border-white/10">
+                  {user ? "פתוח" : "נדרשת התחברות"}
                 </span>
-                <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform">
-                  <Plus className="w-5 h-5 text-indigo-900" />
+              </div>
+
+              <div className="mt-4">
+                <h2 className="text-white text-4xl font-black tracking-tight leading-tight">הגשת טור<br/>חדש</h2>
+                <p className="text-blue-100/70 text-sm font-medium mt-2 max-w-[16rem]">
+                  16 משחקים, 3 כפולים, עלות טור 24 ₪. מי שמסיים אחרון משלם בסיבוב הבא.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">משחקים</p>
+                  <p className="text-white text-xl font-bold">16</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">כפולים</p>
+                  <p className="text-white text-xl font-bold">3</p>
                 </div>
               </div>
             </div>
@@ -184,7 +201,8 @@ const Index = () => {
                 <Lock className="h-5 w-5 text-white/70" />
               </div>
             )}
-            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+            <div className="absolute -right-4 -bottom-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute -left-4 -top-4 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Stats */}
