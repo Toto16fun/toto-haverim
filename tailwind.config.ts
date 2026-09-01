@@ -19,8 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				display: ['Heebo', 'Barlow', 'sans-serif'],
-				body: ['Heebo', 'Barlow', 'sans-serif'],
+				display: ['Assistant', 'Heebo', 'Barlow', 'sans-serif'],
+				body: ['Assistant', 'Heebo', 'Barlow', 'sans-serif'],
 				bebas: ['"Bebas Neue"', 'Heebo', 'sans-serif'],
 			},
 			colors: {
