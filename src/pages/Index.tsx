@@ -79,9 +79,12 @@ const Index = () => {
   const isSuperAdmin = roles?.includes('admin');
 
   const disabledCardClass = "opacity-60 cursor-not-allowed";
-  const baseCardClass = "rounded-[2rem] bg-slate-900/50 border border-white/5 p-5 transition-colors hover:bg-slate-800/50";
+  const baseCardClass = "rounded-[2rem] bg-card/60 border border-border p-5 transition-all hover:bg-card hover:shadow-lg hover:shadow-black/5";
   const squareCardClass = `${baseCardClass} flex flex-col justify-between aspect-square`;
   const horizontalCardClass = `${baseCardClass} flex items-center justify-between`;
+
+  const timeLeft = useCountdown(currentRound?.deadline);
+  const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   return (
     <div className="theme-elite-dark min-h-screen bg-background p-4 md:p-6 font-body" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
