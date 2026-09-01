@@ -128,80 +128,81 @@ const Index = () => {
           {/* Primary Feature: Current Round */}
           <Link
             to={user ? "/current-round" : "#"}
-            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-blue-700 to-slate-900 p-6 shadow-2xl shadow-blue-900/30 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
+            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-card border border-border p-6 transition-all ${user ? 'cursor-pointer hover:bg-card/80 hover:shadow-xl hover:shadow-black/10' : 'opacity-80 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-60"></div>
             <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
-                    <Activity className="h-5 w-5 text-blue-100" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">מחזור נוכחי</span>
+                  <span className="text-muted-foreground text-xs font-bold tracking-widest uppercase">מחזור נוכחי</span>
                 </div>
                 {user ? (
-                  <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-200 border border-sky-400/20">
-                    <span className="h-2 w-2 bg-sky-400 rounded-full animate-pulse"></span>
+                  <span className="bg-primary/10 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-primary border border-primary/20">
+                    <span className="h-2 w-2 bg-primary rounded-full animate-pulse"></span>
                     תוצאות בלייב
                   </span>
                 ) : (
-                  <Lock className="h-5 w-5 text-white/60" />
+                  <Lock className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
 
               <div className="mt-4">
                 {currentRoundLoading ? (
                   <div className="space-y-3">
-                    <div className="h-12 w-40 bg-white/10 rounded-xl animate-pulse"></div>
-                    <div className="h-4 w-32 bg-white/10 rounded-lg animate-pulse"></div>
+                    <div className="h-12 w-40 bg-muted rounded-xl animate-pulse"></div>
+                    <div className="h-4 w-32 bg-muted rounded-lg animate-pulse"></div>
                   </div>
                 ) : currentRound ? (
                   <>
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-white text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
+                      <h2 className="text-foreground text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
                     </div>
-                    <p className="text-blue-100/70 text-sm font-medium mt-2">
-                      {new Date(currentRound.deadline) > new Date() ? "המחזור פתוח להגשות" : "המחזור נעול — תוצאות מתעדכנות"}
+                    <p className="text-muted-foreground text-sm font-medium mt-2">
+                      {isDeadlineActive ? "המחזור פתוח להגשות" : "המחזור נעול — תוצאות מתעדכנות"}
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2 className="text-white text-3xl font-extrabold tracking-tight leading-tight">אין מחזור פעיל</h2>
-                    <p className="text-blue-100/70 text-sm font-medium mt-2">עדיין לא נפתח מחזור חדש</p>
+                    <h2 className="text-foreground text-3xl font-extrabold tracking-tight leading-tight">אין מחזור פעיל</h2>
+                    <p className="text-muted-foreground text-sm font-medium mt-2">עדיין לא נפתח מחזור חדש</p>
                   </>
                 )}
               </div>
 
               {currentRoundLoading ? (
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
-                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-muted rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-muted rounded-2xl p-3 h-16 animate-pulse"></div>
                 </div>
               ) : currentRound && (
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                    <div className="flex items-center gap-1.5 text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
                       <List className="h-3 w-3" />
                       משחקי המחזור
                     </div>
-                    <p className="text-white text-xl font-bold">{totalGames}<span className="text-white/40 text-sm font-medium">/16</span></p>
+                    <p className="text-foreground text-xl font-bold">{totalGames}<span className="text-muted-foreground text-sm font-medium">/16</span></p>
                   </div>
-                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
-                    <div className="flex items-center gap-1.5 text-sky-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                  <div className="bg-secondary/50 border border-border rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
                       <Target className="h-3 w-3" />
                       תוצאות בלייב
                     </div>
-                    <p className="text-white text-xl font-bold">{finishedGames}<span className="text-white/40 text-sm font-medium">/{totalGames || 16}</span></p>
+                    <p className="text-foreground text-xl font-bold">{finishedGames}<span className="text-muted-foreground text-sm font-medium">/{totalGames || 16}</span></p>
                   </div>
                   {topScorer && (
-                    <div className="col-span-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-emerald-200/70 text-[10px] font-semibold uppercase tracking-wider">
+                    <div className="col-span-2 bg-secondary/50 border border-border rounded-2xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
                         <Trophy className="h-3 w-3" />
                         מוביל כרגע
                       </div>
                       <div className="text-right">
-                        <p className="text-white text-sm font-bold leading-none">{topScorer.user_name}</p>
-                        <p className="text-emerald-300 text-xs font-medium">{topScorer.hits} פגיעות</p>
+                        <p className="text-foreground text-sm font-bold leading-none">{topScorer.user_name}</p>
+                        <p className="text-primary text-xs font-medium">{topScorer.hits} פגיעות</p>
                       </div>
                     </div>
                   )}
@@ -210,11 +211,9 @@ const Index = () => {
             </div>
             {!user && (
               <div className="absolute top-4 left-4 z-20">
-                <Lock className="h-5 w-5 text-white/70" />
+                <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
-            <div className="absolute -left-4 -bottom-4 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Submit Bet */}
