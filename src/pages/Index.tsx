@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, ChevronLeft } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
+import { useCurrentRound, useGamesInRound } from "@/hooks/useTotoRounds";
+import { useRoundScores } from "@/hooks/useRoundScores";
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
@@ -10,6 +12,13 @@ const Index = () => {
   const { data: roles } = useUserRoles();
   const { data: userLeague } = useUserLeague(user?.id);
   const { data: isLeagueAdmin } = useIsLeagueAdmin(user?.id, userLeague?.id);
+  const { data: currentRound, isLoading: currentRoundLoading } = useCurrentRound();
+  const { data: games } = useGamesInRound(currentRound?.id);
+  const { data: roundScores } = useRoundScores(currentRound?.id);
+
+  const finishedGames = games?.filter(g => g.result).length || 0;
+  const totalGames = games?.length || 0;
+  const topScorer = roundScores?.[0];
 
   if (loading) {
     return (
@@ -68,23 +77,132 @@ const Index = () => {
         {/* Bento Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
-          {/* Primary Action: Submit Bet */}
+          {/* Primary Feature: Current Round */}
+          <Link
+            to={user ? "/current-round" : "#"}
+            className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-blue-700 to-slate-900 p-6 shadow-2xl shadow-blue-900/30 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
+            onClick={!user ? (e) => e.preventDefault() : undefined}
+          >
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <Activity className="h-5 w-5 text-blue-100" />
+                  </div>
+                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">מחזור נוכחי</span>
+                </div>
+                {user ? (
+                  <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-200 border border-sky-400/20">
+                    <span className="h-2 w-2 bg-sky-400 rounded-full animate-pulse"></span>
+                    תוצאות בלייב
+                  </span>
+                ) : (
+                  <Lock className="h-5 w-5 text-white/60" />
+                )}
+              </div>
+
+              <div className="mt-4">
+                {currentRoundLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-12 w-40 bg-white/10 rounded-xl animate-pulse"></div>
+                    <div className="h-4 w-32 bg-white/10 rounded-lg animate-pulse"></div>
+                  </div>
+                ) : currentRound ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <h2 className="text-white text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
+                    </div>
+                    <p className="text-blue-100/70 text-sm font-medium mt-2">
+                      {new Date(currentRound.deadline) > new Date() ? "המחזור פתוח להגשות" : "המחזור נעול — תוצאות מתעדכנות"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-white text-3xl font-extrabold tracking-tight leading-tight">אין מחזור פעיל</h2>
+                    <p className="text-blue-100/70 text-sm font-medium mt-2">עדיין לא נפתח מחזור חדש</p>
+                  </>
+                )}
+              </div>
+
+              {currentRoundLoading ? (
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                </div>
+              ) : currentRound && (
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                      <List className="h-3 w-3" />
+                      משחקי המחזור
+                    </div>
+                    <p className="text-white text-xl font-bold">{totalGames}<span className="text-white/40 text-sm font-medium">/16</span></p>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                    <div className="flex items-center gap-1.5 text-sky-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                      <Target className="h-3 w-3" />
+                      תוצאות בלייב
+                    </div>
+                    <p className="text-white text-xl font-bold">{finishedGames}<span className="text-white/40 text-sm font-medium">/{totalGames || 16}</span></p>
+                  </div>
+                  {topScorer && (
+                    <div className="col-span-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-emerald-200/70 text-[10px] font-semibold uppercase tracking-wider">
+                        <Trophy className="h-3 w-3" />
+                        מוביל כרגע
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white text-sm font-bold leading-none">{topScorer.user_name}</p>
+                        <p className="text-emerald-300 text-xs font-medium">{topScorer.hits} פגיעות</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {!user && (
+              <div className="absolute top-4 left-4 z-20">
+                <Lock className="h-5 w-5 text-white/70" />
+              </div>
+            )}
+            <div className="absolute -left-4 -bottom-4 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl"></div>
+            <div className="absolute -right-4 -top-4 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl"></div>
+          </Link>
+
+          {/* Submit Bet */}
           <Link
             to={user ? "/submit-bet" : "#"}
             className={`col-span-2 row-span-2 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-900 p-6 shadow-2xl shadow-blue-900/20 transition-all ${user ? 'cursor-pointer hover:brightness-110' : 'opacity-80 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
-            <div className="relative z-10 flex flex-col justify-between h-full min-h-[160px]">
-              <div>
-                <span className="text-blue-100/60 text-xs font-semibold tracking-widest uppercase">טוטו בנטו</span>
-                <h2 className="text-white text-3xl font-extrabold mt-1 tracking-tight leading-tight">הגשת טור<br/>חדש</h2>
-              </div>
-              <div className="flex justify-between items-end">
-                <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white">
-                  {user ? "הצטרף למשחק" : "נדרשת התחברות"}
+            <div className="relative z-10 flex flex-col justify-between h-full min-h-[200px]">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                    <Plus className="h-5 w-5 text-blue-100" />
+                  </div>
+                  <span className="text-blue-100/70 text-xs font-bold tracking-widest uppercase">טוטו בנטו</span>
+                </div>
+                <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-blue-100 border border-white/10">
+                  {user ? "פתוח" : "נדרשת התחברות"}
                 </span>
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform">
-                  <Plus className="w-6 h-6 text-indigo-900" />
+              </div>
+
+              <div className="mt-4">
+                <h2 className="text-white text-4xl font-black tracking-tight leading-tight">הגשת טור<br/>חדש</h2>
+                <p className="text-blue-100/70 text-sm font-medium mt-2 max-w-[16rem]">
+                  16 משחקים, 3 כפולים, עלות טור 24 ₪. מי שמסיים אחרון משלם בסיבוב הבא.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">משחקים</p>
+                  <p className="text-white text-xl font-bold">16</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
+                  <p className="text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">כפולים</p>
+                  <p className="text-white text-xl font-bold">3</p>
                 </div>
               </div>
             </div>
@@ -93,32 +211,8 @@ const Index = () => {
                 <Lock className="h-5 w-5 text-white/70" />
               </div>
             )}
-            <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-          </Link>
-
-          {/* Current Round */}
-          <Link
-            to={user ? "/current-round" : "#"}
-            className={`${squareCardClass} ${user ? 'cursor-pointer' : disabledCardClass}`}
-            onClick={!user ? (e) => e.preventDefault() : undefined}
-          >
-            <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-blue-400" />
-              </div>
-              {user ? (
-                <span className="text-sky-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 bg-sky-400 rounded-full animate-pulse"></span>
-                  LIVE
-                </span>
-              ) : (
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs font-medium">מחזור נוכחי</p>
-              <p className="text-xl font-bold text-foreground mt-0.5">מחזור פעיל</p>
-            </div>
+            <div className="absolute -right-4 -bottom-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute -left-4 -top-4 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Stats */}
@@ -138,15 +232,15 @@ const Index = () => {
           {/* History */}
           <Link
             to={user ? "/history" : "#"}
-            className={`${horizontalCardClass} ${user ? 'cursor-pointer' : disabledCardClass}`}
+            className={`${squareCardClass} ${user ? 'cursor-pointer' : disabledCardClass}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
-            <div className="flex flex-col">
-              <p className="text-muted-foreground text-xs font-medium">עבר</p>
-              <p className="text-lg font-bold text-foreground">היסטוריה</p>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <History className="h-5 w-5 text-amber-400" />
             </div>
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-              <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-muted-foreground text-xs font-medium">עבר</p>
+              <p className="text-xl font-bold text-foreground mt-0.5">היסטוריה</p>
             </div>
           </Link>
 
