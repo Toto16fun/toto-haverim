@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, ChevronLeft } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, Clock, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, ChevronLeft, Activity, Target, List, CalendarDays } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
+import { useCurrentRound, useGamesInRound } from "@/hooks/useTotoRounds";
+import { useRoundScores } from "@/hooks/useRoundScores";
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
