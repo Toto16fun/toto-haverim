@@ -16,7 +16,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
           <p className="text-slate-600 font-body">טוען...</p>
         </div>
       </div>
@@ -31,11 +31,11 @@ const Index = () => {
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-emerald-800 rounded-xl flex items-center justify-center text-white text-xl font-display tracking-widest">
+            <div className="w-11 h-11 bg-blue-800 rounded-xl flex items-center justify-center text-white text-xl font-display tracking-widest">
               ⚽
             </div>
             <div>
-              <h1 className="text-2xl font-black text-emerald-900 leading-none">קבוצת טוטו</h1>
+              <h1 className="text-2xl font-black text-blue-900 leading-none">קבוצת טוטו</h1>
               <p className="text-slate-500 text-sm font-medium">אפליקציית הימורים חברית לקבוצה</p>
             </div>
           </div>
@@ -64,7 +64,7 @@ const Index = () => {
           {/* Primary Action: Submit Bet */}
           <Link
             to={user ? "/submit-bet" : "#"}
-            className={`md:col-span-4 md:row-span-2 group relative overflow-hidden bg-emerald-700 rounded-3xl p-8 flex flex-col justify-between shadow-xl shadow-emerald-900/10 transition-all ${user ? 'cursor-pointer hover:bg-emerald-600' : 'opacity-70 cursor-not-allowed'}`}
+            className={`md:col-span-4 md:row-span-2 group relative overflow-hidden bg-blue-700 rounded-3xl p-8 flex flex-col justify-between shadow-xl shadow-blue-900/10 transition-all ${user ? 'cursor-pointer hover:bg-blue-600' : 'opacity-70 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
             <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -77,12 +77,12 @@ const Index = () => {
             )}
             <div className="relative z-10">
               <h2 className="text-white text-5xl font-black tracking-tight mb-2">הגשת טור</h2>
-              <p className="text-emerald-50/80 text-lg max-w-xs font-medium">
+              <p className="text-blue-50/80 text-lg max-w-xs font-medium">
                 {user ? "מלא את הטור שלך למחזור הנוכחי והצטרף למאבק על המקום הראשון" : "נדרשת התחברות להגשת טור"}
               </p>
             </div>
             <div className="relative z-10 mt-8">
-              <span className="bg-white text-emerald-700 px-6 py-2 rounded-full font-bold text-sm tracking-wide shadow-lg">
+              <span className="bg-white text-blue-700 px-6 py-2 rounded-full font-bold text-sm tracking-wide shadow-lg">
                 {user ? "מלא טור חדש" : "נדרשת התחברות"}
               </span>
             </div>
@@ -91,16 +91,16 @@ const Index = () => {
           {/* Current Round - dark LIVE card */}
           <Link
             to={user ? "/current-round" : "#"}
-            className={`md:col-span-2 md:row-span-2 bg-slate-900 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all ${user ? 'cursor-pointer hover:ring-2 hover:ring-emerald-500/50' : 'opacity-70 cursor-not-allowed'}`}
+            className={`md:col-span-2 md:row-span-2 bg-slate-900 rounded-3xl p-6 flex flex-col justify-between shadow-xl transition-all ${user ? 'cursor-pointer hover:ring-2 hover:ring-blue-500/50' : 'opacity-70 cursor-not-allowed'}`}
             onClick={!user ? (e) => e.preventDefault() : undefined}
           >
             <div className="flex justify-between items-start">
-              <div className="h-10 w-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-emerald-400" />
+              <div className="h-10 w-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <Clock className="h-5 w-5 text-sky-400" />
               </div>
               {user && (
-                <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="h-2 w-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                <span className="text-sky-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="h-2 w-2 bg-sky-400 rounded-full animate-pulse"></span>
                   LIVE
                 </span>
               )}
