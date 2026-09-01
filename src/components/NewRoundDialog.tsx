@@ -220,6 +220,110 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
     }
   }, []);
 
+  const [isAutoFetching, setIsAutoFetching] = useState(false);
+
+  const handleAutoFetch = async () => {
+    setIsAutoFetching(true);
+    try {
+      await createRoundAndProcess(async (roundId) => {
+        const { data, error } = await supabase.functions.invoke('fetch-games-web', {
+          body: { roundId }
+        });
+        if (error || !data?.success) {
+          throw new Error(error?.message || data?.error || 'auto fetch failed');
+        }
+        return data;
+      });
+    } finally {
+      setIsAutoFetching(false);
+    }
+  };
+
+  const createRoundAndProcess = async (process: (roundId: string) => Promise<any>) => {
+    try {
+      // Lock the previous round if it exists
+      if (existingRounds && existingRounds.length > 0) {
+        const currentRound = existingRounds[0];
+        if (currentRound.status === 'active') {
+          try {
+            await supabase.functions.invoke('lockRound', {
+              body: { roundId: currentRound.id }
+            });
+            console.log('Previous round locked successfully');
+          } catch (lockError) {
+            console.error('Failed to lock previous round:', lockError);
+          }
+        }
+      }
+
+      const nextRoundNumber = getNextRoundNumber();
+      const roundResult = await createRound.mutateAsync({
+        round_number: nextRoundNumber,
+        start_date: new Date().toISOString().split('T')[0],
+        deadline: getNextSaturdayDeadline().toISOString(),
+        status: 'draft'
+      });
+
+      setCurrentRoundId(roundResult.id);
+
+      try {
+        await process(roundResult.id);
+        setStep('confirm');
+        toast({
+          title: "מחזור נוצר והמשחקים נטענו!",
+          description: `מחזור ${nextRoundNumber} מוכן להפעלה`
+        });
+      } catch (fetchError: any) {
+        console.log('Processing failed, proceeding with empty round:', fetchError);
+        setStep('confirm');
+        toast({
+          title: "שגיאה בעיבוד",
+          description: `מחזור ${nextRoundNumber} נוצר אבל לא הצלחנו לשלוף את המשחקים. תוכל להוסיף משחקים ידנית`,
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error('Error creating round:', error);
+      toast({
+        title: "שגיאה ביצירת המחזור",
+        description: "לא הצלחנו ליצור את המחזור. נסה שוב מאוחר יותר.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Calculate next Saturday at 13:00 Israel time as deadline
+  const getNextSaturdayDeadline = () => {
+    // Compute next Saturday at 13:00 Israel time, returned as a UTC timestamp
+    const isDateInIsraelDST = (date: Date): boolean => {
+      const year = date.getFullYear();
+      // Israel DST: last Friday in March to last Sunday in October
+      const getLastWeekdayOfMonth = (y: number, m: number, weekday: number): Date => {
+        const lastDay = new Date(y, m + 1, 0);
+        const lastWeekday = lastDay.getDay();
+        const daysBack = (lastWeekday - weekday + 7) % 7;
+        return new Date(y, m, lastDay.getDate() - daysBack);
+      };
+      const lastFridayMarch = getLastWeekdayOfMonth(year, 2, 5); // March (2), Friday (5)
+      const lastSundayOctober = getLastWeekdayOfMonth(year, 9, 0); // October (9), Sunday (0)
+      return date >= lastFridayMarch && date < lastSundayOctober;
+    };
+
+    const now = new Date();
+    const d = new Date(now);
+    // Calculate next Saturday (UTC)
+    const day = d.getUTCDay(); // 0=Sunday, 6=Saturday
+    const daysToSat = (6 - day + 7) % 7 || 7;
+    d.setUTCDate(d.getUTCDate() + daysToSat);
+
+    // Decide UTC hour for 13:00 Israel time depending on DST
+    const targetLocalDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const dst = isDateInIsraelDST(targetLocalDate);
+    // Summer (UTC+3): 13:00 IL = 10:00 UTC; Winter (UTC+2): 13:00 IL = 11:00 UTC
+    d.setUTCHours(dst ? 10 : 11, 0, 0, 0);
+    return d;
+  };
+
   const handleAnalyzeAndConfirm = async () => {
     if (!selectedFile) {
       toast({
