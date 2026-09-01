@@ -482,7 +482,7 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
 
               <Button
                 onClick={handleAnalyzeAndConfirm}
-                disabled={!selectedFile || createRound.isPending || fetchGames.isPending}
+                disabled={!selectedFile || createRound.isPending || fetchGames.isPending || isAutoFetching}
                 className="w-full"
               >
                 {createRound.isPending || fetchGames.isPending ? (
@@ -492,6 +492,34 @@ const NewRoundDialog = ({ open, onOpenChange }: NewRoundDialogProps) => {
                   </>
                 ) : (
                   'צור מחזור ועבד משחקים'
+                )}
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">או</span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleAutoFetch}
+                disabled={isAutoFetching || createRound.isPending || fetchGames.isPending}
+                className="w-full flex items-center gap-2"
+              >
+                {isAutoFetching ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    שולף משחקים מהאינטרנט...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4" />
+                    צור מחזור ושלוף משחקים אוטומטית מהאינטרנט
+                  </>
                 )}
               </Button>
             </CardContent>
