@@ -12,8 +12,15 @@ const Index = () => {
   const { data: roles } = useUserRoles();
   const { data: userLeague } = useUserLeague(user?.id);
   const { data: isLeagueAdmin } = useIsLeagueAdmin(user?.id, userLeague?.id);
+  const { data: currentRound, isLoading: currentRoundLoading } = useCurrentRound();
+  const { data: games } = useGamesInRound(currentRound?.id);
+  const { data: roundScores } = useRoundScores(currentRound?.id);
 
-  if (loading) {
+  const finishedGames = games?.filter(g => g.result).length || 0;
+  const totalGames = games?.length || 0;
+  const topScorer = roundScores?.[0];
+
+  if (loading || currentRoundLoading) {
     return (
       <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
