@@ -102,7 +102,12 @@ const Index = () => {
               </div>
 
               <div className="mt-4">
-                {currentRound ? (
+                {currentRoundLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-12 w-40 bg-white/10 rounded-xl animate-pulse"></div>
+                    <div className="h-4 w-32 bg-white/10 rounded-lg animate-pulse"></div>
+                  </div>
+                ) : currentRound ? (
                   <>
                     <div className="flex items-baseline gap-2">
                       <h2 className="text-white text-5xl font-black tracking-tight leading-none">מחזור {currentRound.round_number}</h2>
@@ -119,7 +124,12 @@ const Index = () => {
                 )}
               </div>
 
-              {currentRound && (
+              {currentRoundLoading ? (
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                  <div className="bg-white/5 rounded-2xl p-3 h-16 animate-pulse"></div>
+                </div>
+              ) : currentRound && (
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3">
                     <div className="flex items-center gap-1.5 text-blue-200/70 text-[10px] font-semibold uppercase tracking-wider mb-1">
