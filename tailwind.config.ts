@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['Heebo', 'Barlow', 'sans-serif'],
+				body: ['Heebo', 'Barlow', 'sans-serif'],
+				bebas: ['"Bebas Neue"', 'Heebo', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
