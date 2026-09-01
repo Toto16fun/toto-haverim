@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateRound, useTotoRounds } from '@/hooks/useTotoRounds';
 import { useFetchGames } from '@/hooks/useFetchGames';
-import { Upload, Image, X, Check, FileSpreadsheet, FileJson } from 'lucide-react';
+import { Upload, Image, X, Check, FileSpreadsheet, FileJson, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 
