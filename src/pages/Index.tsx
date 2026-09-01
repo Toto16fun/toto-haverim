@@ -283,8 +283,6 @@ const Index = () => {
                 <Lock className="h-5 w-5 text-primary-foreground/70" />
               </div>
             )}
-            <div className="absolute -right-4 -bottom-4 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="absolute -left-4 -top-4 w-32 h-32 bg-blue-400/10 rounded-full blur-3xl"></div>
           </Link>
 
           {/* Stats */}
