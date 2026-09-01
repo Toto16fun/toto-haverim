@@ -20,7 +20,7 @@ const Index = () => {
   const totalGames = games?.length || 0;
   const topScorer = roundScores?.[0];
 
-  if (loading || currentRoundLoading) {
+  if (loading) {
     return (
       <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
