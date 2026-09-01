@@ -143,7 +143,7 @@ const Index = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-white text-sm font-bold leading-none">{topScorer.user_name}</p>
-                        <p className="text-emerald-300 text-xs font-medium">{topScorer.points} נקודות</p>
+                        <p className="text-emerald-300 text-xs font-medium">{topScorer.hits} פגיעות</p>
                       </div>
                     </div>
                   )}
