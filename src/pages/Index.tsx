@@ -60,10 +60,12 @@ const Index = () => {
   const { data: currentRound, isLoading: currentRoundLoading } = useCurrentRound();
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: roundScores } = useRoundScores(currentRound?.id);
+  const timeLeft = useCountdown(currentRound?.deadline);
 
   const finishedGames = games?.filter(g => g.result).length || 0;
   const totalGames = games?.length || 0;
   const topScorer = roundScores?.[0];
+  const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   if (loading) {
     return (
@@ -82,9 +84,6 @@ const Index = () => {
   const baseCardClass = "rounded-[2rem] bg-card/60 border border-border p-5 transition-all hover:bg-card hover:shadow-lg hover:shadow-black/5";
   const squareCardClass = `${baseCardClass} flex flex-col justify-between aspect-square`;
   const horizontalCardClass = `${baseCardClass} flex items-center justify-between`;
-
-  const timeLeft = useCountdown(currentRound?.deadline);
-  const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   return (
     <div className="theme-elite-dark min-h-screen bg-background p-4 md:p-6 font-body" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
