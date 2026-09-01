@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.schedule-lock-and-autofill]
 verify_jwt = false
+
+[functions.fetch-games-web]
+verify_jwt = false
