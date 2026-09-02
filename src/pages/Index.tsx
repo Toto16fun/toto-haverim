@@ -69,7 +69,7 @@ const Index = () => {
   const totalGames = games?.length || 0;
   const topScorer = roundScores?.[0];
   const submittedBets = roundBets?.length || 0;
-  const memberCount = leagueMembers?.length || 0;
+  const memberCount = 7; // קבוצה קבועה של 7 חברים
   const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   if (loading) {
