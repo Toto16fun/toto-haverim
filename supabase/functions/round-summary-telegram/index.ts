@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     // 4. Bets + predictions for hit counts and spicy commentary
     const { data: bets } = await supabase
       .from('user_bets')
-      .select('id, user_id, league_id')
+      .select('id, user_id')
       .eq('round_id', round.id)
     const betIds = (bets ?? []).map((b) => b.id)
     const { data: predictions } = betIds.length
@@ -164,17 +164,18 @@ Deno.serve(async (req) => {
 
     for (const leagueId of leagueIds) {
       const leagueScores = scoreRows
-        .filter((s) => s.league_id === leagueId)
-        .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+        .filter((s) => userLeague(s.user_id) === leagueId)
+        .sort((a, b) => (b.hits ?? 0) - (a.hits ?? 0))
       if (!leagueScores.length) continue
 
       const standings = leagueScores.map((s, i) => ({
         place: i + 1,
         name: userName(s.user_id),
-        points: s.points ?? 0,
-        hits: perUser.get(s.user_id)?.hits ?? 0,
+        points: s.hits ?? 0,
+        hits: perUser.get(s.user_id)?.hits ?? s.hits ?? 0,
         doublesHit: perUser.get(s.user_id)?.doublesHit ?? 0,
         doublesTotal: perUser.get(s.user_id)?.doublesTotal ?? 0,
+        isPayer: s.is_payer ?? false,
       }))
 
       const resultsLine = finishedGames
