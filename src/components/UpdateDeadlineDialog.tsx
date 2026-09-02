@@ -65,7 +65,7 @@ export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDead
         <Button
           variant="outline"
           size="sm"
-          className={`flex items-center gap-2 ${className || ''}`}
+          className={`flex items-center gap-2 text-foreground hover:text-foreground hover:bg-white/10 ${className || ''}`}
         >
           <Calendar className="h-4 w-4" />
           עדכון מועד סגירה
