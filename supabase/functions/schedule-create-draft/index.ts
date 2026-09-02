@@ -207,13 +207,33 @@ serve(async (req) => {
       console.error('Auto fetch-games-web threw:', e);
     }
 
+    // If 16 games were fetched successfully, open the round for submissions.
+    // The round remains fully editable by admins afterwards — same as a manual open.
+    let finalStatus = 'draft';
+    if (gamesFetched === 16) {
+      const { error: activateError } = await sb
+        .from('toto_rounds')
+        .update({ status: 'active' })
+        .eq('id', created.id);
+
+      if (activateError) {
+        console.error('Error activating round:', activateError);
+        fetchError = fetchError ?? `activation failed: ${activateError.message}`;
+      } else {
+        finalStatus = 'active';
+        console.log(`Round ${nextNum} opened for submissions (16 games fetched)`);
+      }
+    } else if (gamesFetched > 0) {
+      console.log(`Only ${gamesFetched} games fetched (expected 16) — round stays in draft for manual review`);
+    }
+
     return new Response(
       JSON.stringify({ 
         ok: true, 
         created: created.id, 
         roundNumber: nextNum,
         deadline,
-        status: 'draft',
+        status: finalStatus,
         gamesFetched,
         fetchError
       }), 
