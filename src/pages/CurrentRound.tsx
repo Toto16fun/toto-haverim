@@ -178,6 +178,7 @@ const CurrentRound = () => {
                   roundId={currentRound.id}
                   roundNumber={currentRound.round_number}
                   currentDeadline={currentRound.deadline}
+                  className="w-full sm:w-auto"
                 />
               )}
             </div>
