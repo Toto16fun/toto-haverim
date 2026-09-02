@@ -245,8 +245,6 @@ const CurrentRound = () => {
                 {userBets && userBets.length > 0 ? (
                   <div className="space-y-4">
                      {userBets.map(bet => {
-                      const doubleCount = bet.bet_predictions?.filter(p => p.is_double).length || 0;
-                      const gameCount = bet.bet_predictions?.length || 0;
                       const isExpanded = expandedBetId === bet.id;
                       const userName = getUserName(bet.user_id);
                       
@@ -285,12 +283,6 @@ const CurrentRound = () => {
                                   נכונים: {correctCount}/{finishedGamesCount}
                                 </Badge>
                               )}
-                              <Badge variant={doubleCount === 3 ? "default" : "destructive"} className="text-xs">
-                                כפולים: {doubleCount}/3
-                              </Badge>
-                              <Badge variant={gameCount === 16 ? "default" : "destructive"} className="text-xs">
-                                משחקים: {gameCount}/16
-                              </Badge>
                               <Button
                                 variant="outline"
                                 size="sm"
