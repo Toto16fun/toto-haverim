@@ -178,16 +178,43 @@ Deno.serve(async (req) => {
         isPayer: s.is_payer ?? false,
       }))
 
-      const resultsLine = finishedGames
-        .map((g) => `${g.game_number}. ${g.home_team}–${g.away_team}: ${g.result}`)
+      const leagueUserIds = leagueScores.map((s) => s.user_id)
+      const leagueBets = (bets ?? []).filter((b) => leagueUserIds.includes(b.user_id))
+
+      const resultWord = (g: { home_team: string; away_team: string; result: string | null }) => {
+        if (g.result === '1') return `ניצחון בית — ${g.home_team} ניצחה`
+        if (g.result === '2') return `ניצחון חוץ — ${g.away_team} ניצחה`
+        if (g.result === 'X') return 'תיקו'
+        return 'ללא תוצאה'
+      }
+
+      // Full per-game breakdown: result in words + exactly who predicted what
+      const gamesBreakdown = finishedGames
+        .map((g) => {
+          const lines = leagueBets.map((b) => {
+            const pred = (predictions ?? []).find((p) => p.bet_id === b.id && p.game_id === g.id)
+            if (!pred) return `${userName(b.user_id)}: לא הימר`
+            const picks = (pred.predictions ?? []).join('/')
+            const hit = (pred.predictions ?? []).includes(g.result!)
+            return `${userName(b.user_id)}: ${picks}${pred.is_double ? ' (כפול)' : ''} — ${hit ? 'פגע' : 'פספס'}`
+          })
+          return `משחק ${g.game_number}: ${g.home_team} נגד ${g.away_team} | תוצאה: ${g.result} = ${resultWord(g)}\n   ${lines.join(' | ')}`
+        })
         .join('\n')
 
       const prompt = `אתה כתב ספורט סתלבטי ומצחיק של קבוצת חברים שמהמרים על טוטו 16. כתוב בעברית, קליל, עם הומור וצחוק על החשבון של המשתתפים — אבל בטעם טוב.
 
-הנה נתוני מחזור ${round.round_number} בליגה "${leagueName(leagueId)}":
+חוקי דיוק — קריטי, אסור לחרוג:
+- מותר להסתמך אך ורק על הנתונים המופיעים למטה. אין להמציא תוצאות, שמות קבוצות, מגרשים, שערים או פרטי משחק.
+- "1" = ניצחון קבוצת הבית, "X" = תיקו, "2" = ניצחון קבוצת החוץ. אל תהפוך בין בית לחוץ.
+- כשאתה מזכיר מי הימר על משחק — ציין רק את השמות שמופיעים בפירוט של אותו משחק בדיוק. אל תכתוב "רק X הימר" אלא אם באמת בפירוט רק הוא בחר את הבחירה הזאת.
+- אין להוסיף מידע חיצוני על הקבוצות (טבלה, פציעות, מאמנים, היסטוריה) — אתה לא יודע אותו.
+- אם אתה לא בטוח בעובדה — פשוט אל תכתוב אותה.
 
-תוצאות המשחקים:
-${resultsLine}
+נתוני מחזור ${round.round_number} בליגה "${leagueName(leagueId)}":
+
+פירוט מלא של המשחקים וההימורים:
+${gamesBreakdown}
 
 טבלת המחזור (מקום, שם, נקודות, פגיעות נכונות מתוך ${finishedGames.length}, כפולים שהצליחו):
 ${standings.map((s) => `${s.place}. ${s.name} — ${s.points} נק', ${s.hits} פגיעות, כפולים: ${s.doublesHit}/${s.doublesTotal}`).join('\n')}
@@ -196,10 +223,11 @@ ${standings.map((s) => `${s.place}. ${s.name} — ${s.points} נק', ${s.hits} �
 1. שורת פתיחה עם מספר המחזור.
 2. טבלת תוצאות מדורגת בפורמט הבא בדיוק — שורה לכל מקום, בלי שינויי נוסח: "ראשון - {שם} {פגיעות}/${finishedGames.length}", "שני - {שם} {פגיעות}/${finishedGames.length}", "שלישי - ...". אם יש שוויון באותו מקום, צרף שמות באותה שורה (למשל: "שני - תומר ועילאי 7/16").
 3. מי ניצח את המחזור — ומי המשלם/ים (מקום אחרון).
-4. 2-3 הערות סתלבט על הימורים ספציפיים (למשל: מי פספס משחק "בטוח", מי הלך על כפול אמיץ ונשרף, הפתעות).
+4. 2-3 הערות סתלבט על הימורים ספציפיים, כולן מבוססות ישירות על הפירוט למעלה (מי פספס משחק "בטוח" שכולם פגעו בו, מי הלך על כפול ונשרף, מי לבד צדק בהפתעה).
 5. אימוג'ים במידה. בלי כותרות markdown, בלי # — טקסט זורם עם שורות. עד 220 מילים.
 
 החזר רק את טקסט הסיכום.`
+
 
       const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
