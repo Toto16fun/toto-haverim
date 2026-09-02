@@ -274,7 +274,7 @@ const GamesTable = ({
                    <TableCell colSpan={4} className="text-center p-1 sm:p-4"></TableCell>
                    <TableCell className="text-center p-1 sm:p-4">
                      <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-                       <span className="text-[9px] sm:text-xs text-gray-600">נכונים</span>
+                       <span className="text-[9px] sm:text-xs text-muted-foreground">נכונים</span>
                        <Badge variant="default" className="bg-green-600 text-[10px] sm:text-sm px-1.5 py-0.5">
                          {(() => {
                            let correctCount = 0;
