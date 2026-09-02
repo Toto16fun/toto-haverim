@@ -245,6 +245,38 @@ export type Database = {
         }
         Relationships: []
       }
+      round_summaries: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          round_id: string
+          summaries: Json
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          round_id: string
+          summaries: Json
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          round_id?: string
+          summaries?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_summaries_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_aliases: {
         Row: {
           alias: string
