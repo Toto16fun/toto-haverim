@@ -148,7 +148,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     if (isDeadlinePassed) {
       return {
         status: "מחזור נעול",
-        color: "bg-red-100 text-red-800",
+        color: "bg-destructive/20 text-destructive-foreground border border-destructive/40",
         message: `הדדליין עבר: ${formatIsraelDateTime(deadline)}`
       };
     }
@@ -163,7 +163,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
 
     return {
       status: "טור טיוטה",
-      color: "bg-yellow-100 text-yellow-800",
+      color: "bg-amber-400/15 text-amber-300 border border-amber-400/30",
       message: `הגשה עד: ${formatIsraelDateTime(deadline)}`
     };
   };
@@ -209,9 +209,9 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           
           {/* Validation Messages */}
           {!isDeadlinePassed && validationMessages && validationMessages.length > 0 && (
-            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
-              <p className="text-sm font-medium text-orange-800 mb-1">דרישות להגשה:</p>
-              <ul className="text-sm text-orange-700 space-y-1">
+            <div className="mt-3 p-3 bg-amber-400/10 border border-amber-400/25 rounded-md">
+              <p className="text-sm font-medium text-amber-300 mb-1">דרישות להגשה:</p>
+              <ul className="text-sm text-amber-200/80 space-y-1">
                 {validationMessages.map((message, index) => (
                   <li key={index} className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
@@ -224,7 +224,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
 
           {/* Success Message */}
           {!isDeadlinePassed && validation.canSubmit && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+            <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-md">
               <p className="text-sm text-foreground font-display">
                 ✓ הטור מוכן לשליחה!
               </p>

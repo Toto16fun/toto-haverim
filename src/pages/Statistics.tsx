@@ -22,7 +22,7 @@ const Statistics = () => {
     return (
       <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">שגיאה בטעינת הסטטיסטיקות</p>
+          <p className="text-rose-400">שגיאה בטעינת הסטטיסטיקות</p>
         </div>
       </div>
     );
@@ -48,7 +48,7 @@ const Statistics = () => {
   return (
     <div className="theme-elite-dark min-h-screen bg-background p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-6xl mx-auto">
-        <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
+        <Link to="/" className="inline-flex items-center text-primary hover:text-primary/80 mb-6">
           <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
           חזרה לדף הראשי
         </Link>
@@ -92,7 +92,7 @@ const Statistics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
+                <Trophy className="h-5 w-5 mr-2 text-amber-400" />
                 מובילי המקום הראשון
               </CardTitle>
               <CardDescription>כמות זכיות במחזורים (מקום ראשון)</CardDescription>
@@ -106,7 +106,7 @@ const Statistics = () => {
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
                         <span className="font-medium">{player.user_name}</span>
                       </div>
-                      <span className="text-xl font-bold text-yellow-600">
+                      <span className="text-xl font-bold text-amber-400">
                         {player.first_places}
                       </span>
                     </div>
@@ -124,7 +124,7 @@ const Statistics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <TrendingDown className="h-5 w-5 mr-2 text-red-600" />
+                <TrendingDown className="h-5 w-5 mr-2 text-rose-400" />
                 רשימת המשלמים
               </CardTitle>
               <CardDescription>כמות פעמים שהמשתמש נדרש לשלם</CardDescription>
@@ -138,7 +138,7 @@ const Statistics = () => {
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
                         <span className="font-medium">{player.user_name}</span>
                       </div>
-                      <span className="text-xl font-bold text-red-600">
+                      <span className="text-xl font-bold text-rose-400">
                         {player.times_payer} 💸
                       </span>
                     </div>
@@ -154,7 +154,7 @@ const Statistics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Award className="h-5 w-5 mr-2 text-purple-600" />
+                <Award className="h-5 w-5 mr-2 text-violet-400" />
                 שיאים אישיים
               </CardTitle>
               <CardDescription>הישג הפגיעות הטוב ביותר במחזור בודד</CardDescription>
@@ -168,7 +168,7 @@ const Statistics = () => {
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
                         <span className="font-medium">{player.user_name}</span>
                       </div>
-                      <span className="text-xl font-bold text-purple-600">
+                      <span className="text-xl font-bold text-violet-400">
                         {player.best_score}/16
                       </span>
                     </div>
@@ -208,8 +208,8 @@ const Statistics = () => {
                       <td className="text-center p-2">{player.total_hits}</td>
                       <td className="text-center p-2">{player.rounds_played}</td>
                       <td className="text-center p-2">{(player.total_hits / player.rounds_played).toFixed(1)}</td>
-                      <td className="text-center p-2 text-yellow-600">{player.first_places}</td>
-                      <td className="text-center p-2 text-red-600">{player.times_payer}</td>
+                      <td className="text-center p-2 text-amber-400">{player.first_places}</td>
+                      <td className="text-center p-2 text-rose-400">{player.times_payer}</td>
                       <td className="text-center p-2">{player.best_score}/16</td>
                     </tr>
                   ))}
