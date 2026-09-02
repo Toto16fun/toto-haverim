@@ -68,11 +68,11 @@ const Leaderboard = ({ roundId }: LeaderboardProps) => {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="h-5 w-5 text-yellow-600" />;
+        return <Trophy className="h-5 w-5 text-amber-400" />;
       case 2:
-        return <Medal className="h-5 w-5 text-gray-500" />;
+        return <Medal className="h-5 w-5 text-muted-foreground" />;
       case 3:
-        return <Award className="h-5 w-5 text-orange-600" />;
+        return <Award className="h-5 w-5 text-orange-400" />;
       default:
         return <span className="w-5 h-5 flex items-center justify-center text-sm font-medium">{rank}</span>;
     }
@@ -105,9 +105,9 @@ const Leaderboard = ({ roundId }: LeaderboardProps) => {
             <div
               key={score.id}
               className={`flex items-center justify-between p-3 rounded-lg border ${
-                score.rank === 1 ? 'bg-yellow-50 border-yellow-200' :
-                score.rank === 2 ? 'bg-gray-50 border-gray-200' :
-                score.rank === 3 ? 'bg-orange-50 border-orange-200' :
+                score.rank === 1 ? 'bg-amber-400/10 border-amber-400/30' :
+                score.rank === 2 ? 'bg-slate-400/10 border-slate-400/25' :
+                score.rank === 3 ? 'bg-orange-500/10 border-orange-500/25' :
                 'bg-background border-border'
               }`}
             >

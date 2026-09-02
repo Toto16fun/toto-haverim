@@ -62,6 +62,31 @@ const GamesTable = ({
     }
   };
 
+  // A game is "live" once its kickoff time has passed but no result is in yet
+  const isLive = (game: Game) =>
+    !game.result && !game.is_cancelled && !!game.kickoff_at && new Date(game.kickoff_at) <= new Date();
+
+  const renderResultCell = (game: Game) => {
+    if (game.result) {
+      return (
+        <Badge variant="secondary" className="text-[10px] sm:text-sm px-1 py-0">
+          {game.result}
+        </Badge>
+      );
+    }
+    if (isLive(game)) {
+      return (
+        <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium text-primary whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          פעיל
+        </span>
+      );
+    }
+    return <span className="text-muted-foreground text-[10px]">-</span>;
+  };
+
+
+
 
   // If it's read-only, show simplified table without betting options
   if (isReadOnly) {
@@ -85,14 +110,9 @@ const GamesTable = ({
                   <TableRow key={game.id}>
                     <TableCell className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">
                       <div className="font-semibold">
-                        {game.result ? (
-                          <Badge variant="secondary" className="text-[10px] sm:text-sm px-1 py-0">
-                            {game.result}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400 text-[10px]">-</span>
-                        )}
+                        {renderResultCell(game)}
                       </div>
+
                     </TableCell>
                     <TableCell className="text-center font-medium text-[9px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
                       <div className="break-words leading-tight">
@@ -234,14 +254,9 @@ const GamesTable = ({
                       </TableCell>
                       <TableCell className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">
                         <div className="font-semibold">
-                          {gameResult ? (
-                            <Badge variant="secondary" className="text-[10px] sm:text-sm px-1 py-0">
-                              {gameResult}
-                            </Badge>
-                          ) : (
-                            <span className="text-gray-400 text-[10px]">-</span>
-                          )}
+                          {renderResultCell(game)}
                         </div>
+
                       </TableCell>
                      <TableCell className="text-center font-medium text-[9px] sm:text-xs p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
                        <div className="break-words leading-tight">
@@ -259,7 +274,7 @@ const GamesTable = ({
                    <TableCell colSpan={4} className="text-center p-1 sm:p-4"></TableCell>
                    <TableCell className="text-center p-1 sm:p-4">
                      <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-                       <span className="text-[9px] sm:text-xs text-gray-600">נכונים</span>
+                       <span className="text-[9px] sm:text-xs text-muted-foreground">נכונים</span>
                        <Badge variant="default" className="bg-green-600 text-[10px] sm:text-sm px-1.5 py-0.5">
                          {(() => {
                            let correctCount = 0;
