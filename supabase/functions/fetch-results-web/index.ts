@@ -235,6 +235,30 @@ ${markdown.slice(0, 30000)}`
           console.error('Failed to finalize round:', finishError)
         } else {
           roundFinished = true
+
+          // Fire the Telegram round summary (only if a bot token is configured)
+          if (Deno.env.get('TELEGRAM_BOT_TOKEN')) {
+            try {
+              const summaryRes = await fetch(
+                new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ roundId: round.id }),
+                },
+              )
+              if (!summaryRes.ok) {
+                console.error('Summary function failed:', summaryRes.status, await summaryRes.text())
+              } else {
+                console.log('Round summary sent:', await summaryRes.text())
+              }
+            } catch (e) {
+              console.error('Failed to call summary function:', e)
+            }
+          }
         }
       }
     }
