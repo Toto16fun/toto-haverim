@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List, Clock } from 'lucide-react';
+import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, Clock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
 import { useIsLeagueAdmin, useUserLeague, useLeagueMembers } from "@/hooks/useLeagues";
