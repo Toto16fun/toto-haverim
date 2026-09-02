@@ -18,3 +18,6 @@ verify_jwt = false
 
 [functions.fetch-games-web]
 verify_jwt = false
+
+[functions.fetch-results-web]
+verify_jwt = false
