@@ -202,7 +202,7 @@ const CurrentRound = () => {
                   <CardTitle className="text-center">
                     מחזור {currentRound.round_number}
                   </CardTitle>
-                  <Badge className={isDeadlinePassed ? "bg-destructive/20 text-destructive-foreground border border-destructive/40" : "bg-green-100 text-foreground font-display"}>
+                  <Badge className={isDeadlinePassed ? "bg-destructive/20 text-destructive-foreground border border-destructive/40" : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"}>
                     {isDeadlinePassed ? "מחזור נעול" : "מחזור פעיל"}
                   </Badge>
                 </div>

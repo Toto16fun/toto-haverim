@@ -156,7 +156,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     if (existingBet) {
       return {
         status: "טור הוגש - עריכה אפשרית",
-        color: "bg-green-100 text-foreground font-display",
+        color: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
         message: `עריכה אפשרית עד: ${formatIsraelDateTime(deadline)}`
       };
     }
