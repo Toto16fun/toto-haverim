@@ -62,6 +62,31 @@ const GamesTable = ({
     }
   };
 
+  // A game is "live" once its kickoff time has passed but no result is in yet
+  const isLive = (game: Game) =>
+    !game.result && !game.is_cancelled && !!game.kickoff_at && new Date(game.kickoff_at) <= new Date();
+
+  const renderResultCell = (game: Game) => {
+    if (game.result) {
+      return (
+        <Badge variant="secondary" className="text-[10px] sm:text-sm px-1 py-0">
+          {game.result}
+        </Badge>
+      );
+    }
+    if (isLive(game)) {
+      return (
+        <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium text-primary whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          פעיל
+        </span>
+      );
+    }
+    return <span className="text-muted-foreground text-[10px]">-</span>;
+  };
+
+
+
 
   // If it's read-only, show simplified table without betting options
   if (isReadOnly) {
