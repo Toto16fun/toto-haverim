@@ -9,10 +9,10 @@ const Statistics = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען סטטיסטיקות...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">טוען סטטיסטיקות...</p>
         </div>
       </div>
     );
@@ -20,7 +20,7 @@ const Statistics = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">שגיאה בטעינת הסטטיסטיקות</p>
         </div>
@@ -38,14 +38,14 @@ const Statistics = () => {
   const getPositionColor = (index: number) => {
     switch (index) {
       case 0: return 'bg-yellow-50 border-yellow-200';
-      case 1: return 'bg-gray-50 border-gray-200';
+      case 1: return 'bg-muted/40 border-gray-200';
       case 2: return 'bg-orange-50 border-orange-200';
-      default: return 'bg-white border-gray-100';
+      default: return 'bg-card border-gray-100';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
+    <div className="theme-elite-dark min-h-screen bg-background p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-6xl mx-auto">
         <Link to="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
           <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
@@ -53,15 +53,15 @@ const Statistics = () => {
         </Link>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">סטטיסטיקות העונה</h1>
-          <p className="text-gray-600">נתונים מצטברים וביצועים של חברי הקבוצה</p>
+          <h1 className="text-3xl font-bold text-foreground font-display mb-2">סטטיסטיקות העונה</h1>
+          <p className="text-muted-foreground">נתונים מצטברים וביצועים של חברי הקבוצה</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Target className="h-5 w-5 mr-2 text-green-600" />
+                <Target className="h-5 w-5 mr-2 text-primary" />
                 מובילי הפגיעות הכוללות
               </CardTitle>
               <CardDescription>סך כל הפגיעות בעונה</CardDescription>
@@ -75,11 +75,11 @@ const Statistics = () => {
                         <span className="font-medium text-lg mr-2">#{index + 1}</span>
                         <span className="font-medium">{player.user_name}</span>
                       </div>
-                      <span className="text-xl font-bold text-green-600">
+                      <span className="text-xl font-bold text-primary">
                         {player.total_hits}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {player.rounds_played} מחזורים • ממוצע: {(player.total_hits / player.rounds_played).toFixed(1)}
                     </div>
                   </div>
@@ -109,7 +109,7 @@ const Statistics = () => {
                         {player.first_places}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {player.rounds_played} מחזורים • {((player.first_places / player.rounds_played) * 100).toFixed(1)}% זכיות
                     </div>
                   </div>
@@ -141,7 +141,7 @@ const Statistics = () => {
                         {player.times_payer} 💸
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {player.rounds_played} מחזורים
                     </div>
                   </div>
@@ -171,7 +171,7 @@ const Statistics = () => {
                         {player.best_score}/16
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       {player.rounds_played} מחזורים
                     </div>
                   </div>
@@ -202,7 +202,7 @@ const Statistics = () => {
                 </thead>
                 <tbody>
                   {stats.map((player) => (
-                    <tr key={player.user_id} className="border-b hover:bg-gray-50">
+                    <tr key={player.user_id} className="border-b hover:bg-muted/40">
                       <td className="font-medium p-2">{player.user_name}</td>
                       <td className="text-center p-2">{player.total_hits}</td>
                       <td className="text-center p-2">{player.rounds_played}</td>

@@ -156,7 +156,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
     if (existingBet) {
       return {
         status: "טור הוגש - עריכה אפשרית",
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-foreground font-display",
         message: `עריכה אפשרית עד: ${formatIsraelDateTime(deadline)}`
       };
     }
@@ -203,7 +203,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
               {statusDisplay.status}
             </Badge>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {statusDisplay.message}
           </p>
           
@@ -225,7 +225,7 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
           {/* Success Message */}
           {!isDeadlinePassed && validation.canSubmit && (
             <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-foreground font-display">
                 ✓ הטור מוכן לשליחה!
               </p>
             </div>
@@ -255,9 +255,9 @@ const BetForm = ({ roundId, games, existingBet, deadline }: BetFormProps) => {
       )}
       
       {isDeadlinePassed && !existingBet && (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 text-lg font-medium mb-2">לא הוגש טור למחזור זה</p>
-          <p className="text-sm text-gray-500">הדדליין עבר ולא ניתן עוד להגיש טור</p>
+        <div className="text-center py-8 bg-muted/40 rounded-lg">
+          <p className="text-muted-foreground text-lg font-medium mb-2">לא הוגש טור למחזור זה</p>
+          <p className="text-sm text-muted-foreground">הדדליין עבר ולא ניתן עוד להגיש טור</p>
         </div>
       )}
     </div>

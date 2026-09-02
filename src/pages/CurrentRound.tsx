@@ -38,11 +38,11 @@ const CurrentRound = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className="theme-elite-dark min-h-screen bg-background p-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">נדרשת התחברות</h1>
-            <p className="text-gray-600 mb-6">יש להתחבר כדי לצפות במחזור הנוכחי</p>
+            <h1 className="text-2xl font-bold text-foreground mb-4">נדרשת התחברות</h1>
+            <p className="text-muted-foreground mb-6">יש להתחבר כדי לצפות במחזור הנוכחי</p>
             <Button onClick={() => navigate('/auth')}>
               התחבר
             </Button>
@@ -54,10 +54,10 @@ const CurrentRound = () => {
 
   if (roundLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען נתוני מחזור...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">טוען נתוני מחזור...</p>
         </div>
       </div>
     );
@@ -148,7 +148,7 @@ const CurrentRound = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-2 sm:p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}>
+    <div className="theme-elite-dark min-h-screen bg-background p-2 sm:p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}>
       <div className="max-w-full mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <div className="flex items-center gap-4">
@@ -161,7 +161,7 @@ const CurrentRound = () => {
               <ArrowRight className="h-4 w-4" />
               חזור לעמוד הראשי
             </Button>
-            <h1 className="text-3xl font-bold text-green-800">מחזור נוכחי</h1>
+            <h1 className="text-3xl font-bold text-foreground font-display">מחזור נוכחי</h1>
           </div>
 
           {isAdmin && (
@@ -187,10 +187,10 @@ const CurrentRound = () => {
 
         {!currentRound ? (
           <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">אין מחזור פעיל</h2>
-            <p className="text-gray-600">עדיין לא נוצר מחזור טוטו חדש</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">אין מחזור פעיל</h2>
+            <p className="text-muted-foreground">עדיין לא נוצר מחזור טוטו חדש</p>
             {isAdmin && (
-              <p className="text-sm text-gray-500 mt-2">השתמש בכפתור "פתיחת מחזור חדש" כדי להתחיל מחזור חדש</p>
+              <p className="text-sm text-muted-foreground mt-2">השתמש בכפתור "פתיחת מחזור חדש" כדי להתחיל מחזור חדש</p>
             )}
           </div>
         ) : (
@@ -202,11 +202,11 @@ const CurrentRound = () => {
                   <CardTitle className="text-center">
                     מחזור {currentRound.round_number}
                   </CardTitle>
-                  <Badge className={isDeadlinePassed ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
+                  <Badge className={isDeadlinePassed ? "bg-red-100 text-red-800" : "bg-green-100 text-foreground font-display"}>
                     {isDeadlinePassed ? "מחזור נעול" : "מחזור פעיל"}
                   </Badge>
                 </div>
-                <p className="text-center text-gray-600">
+                <p className="text-center text-muted-foreground">
                   {isDeadlinePassed ? "נעול מאז:" : "סגירה:"} {formatIsraelDateTime(currentRound.deadline)}
                 </p>
               </CardHeader>
@@ -266,16 +266,16 @@ const CurrentRound = () => {
                       }
                       
                       return (
-                        <div key={bet.id} className="border rounded-lg p-2 sm:p-4 bg-white">
+                        <div key={bet.id} className="border rounded-lg p-2 sm:p-4 bg-card">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                               <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-gray-500" />
+                                <User className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-medium text-sm sm:text-base">
                                   {bet.user_id === user.id ? 'הטור שלי' : userName}
                                 </span>
                               </div>
-                              <span className="text-xs sm:text-sm text-gray-500">
+                              <span className="text-xs sm:text-sm text-muted-foreground">
                                 {new Date(bet.submitted_at).toLocaleString('he-IL')}
                               </span>
                             </div>
@@ -319,7 +319,7 @@ const CurrentRound = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-600">
+                  <div className="text-center py-8 text-muted-foreground">
                     עדיין לא הוגשו טורים למחזור זה
                   </div>
                 )}

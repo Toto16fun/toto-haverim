@@ -21,11 +21,11 @@ const SubmitBet = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className="theme-elite-dark min-h-screen bg-background p-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">נדרשת התחברות</h1>
-            <p className="text-gray-600 mb-6">יש להתחבר כדי להגיש טור</p>
+            <h1 className="text-2xl font-bold text-foreground mb-4">נדרשת התחברות</h1>
+            <p className="text-muted-foreground mb-6">יש להתחבר כדי להגיש טור</p>
             <Button onClick={() => navigate('/auth')}>
               התחבר
             </Button>
@@ -42,10 +42,10 @@ const SubmitBet = () => {
 
   if (roundLoading || gamesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="theme-elite-dark min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען נתוני מחזור...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">טוען נתוני מחזור...</p>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ const SubmitBet = () => {
   const isDeadlinePassed = currentRound && new Date() > new Date(currentRound.deadline);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
+    <div className="theme-elite-dark min-h-screen bg-background p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Button 
@@ -67,21 +67,21 @@ const SubmitBet = () => {
             <ArrowRight className="h-4 w-4" />
             חזור לעמוד הראשי
           </Button>
-          <h1 className="text-3xl font-bold text-green-800">הגשת טור</h1>
+          <h1 className="text-3xl font-bold text-foreground font-display">הגשת טור</h1>
         </div>
 
         {!currentRound ? (
           <div className="text-center py-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">אין מחזור פעיל</h2>
-            <p className="text-gray-600">עדיין לא נוצר מחזור טוטו חדש</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">אין מחזור פעיל</h2>
+            <p className="text-muted-foreground">עדיין לא נוצר מחזור טוטו חדש</p>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-green-800">
+              <h2 className="text-xl font-semibold text-foreground font-display">
                 מחזור {currentRound.round_number}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 סגירה: {formatIsraelDateTime(currentRound.deadline)}
               </p>
               {isDeadlinePassed && (
@@ -101,15 +101,15 @@ const SubmitBet = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">הדדליין למחזור זה עבר</p>
+                  <p className="text-muted-foreground">הדדליין למחזור זה עבר</p>
                   {myBet && (
-                    <p className="text-green-600 mt-2">הטור שלך הוגש בהצלחה</p>
+                    <p className="text-primary mt-2">הטור שלך הוגש בהצלחה</p>
                   )}
                 </div>
               )
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-600">המשחקים עדיין לא הוגדרו למחזור זה</p>
+                <p className="text-muted-foreground">המשחקים עדיין לא הוגדרו למחזור זה</p>
               </div>
             )}
           </div>
