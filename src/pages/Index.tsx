@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { Trophy, Users, History, BarChart3, LogIn, LogOut, Lock, ImageIcon, Settings, Shield, UserPlus, Plus, Activity, Target, List, Clock } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useCanEditResults, useUserRoles } from "@/hooks/useUserRoles";
-import { useIsLeagueAdmin, useUserLeague } from "@/hooks/useLeagues";
+import { useIsLeagueAdmin, useUserLeague, useLeagueMembers } from "@/hooks/useLeagues";
 import { useCurrentRound, useGamesInRound } from "@/hooks/useTotoRounds";
 import { useRoundScores } from "@/hooks/useRoundScores";
+import { useUserBets } from "@/hooks/useUserBets";
 
 interface TimeLeft {
   days: number;
@@ -60,11 +61,15 @@ const Index = () => {
   const { data: currentRound, isLoading: currentRoundLoading } = useCurrentRound();
   const { data: games } = useGamesInRound(currentRound?.id);
   const { data: roundScores } = useRoundScores(currentRound?.id);
+  const { data: leagueMembers } = useLeagueMembers(userLeague?.id);
+  const { data: roundBets } = useUserBets(currentRound?.id);
   const timeLeft = useCountdown(currentRound?.deadline);
 
   const finishedGames = games?.filter(g => g.result).length || 0;
   const totalGames = games?.length || 0;
   const topScorer = roundScores?.[0];
+  const submittedBets = roundBets?.length || 0;
+  const memberCount = leagueMembers?.length || 0;
   const isDeadlineActive = currentRound && new Date(currentRound.deadline) > new Date();
 
   if (loading) {
@@ -181,10 +186,10 @@ const Index = () => {
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <div className="bg-secondary/50 border border-border rounded-2xl p-3">
                     <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
-                      <List className="h-3 w-3" />
-                      משחקי המחזור
+                      <Users className="h-3 w-3" />
+                      טורים הוגשו
                     </div>
-                    <p className="text-foreground text-xl font-bold">{totalGames}<span className="text-muted-foreground text-sm font-medium">/16</span></p>
+                    <p className="text-foreground text-xl font-bold">{submittedBets}<span className="text-muted-foreground text-sm font-medium">/{memberCount || '—'}</span></p>
                   </div>
                   <div className="bg-secondary/50 border border-border rounded-2xl p-3">
                     <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-wider mb-1">
