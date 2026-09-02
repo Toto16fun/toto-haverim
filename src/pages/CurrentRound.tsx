@@ -156,7 +156,7 @@ const CurrentRound = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate('/')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-foreground hover:text-foreground"
             >
               <ArrowRight className="h-4 w-4" />
               חזור לעמוד הראשי
