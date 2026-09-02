@@ -37,12 +37,13 @@ const Statistics = () => {
 
   const getPositionColor = (index: number) => {
     switch (index) {
-      case 0: return 'bg-yellow-50 border-yellow-200';
-      case 1: return 'bg-muted/40 border-gray-200';
-      case 2: return 'bg-orange-50 border-orange-200';
-      default: return 'bg-card border-gray-100';
+      case 0: return 'bg-amber-400/10 border-amber-400/30';
+      case 1: return 'bg-slate-400/10 border-slate-400/25';
+      case 2: return 'bg-orange-500/10 border-orange-500/25';
+      default: return 'bg-muted/30 border-border';
     }
   };
+
 
   return (
     <div className="theme-elite-dark min-h-screen bg-background p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
