@@ -181,17 +181,45 @@ serve(async (req) => {
     }
 
     console.log(`Successfully created draft round ${nextNum} with ID ${created.id}`);
-    
+
+    // Automatically fetch the upcoming round's fixtures from the web
+    let gamesFetched = 0;
+    let fetchError: string | null = null;
+    try {
+      const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-games-web`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({ roundId: created.id }),
+      });
+      const result = await res.json();
+      if (res.ok && result?.success) {
+        gamesFetched = result.games?.length ?? 0;
+        console.log(`Fetched ${gamesFetched} games for round ${nextNum}`);
+      } else {
+        fetchError = result?.error ?? `status ${res.status}`;
+        console.error('Auto fetch-games-web failed:', fetchError);
+      }
+    } catch (e) {
+      fetchError = String(e);
+      console.error('Auto fetch-games-web threw:', e);
+    }
+
     return new Response(
       JSON.stringify({ 
         ok: true, 
         created: created.id, 
         roundNumber: nextNum,
         deadline,
-        status: 'draft'
+        status: 'draft',
+        gamesFetched,
+        fetchError
       }), 
       { headers: { ...corsHeaders, 'content-type': 'application/json' } }
     );
+
     
   } catch (error) {
     console.error('Error in schedule-create-draft function:', error);
