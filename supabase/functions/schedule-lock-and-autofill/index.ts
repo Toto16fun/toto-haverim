@@ -72,27 +72,9 @@ serve(async (req) => {
           console.log(`Successfully processed lockRound for round ${round.round_number}`);
         }
 
-        // Send the funny bets recap to Telegram (idempotent — skips if already sent)
-        try {
-          const recapResponse = await fetch(
-            new URL('/functions/v1/bets-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ roundId: round.id })
-            }
-          );
-          if (!recapResponse.ok) {
-            console.error(`bets-summary-telegram failed for round ${round.id}:`, await recapResponse.text());
-          } else {
-            console.log(`Bets recap sent for round ${round.round_number}`);
-          }
-        } catch (recapError) {
-          console.error(`Error sending bets recap for round ${round.id}:`, recapError);
-        }
+        // Note: the funny bets recap is NOT sent here — it is sent by the
+        // 'send-bets-recap-on-first-kickoff' cron when the first game starts.
+
 
         locked.push({ id: round.id, roundNumber: round.round_number });
         
