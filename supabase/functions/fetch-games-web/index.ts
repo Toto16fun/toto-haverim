@@ -6,7 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 //
 // Body: { roundId?: string, dryRun?: boolean, url?: string }
 
-const DEFAULT_URL = 'https://www.toto.co.il/lines-toto'
+const DEFAULT_URL = 'https://www.telesport.co.il/%D7%98%D7%95%D7%98%D7%95'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
