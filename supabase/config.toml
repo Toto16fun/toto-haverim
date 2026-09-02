@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.fetch-results-web]
 verify_jwt = false
+
+[functions.round-summary-telegram]
+verify_jwt = false
