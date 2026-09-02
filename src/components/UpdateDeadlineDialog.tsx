@@ -12,9 +12,10 @@ interface UpdateDeadlineDialogProps {
   roundId: string;
   roundNumber: number;
   currentDeadline: string;
+  className?: string;
 }
 
-export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDeadline }: UpdateDeadlineDialogProps) {
+export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDeadline, className }: UpdateDeadlineDialogProps) {
   const [open, setOpen] = useState(false);
   const [newDeadline, setNewDeadline] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +65,7 @@ export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDead
         <Button
           variant="outline"
           size="sm"
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${className || ''}`}
         >
           <Calendar className="h-4 w-4" />
           עדכון מועד סגירה

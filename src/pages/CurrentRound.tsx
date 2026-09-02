@@ -150,23 +150,25 @@ const CurrentRound = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-2 sm:p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}>
       <div className="max-w-full mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2"
-          >
-            <ArrowRight className="h-4 w-4" />
-            חזור לעמוד הראשי
-          </Button>
-          <h1 className="text-3xl font-bold text-green-800">מחזור נוכחי</h1>
-          
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <ArrowRight className="h-4 w-4" />
+              חזור לעמוד הראשי
+            </Button>
+            <h1 className="text-3xl font-bold text-green-800">מחזור נוכחי</h1>
+          </div>
+
           {isAdmin && (
-            <div className="flex gap-2 mr-auto">
+            <div className="flex flex-col sm:flex-row gap-2 sm:mr-auto w-full sm:w-auto">
               <Button
                 onClick={() => setShowNewRoundDialog(true)}
-                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 פתיחת מחזור חדש
@@ -176,6 +178,7 @@ const CurrentRound = () => {
                   roundId={currentRound.id}
                   roundNumber={currentRound.round_number}
                   currentDeadline={currentRound.deadline}
+                  className="w-full sm:w-auto"
                 />
               )}
             </div>
