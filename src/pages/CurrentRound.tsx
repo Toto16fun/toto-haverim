@@ -202,7 +202,7 @@ const CurrentRound = () => {
                   <CardTitle className="text-center">
                     מחזור {currentRound.round_number}
                   </CardTitle>
-                  <Badge className={isDeadlinePassed ? "bg-red-100 text-red-800" : "bg-green-100 text-foreground font-display"}>
+                  <Badge className={isDeadlinePassed ? "bg-destructive/20 text-destructive-foreground border border-destructive/40" : "bg-green-100 text-foreground font-display"}>
                     {isDeadlinePassed ? "מחזור נעול" : "מחזור פעיל"}
                   </Badge>
                 </div>
@@ -281,7 +281,7 @@ const CurrentRound = () => {
                             </div>
                             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                               {finishedGamesCount > 0 && (
-                                <Badge variant="default" className="text-xs bg-green-600">
+                                <Badge variant="default" className="text-xs bg-emerald-600">
                                   נכונים: {correctCount}/{finishedGamesCount}
                                 </Badge>
                               )}
