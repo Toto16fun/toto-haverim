@@ -110,14 +110,9 @@ const GamesTable = ({
                   <TableRow key={game.id}>
                     <TableCell className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">
                       <div className="font-semibold">
-                        {game.result ? (
-                          <Badge variant="secondary" className="text-[10px] sm:text-sm px-1 py-0">
-                            {game.result}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400 text-[10px]">-</span>
-                        )}
+                        {renderResultCell(game)}
                       </div>
+
                     </TableCell>
                     <TableCell className="text-center font-medium text-[9px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
                       <div className="break-words leading-tight">
