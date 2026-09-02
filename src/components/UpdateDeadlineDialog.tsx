@@ -12,9 +12,10 @@ interface UpdateDeadlineDialogProps {
   roundId: string;
   roundNumber: number;
   currentDeadline: string;
+  className?: string;
 }
 
-export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDeadline }: UpdateDeadlineDialogProps) {
+export default function UpdateDeadlineDialog({ roundId, roundNumber, currentDeadline, className }: UpdateDeadlineDialogProps) {
   const [open, setOpen] = useState(false);
   const [newDeadline, setNewDeadline] = useState('');
   const [isLoading, setIsLoading] = useState(false);
