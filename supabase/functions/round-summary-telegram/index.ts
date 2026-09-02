@@ -106,27 +106,30 @@ Deno.serve(async (req) => {
     if (gamesError) return json({ error: gamesError.message }, 500)
     if (!games?.length) return json({ error: 'No games in round' }, 400)
 
-    // 3. Leagues participating in this round (via round_scores)
+    // 3. Scores for this round (league comes from profiles)
     const { data: scoreRows, error: scoresError } = await supabase
       .from('round_scores')
-      .select('league_id, user_id, points, rank')
+      .select('user_id, hits, rank, is_payer')
       .eq('round_id', round.id)
-      .order('points', { ascending: false })
+      .order('hits', { ascending: false })
     if (scoresError) return json({ error: scoresError.message }, 500)
     if (!scoreRows?.length) return json({ ok: true, message: 'No scores for round', sent: 0 })
 
-    const leagueIds = [...new Set(scoreRows.map((s) => s.league_id))]
-    const { data: leagues } = await supabase.from('leagues').select('id, name').in('id', leagueIds)
-    const leagueName = (id: string) => leagues?.find((l) => l.id === id)?.name ?? 'ליגה'
-
     const userIds = [...new Set(scoreRows.map((s) => s.user_id))]
-    const { data: profiles } = await supabase.from('profiles').select('id, name').in('id', userIds)
+    const { data: profiles } = await supabase.from('profiles').select('id, name, league_id').in('id', userIds)
     const userName = (id: string) => profiles?.find((p) => p.id === id)?.name ?? 'משתמש'
+    const userLeague = (id: string) => profiles?.find((p) => p.id === id)?.league_id ?? null
+
+    const leagueIds = [...new Set(profiles?.map((p) => p.league_id).filter(Boolean) ?? [])] as string[]
+    const { data: leagues } = leagueIds.length
+      ? await supabase.from('leagues').select('id, name').in('id', leagueIds)
+      : { data: [] }
+    const leagueName = (id: string) => leagues?.find((l) => l.id === id)?.name ?? 'ליגה'
 
     // 4. Bets + predictions for hit counts and spicy commentary
     const { data: bets } = await supabase
       .from('user_bets')
-      .select('id, user_id, league_id')
+      .select('id, user_id')
       .eq('round_id', round.id)
     const betIds = (bets ?? []).map((b) => b.id)
     const { data: predictions } = betIds.length
@@ -161,17 +164,18 @@ Deno.serve(async (req) => {
 
     for (const leagueId of leagueIds) {
       const leagueScores = scoreRows
-        .filter((s) => s.league_id === leagueId)
-        .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+        .filter((s) => userLeague(s.user_id) === leagueId)
+        .sort((a, b) => (b.hits ?? 0) - (a.hits ?? 0))
       if (!leagueScores.length) continue
 
       const standings = leagueScores.map((s, i) => ({
         place: i + 1,
         name: userName(s.user_id),
-        points: s.points ?? 0,
-        hits: perUser.get(s.user_id)?.hits ?? 0,
+        points: s.hits ?? 0,
+        hits: perUser.get(s.user_id)?.hits ?? s.hits ?? 0,
         doublesHit: perUser.get(s.user_id)?.doublesHit ?? 0,
         doublesTotal: perUser.get(s.user_id)?.doublesTotal ?? 0,
+        isPayer: s.is_payer ?? false,
       }))
 
       const resultsLine = finishedGames
