@@ -73,6 +73,38 @@ export type Database = {
           },
         ]
       }
+      bets_summaries: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          round_id: string
+          summaries: Json
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          round_id: string
+          summaries: Json
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          round_id?: string
+          summaries?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bets_summaries_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "toto_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
           actual_result: string | null
