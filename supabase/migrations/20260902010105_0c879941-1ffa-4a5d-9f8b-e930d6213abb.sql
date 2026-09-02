@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_user_league_id(uuid) TO authenticated;
