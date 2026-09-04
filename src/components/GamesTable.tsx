@@ -171,103 +171,102 @@ const GamesTable = ({
                    return showResults && gameResult && gamePredictions.includes(option) && gameResult !== option;
                  };
                  
-                   return (
-                    <TableRow key={game.id}>
-                      <TableCell className="text-center p-0.5 sm:p-4">
-                        <div className="relative inline-block">
-                          <Button
-                            variant={gamePredictions.includes('2') ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleOptionClick(game.id, '2')}
-                            disabled={isReadOnly}
-                            className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
-                              gamePredictions.includes('2') 
-                                ? isOptionCorrect('2')
-                                  ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
-                                  : isOptionWrong('2')
-                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                : ''
-                            }`}
-                          >
-                            2
-                          </Button>
-                          {showResults && gamePredictions.includes('2') && isOptionCorrect('2') && (
-                            <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center p-0.5 sm:p-4">
-                        <div className="relative inline-block">
-                          <Button
-                            variant={gamePredictions.includes('X') ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleOptionClick(game.id, 'X')}
-                            disabled={isReadOnly}
-                            className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
-                              gamePredictions.includes('X') 
-                                ? isOptionCorrect('X')
-                                  ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
-                                  : isOptionWrong('X')
-                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                : ''
-                            }`}
-                          >
-                            X
-                          </Button>
-                          {showResults && gamePredictions.includes('X') && isOptionCorrect('X') && (
-                            <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center p-0.5 sm:p-4">
-                        <div className="relative inline-block">
-                          <Button
-                            variant={gamePredictions.includes('1') ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleOptionClick(game.id, '1')}
-                            disabled={isReadOnly}
-                            className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
-                              gamePredictions.includes('1') 
-                                ? isOptionCorrect('1')
-                                  ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
-                                  : isOptionWrong('1')
-                                  ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
-                                  : 'bg-blue-600 hover:bg-blue-700'
-                                : ''
-                            }`}
-                          >
-                            1
-                          </Button>
-                          {showResults && gamePredictions.includes('1') && isOptionCorrect('1') && (
-                            <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center p-0.5 sm:p-4">
-                        {isDouble && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600 text-[9px] sm:text-xs px-0.5 sm:px-1 py-0">
-                            כפול
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">
-                        <div className="font-semibold">
-                          {renderResultCell(game)}
-                        </div>
-
-                      </TableCell>
-                     <TableCell className="text-center font-medium text-[9px] sm:text-xs p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
-                       <div className="break-words leading-tight">
-                         {game.home_team} - {game.away_team}
-                       </div>
-                     </TableCell>
-                     <TableCell className="text-center font-medium text-[10px] sm:text-xs p-0.5 sm:p-4">
-                       {game.game_number}
-                     </TableCell>
-                   </TableRow>
-                 );
+                    return (
+                     <TableRow key={game.id}>
+                       <TableCell className="text-center font-medium text-[10px] sm:text-xs p-0.5 sm:p-4">
+                         {game.game_number}
+                       </TableCell>
+                       <TableCell className="text-center font-medium text-[9px] sm:text-xs p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
+                         <div className="break-words leading-tight">
+                           {game.home_team} - {game.away_team}
+                         </div>
+                       </TableCell>
+                       <TableCell className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">
+                         <div className="font-semibold">
+                           {renderResultCell(game)}
+                         </div>
+                       </TableCell>
+                       <TableCell className="text-center p-0.5 sm:p-4">
+                         {isDouble && (
+                           <Badge variant="outline" className="text-orange-600 border-orange-600 text-[9px] sm:text-xs px-0.5 sm:px-1 py-0">
+                             כפול
+                           </Badge>
+                         )}
+                       </TableCell>
+                       <TableCell className="text-center p-0.5 sm:p-4">
+                         <div className="relative inline-block">
+                           <Button
+                             variant={gamePredictions.includes('1') ? "default" : "outline"}
+                             size="sm"
+                             onClick={() => handleOptionClick(game.id, '1')}
+                             disabled={isReadOnly}
+                             className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
+                               gamePredictions.includes('1') 
+                                 ? isOptionCorrect('1')
+                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                   : isOptionWrong('1')
+                                   ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
+                                   : 'bg-blue-600 hover:bg-blue-700'
+                                 : ''
+                             }`}
+                           >
+                             1
+                           </Button>
+                           {showResults && gamePredictions.includes('1') && isOptionCorrect('1') && (
+                             <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
+                           )}
+                         </div>
+                       </TableCell>
+                       <TableCell className="text-center p-0.5 sm:p-4">
+                         <div className="relative inline-block">
+                           <Button
+                             variant={gamePredictions.includes('X') ? "default" : "outline"}
+                             size="sm"
+                             onClick={() => handleOptionClick(game.id, 'X')}
+                             disabled={isReadOnly}
+                             className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
+                               gamePredictions.includes('X') 
+                                 ? isOptionCorrect('X')
+                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                   : isOptionWrong('X')
+                                   ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
+                                   : 'bg-blue-600 hover:bg-blue-700'
+                                 : ''
+                             }`}
+                           >
+                             X
+                           </Button>
+                           {showResults && gamePredictions.includes('X') && isOptionCorrect('X') && (
+                             <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
+                           )}
+                         </div>
+                       </TableCell>
+                       <TableCell className="text-center p-0.5 sm:p-4">
+                         <div className="relative inline-block">
+                           <Button
+                             variant={gamePredictions.includes('2') ? "default" : "outline"}
+                             size="sm"
+                             onClick={() => handleOptionClick(game.id, '2')}
+                             disabled={isReadOnly}
+                             className={`w-5 h-5 sm:w-8 sm:h-8 text-[10px] sm:text-xs p-0 ${
+                               gamePredictions.includes('2') 
+                                 ? isOptionCorrect('2')
+                                   ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-400 ring-offset-1'
+                                   : isOptionWrong('2')
+                                   ? 'bg-blue-600 hover:bg-blue-700 ring-1 ring-red-500'
+                                   : 'bg-blue-600 hover:bg-blue-700'
+                                 : ''
+                             }`}
+                           >
+                             2
+                           </Button>
+                           {showResults && gamePredictions.includes('2') && isOptionCorrect('2') && (
+                             <CheckCircle2 className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600 bg-white rounded-full" />
+                           )}
+                         </div>
+                       </TableCell>
+                    </TableRow>
+                  );
                })}
                {showSummary && (
                  <TableRow className="border-t-2 bg-muted/30 font-semibold">
