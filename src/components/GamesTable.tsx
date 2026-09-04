@@ -143,13 +143,13 @@ const GamesTable = ({
           <Table className="text-[10px] sm:text-sm">
             <TableHeader>
                <TableRow>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">2</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">X</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">1</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">כפול</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">תוצאה</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">קבוצות</TableHead>
                  <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">#</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">קבוצות</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">תוצאה</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">כפול</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">1</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">X</TableHead>
+                 <TableHead className="text-center text-[10px] sm:text-xs p-0.5 sm:p-4">2</TableHead>
                </TableRow>
             </TableHeader>
              <TableBody>
