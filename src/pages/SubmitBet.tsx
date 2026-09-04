@@ -19,6 +19,11 @@ const SubmitBet = () => {
   // Basic admin check - can be enhanced later with proper role system
   const isAdmin = user?.email === 'tomercohen1995@gmail.com';
 
+  // Ensure fresh round data on mount - must be before any early return
+  useEffect(() => {
+    refetchRound();
+  }, [refetchRound]);
+
   if (!user) {
     return (
       <div className="theme-elite-dark min-h-screen bg-background p-4">
@@ -34,11 +39,6 @@ const SubmitBet = () => {
       </div>
     );
   }
-
-  // Ensure fresh round data on mount
-  useEffect(() => {
-    refetchRound();
-  }, [refetchRound]);
 
   if (roundLoading || gamesLoading) {
     return (
