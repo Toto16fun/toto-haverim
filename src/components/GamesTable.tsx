@@ -98,33 +98,32 @@ const GamesTable = ({
       <CardContent className="p-0 sm:p-6">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
-               <TableRow>
-                 <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">תוצאה נכונה</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">קבוצות</TableHead>
-                 <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">#</TableHead>
-               </TableRow>
-            </TableHeader>
-            <TableBody>
-               {games.map(game => (
-                  <TableRow key={game.id}>
-                    <TableCell className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">
-                      <div className="font-semibold">
-                        {renderResultCell(game)}
-                      </div>
-
-                    </TableCell>
-                    <TableCell className="text-center font-medium text-[9px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
-                      <div className="break-words leading-tight">
-                        {game.home_team} - {game.away_team}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center font-medium text-[10px] sm:text-sm p-0.5 sm:p-4">
-                      {game.game_number}
-                    </TableCell>
-                  </TableRow>
-               ))}
-            </TableBody>
+             <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">#</TableHead>
+                  <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">קבוצות</TableHead>
+                  <TableHead className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">תוצאה נכונה</TableHead>
+                </TableRow>
+             </TableHeader>
+             <TableBody>
+                {games.map(game => (
+                   <TableRow key={game.id}>
+                     <TableCell className="text-center font-medium text-[10px] sm:text-sm p-0.5 sm:p-4">
+                       {game.game_number}
+                     </TableCell>
+                     <TableCell className="text-center font-medium text-[9px] sm:text-sm p-0.5 sm:p-4 min-w-[80px] sm:min-w-0">
+                       <div className="break-words leading-tight">
+                         {game.home_team} - {game.away_team}
+                       </div>
+                     </TableCell>
+                     <TableCell className="text-center text-[10px] sm:text-sm p-0.5 sm:p-4">
+                       <div className="font-semibold">
+                         {renderResultCell(game)}
+                       </div>
+                     </TableCell>
+                   </TableRow>
+                ))}
+             </TableBody>
             </Table>
           </div>
         </CardContent>
