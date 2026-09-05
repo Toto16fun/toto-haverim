@@ -189,7 +189,10 @@ ${markdown.slice(0, 30000)}`
         updates,
         mismatches,
         scrapedCount: scraped.length,
+        scraped,
+        markdownSample: body?.debug ? markdown.slice(0, 6000) : undefined,
       })
+
     }
 
     let updatedCount = 0
