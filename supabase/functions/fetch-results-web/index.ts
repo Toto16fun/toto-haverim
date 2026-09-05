@@ -1,14 +1,15 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-// Scrapes the Telesport Toto-16 page with Firecrawl and extracts live results
-// (1 / X / 2) for finished games using Lovable AI, then updates the games table
-// and recomputes round scores live.
+// Scrapes the bankerim.co.il Winner-16 page with Firecrawl and extracts live
+// results (1 / X / 2) for finished games using Lovable AI, then updates the
+// games table and recomputes round scores live.
 //
 // Body: { roundId?: string, dryRun?: boolean, url?: string }
 // If roundId is omitted, picks the latest round that still has games without results.
 
-const DEFAULT_URL = 'https://m.telesport.co.il/winner-16'
+const DEFAULT_URL =
+  'https://www.bankerim.co.il/%D7%9E%D7%A9%D7%97%D7%A7%D7%99%D7%9D/%D7%95%D7%95%D7%99%D7%A0%D7%A8-16.html'
 
 const normalize = (s: string) =>
   (s ?? '')
