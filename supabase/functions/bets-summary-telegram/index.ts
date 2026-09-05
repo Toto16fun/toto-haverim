@@ -62,17 +62,28 @@ Deno.serve(async (req) => {
       if (error || !data) return json({ error: 'Round not found' }, 404)
       round = data
     } else {
+      // The recap belongs to the round whose deadline has just passed —
+      // NOT simply "the latest locked round" (a round can still be 'active'
+      // if the lock job lagged, which previously made us recap an old round).
+      const nowIso = new Date().toISOString()
       const { data, error } = await supabase
         .from('toto_rounds')
-        .select('id, round_number')
-        .in('status', ['locked', 'finished'])
-        .order('round_number', { ascending: false })
+        .select('id, round_number, deadline')
+        .lte('deadline', nowIso)
+        .order('deadline', { ascending: false })
         .limit(1)
         .maybeSingle()
       if (error) return json({ error: error.message }, 500)
-      if (!data) return json({ ok: true, message: 'No locked round found', sent: 0 })
+      if (!data) return json({ ok: true, message: 'No closed round found', sent: 0 })
+
+      // Only recap a round that closed within the last 24h — never an old one.
+      const ageMs = Date.now() - new Date(data.deadline).getTime()
+      if (ageMs > 24 * 60 * 60 * 1000) {
+        return json({ ok: true, message: 'Latest closed round is too old to recap', sent: 0, roundId: data.id })
+      }
       round = data
     }
+
 
     // Idempotency: don't recap the same round twice (unless dryRun)
     if (!dryRun) {
@@ -181,6 +192,9 @@ Deno.serve(async (req) => {
 - לפני טענה כמו "רק X הימר" — בדוק בפירוט ובעובדות המחושבות למטה שזה נכון.
 - אין להוסיף מידע חיצוני על הקבוצות (טבלה, פציעות, מאמנים) — אתה לא יודע אותו.
 - אם אינך בטוח בעובדה — אל תכתוב אותה.
+- כל הנתונים למטה שייכים אך ורק למחזור ${round.round_number}. אסור בתכלית האיסור להזכיר משחקים, קבוצות, בחירות או אירועים ממחזורים קודמים, גם אם אתה "זוכר" אותם.
+- כל שם קבוצה שאתה מזכיר חייב להופיע מילה במילה ברשימת המשחקים למטה.
+- אין לטעון שמישהו שלח טוטומט/מילוי אוטומטי אלא אם כתוב במפורש "הטור מולא אוטומטית (טוטומט)" ליד שמו בסטטיסטיקות.
 
 רקע על המשתתפים — להשתמש בחוכמה ובמידה, רק כשיש חיבור טבעי. לא לכפות בדיחה:
 
