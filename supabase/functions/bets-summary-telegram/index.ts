@@ -216,6 +216,7 @@ Deno.serve(async (req) => {
 
 סטטיסטיקות למשתתף:
 ${userStats.join('\n')}
+${autofilledNote}
 
 בחירות ייחודיות (רק אדם אחד הלך על זה):
 ${facts.length ? facts.join('\n') : 'אין — כולם הלכו באותו כיוון בערך'}
