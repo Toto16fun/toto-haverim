@@ -8,7 +8,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 // Body: { roundId?: string, dryRun?: boolean, url?: string }
 // If roundId is omitted, picks the latest round that still has games without results.
 
-const DEFAULT_URL = 'https://www.telesport.co.il/%D7%98%D7%95%D7%98%D7%95'
+const DEFAULT_URL = 'https://m.telesport.co.il/winner-16'
 
 const normalize = (s: string) =>
   (s ?? '')
