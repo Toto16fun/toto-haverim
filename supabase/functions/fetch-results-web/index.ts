@@ -1,14 +1,15 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-// Scrapes the Telesport Toto-16 page with Firecrawl and extracts live results
-// (1 / X / 2) for finished games using Lovable AI, then updates the games table
-// and recomputes round scores live.
+// Scrapes the bankerim.co.il Winner-16 page with Firecrawl and extracts live
+// results (1 / X / 2) for finished games using Lovable AI, then updates the
+// games table and recomputes round scores live.
 //
 // Body: { roundId?: string, dryRun?: boolean, url?: string }
 // If roundId is omitted, picks the latest round that still has games without results.
 
-const DEFAULT_URL = 'https://m.telesport.co.il/winner-16'
+const DEFAULT_URL =
+  'https://www.bankerim.co.il/%D7%9E%D7%A9%D7%97%D7%A7%D7%99%D7%9D/%D7%95%D7%95%D7%99%D7%A0%D7%A8-16.html'
 
 const normalize = (s: string) =>
   (s ?? '')
@@ -109,14 +110,15 @@ Deno.serve(async (req) => {
       return json({ error: 'Scrape returned empty content' }, 502)
     }
 
-    // 4. Extract live results with Lovable AI — only the "ווינר 16" section
-    const prompt = `זהו תוכן של עמוד טוטו "ווינר 16" באתר טלספורט. התמקד אך ורק ברשימת 16 המשחקים של ווינר 16 במחזור הנוכחי (התעלם מ"ווינר מחצית", "ווינר עולמי", ומרצועת המשחקים החיים בראש העמוד).
+    // 4. Extract live results with Lovable AI — the "ווינר 16" games table
+    const prompt = `זהו תוכן של עמוד "ווינר 16" באתר bankerim.co.il. התמקד אך ורק ברשימת 16 המשחקים שמתחת לכותרת "ווינר 16 | תוכניה מס'" (התעלם מתפריטי סינון, תוכניות עבר ופרסומות).
+כל משחק מופיע כשורה בסגנון: "**8.**הסתייםפרמייר ליגנוטינגהאם פורסט - טוטנהאם2.402.952.400 - 0" — כלומר: מספר משחק, סטטוס/זמן, ליגה, קבוצת בית - קבוצת חוץ, שלושה יחסים, ובמשחק שהסתיים גם תוצאת שערים בסוף.
 עבור כל אחד מ-16 המשחקים חלץ:
 - index: מספר המשחק (1-16)
 - home: קבוצת הבית
 - away: קבוצת החוץ
-- finished: true רק אם מופיע "הסתיים" או תוצאת שער סופית (למשל "2 - 1"). אם מופיע "?" או רק שעה/תאריך — false.
-- result: אם המשחק הסתיים — "1" (ניצחון בית), "X" (תיקו) או "2" (ניצחון חוץ). אם יש תוצאת שערים, גזור ממנה: שערי בית > שערי חוץ => "1", שווה => "X", אחרת => "2". אם לא הסתיים — null.
+- finished: true רק אם הסטטוס הוא "הסתיים" (וגם אם מופיעה תוצאת שערים). אם מופיע זמן עתידי ("היום 19:45", "ראשון 16:00") או דקת משחק חי ("37'") — false.
+- result: אם המשחק הסתיים — גזור מתוצאת השערים: שערי בית > שערי חוץ => "1", שווה => "X", אחרת => "2". אם לא הסתיים — null.
 
 החזר JSON בלבד בפורמט:
 {"games":[{"index":1,"home":"...","away":"...","finished":false,"result":null}]}
