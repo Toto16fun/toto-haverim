@@ -167,6 +167,12 @@ Deno.serve(async (req) => {
         )
       }
 
+      const anyAutofilled = leagueBets.some((b) => b.is_autofilled)
+      const autofilledNote = anyAutofilled
+        ? 'המשתתפים שמסומנים למעלה עם "הטור מולא אוטומטית (טוטומט)" — הם היחידים ששלחו טוטומט.'
+        : 'חשוב: במחזור הזה אף אחד לא שלח טוטומט/מילוי אוטומטי — אין להזכיר טוטומט בשום צורה, אפילו כבדיחה.'
+
+
       // Unique picks: per game, outcomes picked by exactly one person
       for (const g of games) {
         const pickers: Record<string, string[]> = { '1': [], X: [], '2': [] }
@@ -210,6 +216,7 @@ Deno.serve(async (req) => {
 
 סטטיסטיקות למשתתף:
 ${userStats.join('\n')}
+${autofilledNote}
 
 בחירות ייחודיות (רק אדם אחד הלך על זה):
 ${facts.length ? facts.join('\n') : 'אין — כולם הלכו באותו כיוון בערך'}
