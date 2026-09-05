@@ -120,10 +120,17 @@ Deno.serve(async (req) => {
     const userName = (id: string) => profiles?.find((p) => p.id === id)?.name ?? 'משתמש'
     const userLeague = (id: string) => profiles?.find((p) => p.id === id)?.league_id ?? null
 
-    const leagueIds = [...new Set(profiles?.map((p) => p.league_id).filter(Boolean) ?? [])] as string[]
-    const { data: leagues } = leagueIds.length
-      ? await supabase.from('leagues').select('id, name').in('id', leagueIds)
-      : { data: [] }
+    // Only summarize the main (first-created) league; skip secondary leagues like "ilay express"
+    const { data: mainLeague } = await supabase
+      .from('leagues')
+      .select('id, name')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+    if (!mainLeague) return json({ ok: true, message: 'No main league found', sent: 0 })
+
+    const leagueIds = [mainLeague.id] as string[]
+    const { data: leagues } = await supabase.from('leagues').select('id, name').eq('id', mainLeague.id)
     const leagueName = (id: string) => leagues?.find((l) => l.id === id)?.name ?? 'ליגה'
 
     // 4. Bets + predictions for hit counts and spicy commentary
