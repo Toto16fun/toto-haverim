@@ -1,15 +1,15 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-// Scrapes the bankerim.co.il Winner-16 page with Firecrawl and extracts live
-// results (1 / X / 2) for finished games using Lovable AI, then updates the
-// games table and recomputes round scores live.
+// Reads live Winner-16 results straight from bankerim.co.il's programme endpoint
+// (the same AJAX call the site's own page makes), parses 1 / X / 2 for finished
+// games deterministically, updates the games table and recomputes round scores.
 //
-// Body: { roundId?: string, dryRun?: boolean, url?: string }
+// Body: { roundId?: string, dryRun?: boolean, date?: string (YYYY-MM-DD) }
 // If roundId is omitted, picks the latest round that still has games without results.
 
-const DEFAULT_URL =
-  'https://www.bankerim.co.il/%D7%9E%D7%A9%D7%97%D7%A7%D7%99%D7%9D/%D7%95%D7%95%D7%99%D7%A0%D7%A8-16.html'
+const AJAX_URL = 'https://www.bankerim.co.il/php/ajaxHandller.php'
+const GAME_TYPE = '96'
 
 const normalize = (s: string) =>
   (s ?? '')
@@ -17,6 +17,66 @@ const normalize = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
+
+type ScrapedGame = {
+  index: number
+  home: string
+  away: string
+  finished: boolean
+  result: string | null
+}
+
+// Pull the programme HTML for a specific Saturday and parse each game row.
+async function fetchProgramme(dateISO: string): Promise<{ games: ScrapedGame[]; programme: string | null; raw: number }> {
+  const res = await fetch(`${AJAX_URL}?_=${Date.now()}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+      Referer: 'https://www.bankerim.co.il/',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Cache-Control': 'no-cache',
+    },
+    body: `myFunc=160&startTime=${dateISO}&logged=0&gameType=${GAME_TYPE}`,
+  })
+  if (!res.ok) throw new Error(`bankerim request failed: ${res.status}`)
+  const html = await res.text()
+
+  const programme = html.match(/data-info-roundid="(\d+)"/)?.[1] ?? null
+
+  // Each game is a <div class="game ..."> block; split on that boundary.
+  const blocks = html.split(/<div class="game /).slice(1)
+  const games: ScrapedGame[] = []
+
+  for (const block of blocks) {
+    const index = Number(block.match(/data-num-in-round="(\d+)"/)?.[1] ?? 0)
+    if (!index) continue
+
+    const desc = block.match(/<span class="desc"[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? ''
+    const teams = desc.replace(/<[^>]+>/g, '').trim().split(' - ')
+    const home = (teams[0] ?? '').trim()
+    const away = (teams[1] ?? '').trim()
+
+    // Status lives in the <span class="status">...</span> block only.
+    const status = block.match(/<span class="status">([\s\S]*?)<\/span>\s*<\/span>/)?.[1] ?? ''
+    const finished = status.includes('הסתיים')
+
+    // The site marks the winning column with the "win" class.
+    let result: string | null = null
+    if (/class="bet-home\s+win"/.test(block)) result = '1'
+    else if (/class="bet-x\s+win"/.test(block)) result = 'X'
+    else if (/class="bet-guest\s+win"/.test(block)) result = '2'
+
+    games.push({ index, home, away, finished, result: finished ? result : null })
+  }
+
+  // Keep only the 16 toto games, first occurrence per index.
+  const seen = new Set<number>()
+  const unique = games.filter((g) => (seen.has(g.index) ? false : (seen.add(g.index), true)))
+
+  return { games: unique, programme, raw: blocks.length }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -31,12 +91,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}))
-    const { roundId, dryRun = false, url = DEFAULT_URL } = body
-
-    const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY')
-    const lovableKey = Deno.env.get('LOVABLE_API_KEY')
-    if (!firecrawlKey) return json({ error: 'Missing FIRECRAWL_API_KEY' }, 500)
-    if (!lovableKey) return json({ error: 'Missing LOVABLE_API_KEY' }, 500)
+    const { roundId, dryRun = false, date } = body
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -44,20 +99,19 @@ Deno.serve(async (req) => {
     )
 
     // 1. Resolve the round
-    let round: { id: string; round_number: number; status: string } | null = null
+    let round: { id: string; round_number: number; status: string; deadline: string } | null = null
     if (roundId) {
       const { data, error } = await supabase
         .from('toto_rounds')
-        .select('id, round_number, status')
+        .select('id, round_number, status, deadline')
         .eq('id', roundId)
         .single()
       if (error || !data) return json({ error: 'Round not found' }, 404)
       round = data
     } else {
-      // Latest round (active/locked/finished) that still has games missing results
       const { data: rounds, error } = await supabase
         .from('toto_rounds')
-        .select('id, round_number, status')
+        .select('id, round_number, status, deadline')
         .in('status', ['active', 'locked', 'finished'])
         .order('round_number', { ascending: false })
         .limit(5)
@@ -89,74 +143,18 @@ Deno.serve(async (req) => {
     if (gamesError) return json({ error: gamesError.message }, 500)
     if (!games || games.length === 0) return json({ error: 'No games in round' }, 400)
 
-    // 3. Scrape the toto page
-    console.log('Scraping', url)
-    const scrapeRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${firecrawlKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url, formats: ['markdown'] }),
-    })
-    if (!scrapeRes.ok) {
-      const errText = await scrapeRes.text()
-      console.error('Firecrawl failed:', scrapeRes.status, errText)
-      return json({ error: `Firecrawl failed: ${scrapeRes.status}`, details: errText }, 502)
-    }
-    const scrapeData = await scrapeRes.json()
-    const markdown: string = scrapeData?.data?.markdown ?? scrapeData?.markdown ?? ''
-    if (!markdown || markdown.length < 50) {
-      return json({ error: 'Scrape returned empty content' }, 502)
+    // 3. Fetch the exact programme for this round (by its deadline date, Israel time)
+    const programmeDate: string =
+      date ??
+      new Date(new Date(round.deadline).getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
+    console.log(`Fetching bankerim programme for ${programmeDate} (round ${round.round_number})`)
+    const { games: scraped, programme, raw } = await fetchProgramme(programmeDate)
+    if (scraped.length === 0) {
+      return json({ error: 'No games found on source page', programmeDate, raw }, 502)
     }
 
-    // 4. Extract live results with Lovable AI — the "ווינר 16" games table
-    const prompt = `זהו תוכן של עמוד "ווינר 16" באתר bankerim.co.il. התמקד אך ורק ברשימת 16 המשחקים שמתחת לכותרת "ווינר 16 | תוכניה מס'" (התעלם מתפריטי סינון, תוכניות עבר ופרסומות).
-כל משחק מופיע כשורה בסגנון: "**8.**הסתייםפרמייר ליגנוטינגהאם פורסט - טוטנהאם2.402.952.400 - 0" — כלומר: מספר משחק, סטטוס/זמן, ליגה, קבוצת בית - קבוצת חוץ, שלושה יחסים, ובמשחק שהסתיים גם תוצאת שערים בסוף.
-עבור כל אחד מ-16 המשחקים חלץ:
-- index: מספר המשחק (1-16)
-- home: קבוצת הבית
-- away: קבוצת החוץ
-- finished: true רק אם הסטטוס הוא "הסתיים" (וגם אם מופיעה תוצאת שערים). אם מופיע זמן עתידי ("היום 19:45", "ראשון 16:00") או דקת משחק חי ("37'") — false.
-- result: אם המשחק הסתיים — גזור מתוצאת השערים: שערי בית > שערי חוץ => "1", שווה => "X", אחרת => "2". אם לא הסתיים — null.
-
-החזר JSON בלבד בפורמט:
-{"games":[{"index":1,"home":"...","away":"...","finished":false,"result":null}]}
-אל תמציא תוצאות. אם משחק לא הסתיים, finished=false ו-result=null.
-
-תוכן העמוד:
-${markdown.slice(0, 30000)}`
-
-
-    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-      }),
-    })
-    if (!aiRes.ok) {
-      const errText = await aiRes.text()
-      console.error('AI gateway failed:', aiRes.status, errText)
-      return json({ error: `AI gateway failed: ${aiRes.status}` }, 502)
-    }
-    const aiData = await aiRes.json()
-    const content = aiData?.choices?.[0]?.message?.content ?? '{}'
-
-    let extracted: { games: Array<{ index: number; home: string; away: string; finished: boolean; result: string | null }> }
-    try {
-      extracted = JSON.parse(content)
-    } catch {
-      return json({ error: 'AI returned invalid JSON', raw: content.slice(0, 500) }, 502)
-    }
-    const scraped = extracted?.games ?? []
-
-    // 5. Match scraped games to DB games by index + team names, update results
+    // 4. Match scraped games to DB games by index + team names, update results
     const updates: Array<{ gameId: string; index: number; result: string; home: string; away: string }> = []
     const mismatches: Array<{ index: number; db: string; scraped: string }> = []
 
@@ -189,13 +187,13 @@ ${markdown.slice(0, 30000)}`
         dryRun: true,
         roundId: round.id,
         roundNumber: round.round_number,
+        programmeDate,
+        programme,
         updates,
         mismatches,
         scrapedCount: scraped.length,
         scraped,
-        markdownSample: body?.debug ? markdown.slice(0, 6000) : undefined,
       })
-
     }
 
     let updatedCount = 0
@@ -211,7 +209,7 @@ ${markdown.slice(0, 30000)}`
       }
     }
 
-    // 6. Recompute live scores if anything changed
+    // 5. Recompute live scores if anything changed
     let scoresComputed = false
     let roundFinished = false
     if (updatedCount > 0) {
@@ -224,7 +222,7 @@ ${markdown.slice(0, 30000)}`
         scoresComputed = true
       }
 
-      // 7. If all non-cancelled games now have results, finalize the round
+      // 6. If all non-cancelled games now have results, finalize the round
       const { count: remaining } = await supabase
         .from('games')
         .select('id', { count: 'exact', head: true })
@@ -242,7 +240,6 @@ ${markdown.slice(0, 30000)}`
         } else {
           roundFinished = true
 
-          // Fire the Telegram round summary (only if a bot token is configured)
           if (Deno.env.get('TELEGRAM_BOT_TOKEN')) {
             try {
               const summaryRes = await fetch(
@@ -273,6 +270,8 @@ ${markdown.slice(0, 30000)}`
       success: true,
       roundId: round.id,
       roundNumber: round.round_number,
+      programmeDate,
+      programme,
       updated: updatedCount,
       mismatches,
       scoresComputed,
