@@ -202,12 +202,8 @@ Deno.serve(async (req) => {
       if (!dbGame || dbGame.is_cancelled) continue
       if (dbGame.result) continue // already has a result
 
-      const homeMatch =
-        normalize(dbGame.home_team).includes(normalize(g.home)) ||
-        normalize(g.home).includes(normalize(dbGame.home_team))
-      const awayMatch =
-        normalize(dbGame.away_team).includes(normalize(g.away)) ||
-        normalize(g.away).includes(normalize(dbGame.away_team))
+      const homeMatch = teamsMatch(dbGame.home_team, g.home)
+      const awayMatch = teamsMatch(dbGame.away_team, g.away)
 
       if (!homeMatch || !awayMatch) {
         mismatches.push({
