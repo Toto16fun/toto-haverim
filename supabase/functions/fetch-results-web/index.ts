@@ -18,6 +18,44 @@ const normalize = (s: string) =>
     .trim()
     .toLowerCase()
 
+// Club prefixes differ between sources ("הפועל קרית שמונה" vs "עירוני קרית שמונה"),
+// and spelling varies ("פתח תקווה" / "פתח תקוה"), so compare the core name loosely.
+const PREFIXES = ['הפועל', 'מכבי', 'עירוני', 'בני', 'ביתר', 'מס', 'פצ', 'אף סי', 'סי']
+
+const core = (s: string) => {
+  let t = normalize(s).replace(/וו/g, 'ו').replace(/יי/g, 'י')
+  for (const p of PREFIXES) {
+    if (t.startsWith(p + ' ')) t = t.slice(p.length + 1)
+  }
+  return t.replace(/\s+/g, '')
+}
+
+const levenshtein = (a: string, b: string) => {
+  const m = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
+  for (let j = 0; j <= b.length; j++) m[0][j] = j
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      m[i][j] = Math.min(
+        m[i - 1][j] + 1,
+        m[i][j - 1] + 1,
+        m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      )
+    }
+  }
+  return m[a.length][b.length]
+}
+
+const teamsMatch = (a: string, b: string) => {
+  const x = core(a)
+  const y = core(b)
+  if (!x || !y) return false
+  if (x === y || x.includes(y) || y.includes(x)) return true
+  const dist = levenshtein(x, y)
+  return dist / Math.max(x.length, y.length) <= 0.25
+}
+
+
+
 type ScrapedGame = {
   index: number
   home: string
