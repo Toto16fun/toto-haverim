@@ -65,11 +65,15 @@ serve(async (req) => {
   try {
     console.log('Running scheduled draft creation...');
     
-    // Check if there's already an active round for the upcoming week
+    const nowIso = new Date().toISOString();
+
+    // Only a currently open active round should block the next round.
+    // Historical rows can retain an old status and must not block scheduling forever.
     const { data: activeRounds, error: activeError } = await sb
       .from('toto_rounds')
       .select('*')
       .eq('status', 'active')
+      .gt('deadline', nowIso)
       .limit(1);
     
     if (activeError) {
@@ -85,11 +89,12 @@ serve(async (req) => {
       );
     }
 
-    // Check if there's already a draft round
+    // Only a future draft is relevant. Ignore stale drafts whose deadline has passed.
     const { data: draftRounds, error: draftError } = await sb
       .from('toto_rounds')
       .select('*')
       .eq('status', 'draft')
+      .gt('deadline', nowIso)
       .limit(1);
     
     if (draftError) {
