@@ -168,7 +168,38 @@ Deno.serve(async (req) => {
         }
       }
       if (!round) {
-        return json({ success: true, message: 'No round with missing results', updated: 0 })
+        // Safety net: a round can end up complete without a summary (e.g. it was
+        // reopened/closed manually). Send the summary for any recent complete round
+        // that never got one.
+        let summarySent: string | null = null
+        for (const r of rounds ?? []) {
+          const { data: existing } = await supabase
+            .from('round_summaries').select('id').eq('round_id', r.id).maybeSingle()
+          if (existing) break // older rounds were already handled
+          const { count: total } = await supabase
+            .from('games').select('id', { count: 'exact', head: true }).eq('round_id', r.id)
+          if (!total) continue
+          await supabase.from('toto_rounds')
+            .update({ results_updated: true, status: 'finished' }).eq('id', r.id)
+          await supabase.rpc('compute_round_scores_sql', { p_round_id: r.id })
+          if (Deno.env.get('TELEGRAM_BOT_TOKEN')) {
+            const res = await fetch(
+              new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ roundId: r.id }),
+              },
+            )
+            console.log('Catch-up summary:', res.status, await res.text())
+            summarySent = r.id
+          }
+          break
+        }
+        return json({ success: true, message: 'No round with missing results', updated: 0, summarySent })
       }
     }
 
