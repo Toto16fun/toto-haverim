@@ -168,7 +168,32 @@ Deno.serve(async (req) => {
         }
       }
       if (!round) {
-        return json({ success: true, message: 'No round with missing results', updated: 0 })
+        // Safety net: a round whose results are all in (e.g. completed before its
+        // deadline was extended) but never got a Telegram summary — send it now.
+        let summarySent: string | null = null
+        const latest = rounds?.[0]
+        if (latest && !dryRun && Deno.env.get('TELEGRAM_BOT_TOKEN')) {
+          const { data: existing } = await supabase
+            .from('round_summaries').select('id').eq('round_id', latest.id).maybeSingle()
+          if (!existing && new Date(latest.deadline).getTime() < Date.now()) {
+            await supabase.from('toto_rounds')
+              .update({ results_updated: true, status: 'finished' }).eq('id', latest.id)
+            const res = await fetch(
+              new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ roundId: latest.id }),
+              },
+            )
+            summarySent = res.ok ? latest.id : null
+            if (!res.ok) console.error('Catch-up summary failed:', res.status, await res.text())
+          }
+        }
+        return json({ success: true, message: 'No round with missing results', updated: 0, summarySent })
       }
     }
 
