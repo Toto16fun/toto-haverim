@@ -116,6 +116,28 @@ async function fetchProgramme(dateISO: string): Promise<{ games: ScrapedGame[]; 
   return { games: unique, programme, raw: blocks.length }
 }
 
+// The scheduler disconnects after a few seconds, which used to kill the
+// (slow, AI-written) summary call mid-flight. Run it in the background so it
+// survives the caller hanging up.
+function sendSummaryInBackground(roundId: string) {
+  const task = fetch(
+    new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ roundId }),
+    },
+  )
+    .then(async (r) => console.log('Round summary response:', r.status, await r.text()))
+    .catch((e) => console.error('Failed to call summary function:', e))
+  // deno-lint-ignore no-explicit-any
+  const rt = (globalThis as any).EdgeRuntime
+  if (rt?.waitUntil) rt.waitUntil(task)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -181,19 +203,8 @@ Deno.serve(async (req) => {
         if (!existing) {
           await supabase.from('toto_rounds')
             .update({ results_updated: true, status: 'finished' }).eq('id', candidate.id)
-          const res = await fetch(
-            new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
-            {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ roundId: candidate.id }),
-            },
-          )
-          summarySent = res.ok ? candidate.id : null
-          if (!res.ok) console.error('Catch-up summary failed:', res.status, await res.text())
+          sendSummaryInBackground(candidate.id)
+          summarySent = candidate.id
         }
       }
 
@@ -305,26 +316,7 @@ Deno.serve(async (req) => {
           roundFinished = true
 
           if (Deno.env.get('TELEGRAM_BOT_TOKEN')) {
-            try {
-              const summaryRes = await fetch(
-                new URL('/functions/v1/round-summary-telegram', Deno.env.get('SUPABASE_URL')!).toString(),
-                {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ roundId: round.id }),
-                },
-              )
-              if (!summaryRes.ok) {
-                console.error('Summary function failed:', summaryRes.status, await summaryRes.text())
-              } else {
-                console.log('Round summary sent:', await summaryRes.text())
-              }
-            } catch (e) {
-              console.error('Failed to call summary function:', e)
-            }
+            sendSummaryInBackground(round.id)
           }
         }
       }
