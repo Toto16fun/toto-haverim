@@ -103,9 +103,40 @@ serve(async (req) => {
     }
 
     if ((draftRounds ?? []).length > 0) {
-      console.log('Draft round already exists, skipping creation');
+      const draft = draftRounds[0];
+      // Retry path: a future draft exists but its games were not fetched (e.g. Tuesday fetch failed).
+      const { count: existingGames } = await sb
+        .from('games')
+        .select('id', { count: 'exact', head: true })
+        .eq('round_id', draft.id);
+
+      let retried = false;
+      let gamesFetched = existingGames ?? 0;
+      let retryStatus = 'draft';
+      if (gamesFetched !== 16) {
+        retried = true;
+        try {
+          const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-games-web`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({ roundId: draft.id }),
+          });
+          const result = await res.json();
+          gamesFetched = res.ok && result?.success ? (result.games?.length ?? 0) : 0;
+        } catch (e) {
+          console.error('Retry fetch-games-web threw:', e);
+        }
+      }
+      if (gamesFetched === 16) {
+        const { error } = await sb.from('toto_rounds').update({ status: 'active' }).eq('id', draft.id);
+        if (!error) retryStatus = 'active';
+      }
+      console.log(`Existing draft ${draft.round_number}: retried=${retried}, games=${gamesFetched}, status=${retryStatus}`);
       return new Response(
-        JSON.stringify({ skipped: 'draft round exists', draftRound: draftRounds[0] }), 
+        JSON.stringify({ skipped: 'draft round exists', draftRound: draft.id, retried, gamesFetched, status: retryStatus }),
         { headers: { ...corsHeaders, 'content-type': 'application/json' } }
       );
     }
